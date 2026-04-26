@@ -14,7 +14,7 @@
 [![Status](https://img.shields.io/badge/Status-In%20Development-yellow.svg)]()
 [![GitHub](https://img.shields.io/badge/GitHub-Kian--irani-black?logo=github)](https://github.com/Kian-irani)
 
-[🇮🇷 فارسی](#-معرفی) • [🇬🇧 English](#-introduction)
+[🇮🇷 فارسی](#-معرفی) • [🇬🇧 English](#-introduction) • [🗺️ Roadmap](ROADMAP.md) • [📊 Projects](https://github.com/Kian-irani/jarvis-android/projects)
 
 </div>
 
