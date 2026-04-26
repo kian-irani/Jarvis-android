@@ -12,6 +12,7 @@
 [![Platform](https://img.shields.io/badge/Platform-Android-green.svg)]()
 [![Backend](https://img.shields.io/badge/Backend-Python%20%7C%20FastAPI-orange.svg)]()
 [![Status](https://img.shields.io/badge/Status-In%20Development-yellow.svg)]()
+[![GitHub](https://img.shields.io/badge/GitHub-Kian--irani-black?logo=github)](https://github.com/Kian-irani)
 
 [🇮🇷 فارسی](#-معرفی) • [🇬🇧 English](#-introduction)
 
@@ -154,7 +155,7 @@ One command to join / یک دستور برای اتصال:
 ### ۱. راه‌اندازی Brain روی VPS
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/jarvis-android
+git clone https://github.com/Kian-irani/jarvis-android
 cd jarvis-android/brain
 cp .env.example .env
 # کلیدهای API را در .env وارد کنید
@@ -165,13 +166,13 @@ docker compose up -d
 
 ```bash
 # Linux / VPS
-curl -s https://your-vps-ip/join.sh | bash
+  curl -s https://your-vps-ip/join.sh | bash
 
 # Windows (PowerShell)
-iwr https://your-vps-ip/join.ps1 | iex
+  iwr https://your-vps-ip/join.ps1 | iex
 
 # Android (Termux)
-curl -s https://your-vps-ip/join-android.sh | bash
+  curl -s https://your-vps-ip/join-android.sh | bash
 ```
 
 ### ۳. نصب اپ اندروید
