@@ -22,13 +22,14 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Grant execute permission
-        run: chmod +x android/gradlew
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-version: '8.6'
 
       - name: Build Debug APK
-        run: |
-          cd android
-          ./gradlew assembleDebug --no-daemon
+        working-directory: android
+        run: gradle assembleDebug --no-daemon --warning-mode=none
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
