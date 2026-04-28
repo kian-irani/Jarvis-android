@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JARVIS Control Panel</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #0a0a0f; color: #00d4ff; font-family: 'Courier New', monospace; }
+  .header { background: linear-gradient(135deg, #0a0a1a, #001a2e); border-bottom: 1px solid #00d4ff33; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; }
+  .logo { font-size: 24px; font-weight: bold; color: #00d4ff; text-shadow: 0 0 20px #00d4ff; letter-spacing: 3px; }
+  .status-dot { width: 10px; height: 10px; border-radius: 50%; background: #00ff88; display: inline-block; margin-left: 8px; box-shadow: 0 0 10px #00ff88; animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; padding: 15px; }
+  .card { background: #0d1117; border: 1px solid #00d4ff22; border-radius: 10px; padding: 15px; }
+  .card h3 { color: #00d4ff; font-size: 12px; letter-spacing: 2px; margin-bottom: 12px; text-transform: uppercase; }
+  .node-item { background: #0a1628; border: 1px solid #00d4ff22; border-radius: 8px; padding: 10px; margin-bottom: 8px; }
+  .node-name { color: #00ff88; font-size: 13px; font-weight: bold; }
+  .node-info { color: #6688aa; font-size: 11px; margin-top: 4px; }
+  .metric { display: flex; justify-content: space-between; align-items: center; margin: 6px 0; }
+  .metric-label { color: #6688aa; font-size: 11px; }
+  .metric-bar { width: 60%; height: 4px; background: #111; border-radius: 2px; overflow: hidden; }
+  .metric-fill { height: 100%; background: linear-gradient(90deg, #00d4ff, #00ff88); border-radius: 2px; transition: width 0.5s; }
+  .metric-val { color: #00d4ff; font-size: 11px; min-width: 35px; text-align: right; }
+  .chat-box { grid-column: 1/-1; }
+  .messages { height: 200px; overflow-y: auto; background: #060d13; border: 1px solid #00d4ff11; border-radius: 8px; padding: 10px; margin-bottom: 10px; }
+  .msg { margin: 8px 0; font-size: 12px; line-height: 1.5; }
+  .msg.user { color: #00ff88; }
+  .msg.jarvis { color: #00d4ff; }
+  .msg.system { color: #ff6644; font-size: 11px; }
+  .input-row { display: flex; gap: 8px; }
+  .chat-input { flex: 1; background: #0d1117; border: 1px solid #00d4ff33; color: #00d4ff; padding: 10px; border-radius: 8px; font-family: monospace; font-size: 13px; outline: none; }
+  .btn { background: linear-gradient(135deg, #003366, #005599); border: 1px solid #00d4ff44; color: #00d4ff; padding: 10px 16px; border-radius: 8px; cursor: pointer; font-family: monospace; font-size: 12px; transition: all 0.2s; }
+  .btn:hover { background: linear-gradient(135deg, #004488, #0077bb); box-shadow: 0 0 15px #00d4ff44; }
+  .btn.danger { background: linear-gradient(135deg, #330000, #550000); border-color: #ff444444; color: #ff6644; }
+  .terminal-box { grid-column: 1/-1; }
+  .terminal { height: 120px; overflow-y: auto; background: #000; border: 1px solid #00ff8833; border-radius: 8px; padding: 10px; font-size: 11px; color: #00ff88; margin-bottom: 8px; }
+  .exec-row { display: flex; gap: 8px; align-items: center; }
+  .exec-input { flex: 1; background: #060d00; border: 1px solid #00ff8833; color: #00ff88; padding: 8px; border-radius: 6px; font-family: monospace; font-size: 12px; outline: none; }
+  .node-select { background: #060d00; border: 1px solid #00ff8833; color: #00ff88; padding: 8px; border-radius: 6px; font-family: monospace; font-size: 12px; outline: none; }
+  .full { grid-column: 1/-1; }
+  .stats-row { display: flex; gap: 10px; grid-column: 1/-1; }
+  .stat-card { flex: 1; background: #0d1117; border: 1px solid #00d4ff22; border-radius: 10px; padding: 12px; text-align: center; }
+  .stat-num { font-size: 28px; font-weight: bold; color: #00ff88; text-shadow: 0 0 15px #00ff8866; }
+  .stat-label { font-size: 10px; color: #6688aa; letter-spacing: 2px; margin-top: 4px; }
+  .online { color: #00ff88; } .offline { color: #ff4444; }
+  ::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-track { background: #111; } ::-webkit-scrollbar-thumb { background: #00d4ff44; border-radius: 2px; }
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="logo">⚡ J.A.R.V.I.S</div>
+  <div style="font-size:12px;color:#6688aa">
+    <span class="status-dot"></span>
+    <span id="brain-status">CONNECTING...</span>
+  </div>
+</div>
+
+<div class="grid">
+  <!-- Stats -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-num" id="stat-online">0</div>
+      <div class="stat-label">NODES ONLINE</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" id="stat-total">0</div>
+      <div class="stat-label">TOTAL NODES</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" id="stat-cpu">0%</div>
+      <div class="stat-label">BRAIN CPU</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" id="stat-ram">0GB</div>
+      <div class="stat-label">BRAIN RAM FREE</div>
+    </div>
+  </div>
+
+  <!-- Nodes -->
+  <div class="card">
+    <h3>🌐 Mesh Nodes</h3>
+    <div id="nodes-list"><div style="color:#6688aa;font-size:12px">در حال بارگذاری...</div></div>
+  </div>
+
+  <!-- Node Details -->
+  <div class="card">
+    <h3>📊 جزئیات Node</h3>
+    <div id="node-detail"><div style="color:#6688aa;font-size:12px">یک Node انتخاب کن</div></div>
+  </div>
+
+  <!-- Chat -->
+  <div class="card chat-box">
+    <h3>💬 Chat با JARVIS</h3>
+    <div class="messages" id="messages">
+      <div class="msg system">[ JARVIS AI — LLaMA 3.3 70B — آماده ]</div>
+    </div>
+    <div class="input-row">
+      <input class="chat-input" id="chat-input" placeholder="پیام بنویس..." onkeydown="if(event.key==='Enter')sendChat()">
+      <button class="btn" onclick="sendChat()">ارسال</button>
+    </div>
+  </div>
+
+  <!-- Terminal -->
+  <div class="card terminal-box">
+    <h3>💻 Remote Terminal</h3>
+    <div class="terminal" id="terminal">[ Terminal آماده — دستور وارد کن ]</div>
+    <div class="exec-row">
+      <select class="node-select" id="node-select"><option>در حال بارگذاری...</option></select>
+      <input class="exec-input" id="exec-input" placeholder="دستور..." onkeydown="if(event.key==='Enter')execCmd()">
+      <button class="btn" onclick="execCmd()">اجرا</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = window.location.protocol + '//' + window.location.hostname + ':8000';
+let nodes = [];
+let selectedNode = null;
+
+async function fetchHealth() {
+  try {
+    const r = await fetch(API + '/health');
+    const d = await r.json();
+    document.getElementById('brain-status').textContent = 'ONLINE';
+    document.getElementById('stat-cpu').textContent = d.cpu + '%';
+    document.getElementById('stat-ram').textContent = d.ram_free_gb + 'GB';
+    document.getElementById('stat-online').textContent = d.nodes_online;
+    document.getElementById('stat-total').textContent = d.nodes_total;
+  } catch(e) {
+    document.getElementById('brain-status').textContent = 'OFFLINE';
+  }
+}
+
+async function fetchNodes() {
+  try {
+    const r = await fetch(API + '/nodes');
+    const d = await r.json();
+    nodes = d.nodes;
+    renderNodes();
+    updateSelect();
+  } catch(e) {}
+}
+
+function renderNodes() {
+  const el = document.getElementById('nodes-list');
+  if (!nodes.length) { el.innerHTML = '<div style="color:#6688aa;font-size:12px">هیچ Node آنلاینی نیست</div>'; return; }
+  el.innerHTML = nodes.map(n => `
+    <div class="node-item" onclick="showDetail('${n.node_id}')" style="cursor:pointer">
+      <div class="node-name">
+        <span class="${n.status === 'online' ? 'online' : 'offline'}">●</span>
+        ${n.name}
+      </div>
+      <div class="node-info">${n.device_type} | ${n.os} | CPU: ${n.hardware?.cpu_cores || '?'} core</div>
+      <div class="node-info">RAM: ${n.hardware?.ram_gb || '?'}GB | Disk: ${n.hardware?.disk_gb || '?'}GB</div>
+      ${n.metrics ? `
+      <div class="metric">
+        <span class="metric-label">CPU</span>
+        <div class="metric-bar"><div class="metric-fill" style="width:${n.metrics.cpu || 0}%"></div></div>
+        <span class="metric-val">${n.metrics.cpu || 0}%</span>
+      </div>
+      <div class="metric">
+        <span class="metric-label">RAM</span>
+        <div class="metric-bar"><div class="metric-fill" style="width:${n.metrics.ram_percent || 0}%"></div></div>
+        <span class="metric-val">${n.metrics.ram_percent || 0}%</span>
+      </div>` : ''}
+    </div>
+  `).join('');
+}
+
+function showDetail(id) {
+  const n = nodes.find(x => x.node_id === id);
+  if (!n) return;
+  selectedNode = n;
+  document.getElementById('node-detail').innerHTML = `
+    <div style="font-size:12px">
+      <div style="color:#00ff88;font-size:14px;margin-bottom:8px">● ${n.name}</div>
+      <div class="node-info">ID: ${n.node_id?.substring(0,8)}...</div>
+      <div class="node-info">Type: ${n.device_type}</div>
+      <div class="node-info">OS: ${n.os}</div>
+      <div class="node-info">Caps: ${(n.capabilities||[]).join(', ')}</div>
+      <div class="node-info" style="margin-top:8px">Hardware:</div>
+      <div class="node-info">• CPU: ${n.hardware?.cpu_cores} cores</div>
+      <div class="node-info">• RAM: ${n.hardware?.ram_gb}GB</div>
+      <div class="node-info">• Disk: ${n.hardware?.disk_gb}GB</div>
+      ${n.metrics ? `
+      <div class="node-info" style="margin-top:8px">Live:</div>
+      <div class="node-info">• CPU: ${n.metrics.cpu}%</div>
+      <div class="node-info">• RAM Free: ${n.metrics.ram_free_gb}GB</div>
+      <div class="node-info">• Disk Free: ${n.metrics.disk_free_gb}GB</div>` : ''}
+    </div>
+  `;
+}
+
+function updateSelect() {
+  const sel = document.getElementById('node-select');
+  sel.innerHTML = nodes.map(n => `<option value="${n.node_id}">${n.name}</option>`).join('');
+}
+
+async function sendChat() {
+  const inp = document.getElementById('chat-input');
+  const msg = inp.value.trim();
+  if (!msg) return;
+  inp.value = '';
+  const msgs = document.getElementById('messages');
+  msgs.innerHTML += `<div class="msg user">شما: ${msg}</div>`;
+  msgs.innerHTML += `<div class="msg system">[ در حال پردازش... ]</div>`;
+  msgs.scrollTop = msgs.scrollHeight;
+  try {
+    const r = await fetch(API + '/chat', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({message: msg})
+    });
+    const d = await r.json();
+    msgs.lastElementChild.remove();
+    msgs.innerHTML += `<div class="msg jarvis">JARVIS: ${d.response}</div>`;
+    msgs.scrollTop = msgs.scrollHeight;
+  } catch(e) {
+    msgs.lastElementChild.textContent = '[ خطا در اتصال ]';
+  }
+}
+
+async function execCmd() {
+  const inp = document.getElementById('exec-input');
+  const sel = document.getElementById('node-select');
+  const cmd = inp.value.trim();
+  const nodeId = sel.value;
+  if (!cmd) return;
+  inp.value = '';
+  const term = document.getElementById('terminal');
+  term.innerHTML += `\n<span style="color:#ffaa00">$ ${cmd}</span>\n`;
+  try {
+    const r = await fetch(API + '/nodes/' + nodeId + '/exec', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({command: cmd})
+    });
+    const d = await r.json();
+    term.innerHTML += `<span style="color:#00ff88">${d.status === 'sent' ? 'دستور ارسال شد ✓' : d.error}</span>\n`;
+  } catch(e) {
+    term.innerHTML += `<span style="color:#ff4444">خطا در اتصال</span>\n`;
+  }
+  term.scrollTop = term.scrollHeight;
+}
+
+// Auto refresh
+fetchHealth(); fetchNodes();
+setInterval(fetchHealth, 5000);
+setInterval(fetchNodes, 8000);
+</script>
+</body>
+</html>
