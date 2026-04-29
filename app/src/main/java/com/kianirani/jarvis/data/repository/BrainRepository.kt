@@ -1,33 +1,53 @@
 package com.kianirani.jarvis.data.repository
 
 import android.util.Log
-import io.ktor.client.*
-import io.ktor.client.engine.okhttp.*
-import io.ktor.client.plugins.*
-import io.ktor.client.plugins.contentnegotiation.*
-import io.ktor.client.plugins.logging.*
-import io.ktor.client.plugins.websocket.*
-import io.ktor.client.request.*
-import io.ktor.client.statement.*
-import io.ktor.http.*
-import io.ktor.serialization.kotlinx.json.*
-import io.ktor.websocket.*
-import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.*
-import kotlinx.serialization.*
-import kotlinx.serialization.json.*
+import io.ktor.client.HttpClient
+import io.ktor.client.engine.okhttp.OkHttp
+import io.ktor.client.plugins.HttpTimeout
+import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.client.plugins.logging.LogLevel
+import io.ktor.client.plugins.logging.Logging
+import io.ktor.client.plugins.websocket.WebSockets
+import io.ktor.client.plugins.websocket.webSocket
+import io.ktor.client.request.get
+import io.ktor.client.request.post
+import io.ktor.client.request.setBody
+import io.ktor.client.statement.bodyAsText
+import io.ktor.http.ContentType
+import io.ktor.http.contentType
+import io.ktor.serialization.kotlinx.json.json
+import io.ktor.websocket.Frame
+import io.ktor.websocket.readText
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.decodeFromJsonElement
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.parseToJsonElement
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Serializable
-data class ChatRequest(
-    val message: String,
-    val node_id: String? = null
-)
+data class ChatRequest(val message: String, val node_id: String? = null)
 
 @Serializable
 data class ChatResponse(
-    val response: String,
+    val response: String = "",
     val model: String = "",
     val node_used: String? = null,
     val duration_ms: Long = 0
@@ -50,14 +70,7 @@ data class ApiNode(
     val node_id: String,
     val name: String,
     val status: String = "offline",
-    val metrics: NodeMetrics? = null,
-    val capabilities: List<String> = emptyList()
-)
-
-@Serializable
-data class NodesResponse(
-    val nodes: List<ApiNode> = emptyList(),
-    val count: Int = 0
+    val metrics: NodeMetrics? = null
 )
 
 @Serializable
@@ -93,7 +106,7 @@ class BrainRepository @Inject constructor() {
 
     private val http = HttpClient(OkHttp) {
         install(ContentNegotiation) { json(jsonParser) }
-        install(WebSockets) { pingInterval = 20_000L }
+        install(WebSockets)
         install(Logging) { level = LogLevel.INFO }
         install(HttpTimeout) {
             requestTimeoutMillis = 15_000
@@ -107,40 +120,39 @@ class BrainRepository @Inject constructor() {
     private val _connected = MutableStateFlow(false)
     val connected: StateFlow<Boolean> = _connected.asStateFlow()
 
-    suspend fun health() = runCatching {
-        http.get("$BASE_URL/health").body<HealthResponse>()
+    suspend fun health(): Result<HealthResponse> = runCatching {
+        val text = http.get("$BASE_URL/health").bodyAsText()
+        jsonParser.decodeFromString(HealthResponse.serializer(), text)
     }
 
-    suspend fun getNodes() = runCatching {
-        http.get("$BASE_URL/nodes").body<NodesResponse>()
+    suspend fun getNodes(): Result<List<ApiNode>> = runCatching {
+        val text = http.get("$BASE_URL/nodes").bodyAsText()
+        val obj = jsonParser.parseToJsonElement(text).jsonObject
+        val arr = obj["nodes"]?.jsonArray ?: return@runCatching emptyList()
+        arr.map { jsonParser.decodeFromJsonElement(ApiNode.serializer(), it) }
     }
 
-    suspend fun chat(msg: String, nodeId: String? = null) = runCatching {
-        http.post("$BASE_URL/chat") {
+    suspend fun chat(msg: String, nodeId: String? = null): Result<ChatResponse> = runCatching {
+        val req = ChatRequest(msg, nodeId)
+        val body = jsonParser.encodeToString(ChatRequest.serializer(), req)
+        val text = http.post("$BASE_URL/chat") {
             contentType(ContentType.Application.Json)
-            setBody(ChatRequest(msg, nodeId))
-        }.body<ChatResponse>()
-    }
-
-    suspend fun runCommand(nodeId: String, cmd: String) = runCatching {
-        http.post("$BASE_URL/run") {
-            contentType(ContentType.Application.Json)
-            setBody(mapOf("node_id" to nodeId, "command" to cmd))
+            setBody(body)
         }.bodyAsText()
+        jsonParser.decodeFromString(ChatResponse.serializer(), text)
     }
 
     fun connectWebSocket(scope: CoroutineScope) {
         scope.launch(Dispatchers.IO) {
-            var delay = 3_000L
+            var delayMs = 3_000L
             while (isActive) {
                 try {
                     http.webSocket(WS_URL) {
                         _connected.value = true
-                        delay = 3_000L
+                        delayMs = 3_000L
                         _events.emit(BrainEvent.Connected("Brain connected"))
-                        send(Frame.Text(jsonParser.encodeToString(
-                            mapOf("type" to "mobile_register", "client" to "JARVIS-Android")
-                        )))
+                        val reg = mapOf("type" to "mobile_register", "client" to "JARVIS-Android")
+                        send(Frame.Text(jsonParser.encodeToString(reg)))
                         for (frame in incoming) {
                             if (frame is Frame.Text) handleWs(frame.readText())
                         }
@@ -150,10 +162,10 @@ class BrainRepository @Inject constructor() {
                 } catch (e: Exception) {
                     _connected.value = false
                     _events.emit(BrainEvent.Disconnected)
-                    _events.emit(BrainEvent.LogEntry("Reconnecting in ${delay/1000}s...", "warn"))
+                    _events.emit(BrainEvent.LogEntry("Reconnecting...", "warn"))
                 }
-                kotlinx.coroutines.delay(delay)
-                delay = (delay * 1.5f).toLong().coerceAtMost(30_000)
+                delay(delayMs)
+                delayMs = (delayMs * 1.5).toLong().coerceAtMost(30_000)
             }
         }
     }
@@ -164,31 +176,40 @@ class BrainRepository @Inject constructor() {
             when (obj["type"]?.jsonPrimitive?.content) {
                 "heartbeat" -> {
                     val nid = obj["node_id"]?.jsonPrimitive?.content ?: return
-                    val m = obj["metrics"]?.let { jsonParser.decodeFromJsonElement<NodeMetrics>(it) }
+                    val m = obj["metrics"]?.let {
+                        jsonParser.decodeFromJsonElement(NodeMetrics.serializer(), it)
+                    }
                     _events.emit(BrainEvent.NodeUpdated(ApiNode(nid, nid, metrics = m)))
                 }
-                "chat_stream" -> _events.emit(
-                    BrainEvent.ChatReply(obj["delta"]?.jsonPrimitive?.content ?: "")
-                )
-                "log" -> _events.emit(BrainEvent.LogEntry(
-                    obj["message"]?.jsonPrimitive?.content ?: "",
-                    obj["level"]?.jsonPrimitive?.content ?: "info"
-                ))
-                "connected" -> obj["nodes"]?.jsonArray?.forEach { n ->
-                    _events.emit(BrainEvent.NodeUpdated(jsonParser.decodeFromJsonElement<ApiNode>(n)))
+                "chat_stream" -> {
+                    val delta = obj["delta"]?.jsonPrimitive?.content ?: ""
+                    _events.emit(BrainEvent.ChatReply(delta))
+                }
+                "log" -> {
+                    val msg = obj["message"]?.jsonPrimitive?.content ?: ""
+                    val lvl = obj["level"]?.jsonPrimitive?.content ?: "info"
+                    _events.emit(BrainEvent.LogEntry(msg, lvl))
+                }
+                "connected" -> {
+                    obj["nodes"]?.jsonArray?.forEach { n ->
+                        val node = jsonParser.decodeFromJsonElement(ApiNode.serializer(), n)
+                        _events.emit(BrainEvent.NodeUpdated(node))
+                    }
                 }
             }
         } catch (e: Exception) {
-            Log.e(TAG, "WS parse: $e")
+            Log.e(TAG, "WS parse error: $e")
         }
     }
 
     fun startPolling(scope: CoroutineScope, ms: Long = 5_000L) {
         scope.launch(Dispatchers.IO) {
             while (isActive) {
-                kotlinx.coroutines.delay(ms)
+                delay(ms)
                 getNodes()
-                    .onSuccess { r -> r.nodes.forEach { _events.emit(BrainEvent.NodeUpdated(it)) } }
+                    .onSuccess { nodes ->
+                        nodes.forEach { _events.emit(BrainEvent.NodeUpdated(it)) }
+                    }
                     .onFailure { _events.emit(BrainEvent.Error(it)) }
             }
         }
