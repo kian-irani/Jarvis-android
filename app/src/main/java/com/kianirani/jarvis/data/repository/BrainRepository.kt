@@ -31,13 +31,12 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
-import kotlinx.serialization.json.parseToJsonElement
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -62,9 +61,11 @@ class BrainRepository @Inject constructor() {
         private const val TAG = "BrainRepo"
         private const val BASE_URL = "http://212.87.199.62:8000"
         private const val WS_URL = "ws://212.87.199.62:8000/ws/mobile"
+        private const val REG_MSG = "{\"type\":\"mobile_register\",\"client\":\"JARVIS-Android\"}"
     }
 
     private val jsonParser = Json { ignoreUnknownKeys = true; isLenient = true; coerceInputValues = true }
+    private fun parseObj(text: String): JsonObject = jsonParser.decodeFromString(JsonObject.serializer(), text)
 
     private val http = HttpClient(OkHttp) {
         install(ContentNegotiation) { json(jsonParser) }
@@ -79,16 +80,16 @@ class BrainRepository @Inject constructor() {
     val connected: StateFlow<Boolean> = _connected.asStateFlow()
 
     suspend fun health(): Result<HealthResponse> = runCatching {
-        jsonParser.decodeFromString(HealthResponse.serializer(), http.get("$BASE_URL/health").bodyAsText())
+        jsonParser.decodeFromString(HealthResponse.serializer(), http.get(BASE_URL + "/health").bodyAsText())
     }
 
     suspend fun getNodes(): Result<List<ApiNode>> = runCatching {
-        val obj = jsonParser.parseToJsonElement(http.get("$BASE_URL/nodes").bodyAsText()).jsonObject
+        val obj = parseObj(http.get(BASE_URL + "/nodes").bodyAsText())
         obj["nodes"]?.jsonArray?.map { jsonParser.decodeFromJsonElement(ApiNode.serializer(), it) } ?: emptyList()
     }
 
     suspend fun chat(msg: String, nodeId: String? = null): Result<ChatResponse> = runCatching {
-        val text = http.post("$BASE_URL/chat") {
+        val text = http.post(BASE_URL + "/chat") {
             contentType(ContentType.Application.Json)
             setBody(jsonParser.encodeToString(ChatRequest.serializer(), ChatRequest(msg, nodeId)))
         }.bodyAsText()
@@ -103,8 +104,10 @@ class BrainRepository @Inject constructor() {
                     http.webSocket(WS_URL) {
                         _connected.value = true; delayMs = 3_000L
                         _events.emit(BrainEvent.Connected("Brain connected"))
-                        send(Frame.Text(jsonParser.encodeToString(mapOf("type" to "mobile_register", "client" to "JARVIS-Android"))))
-                        for (frame in incoming) { if (frame is Frame.Text) handleWs(frame.readText()) }
+                        send(Frame.Text(REG_MSG))
+                        for (frame in incoming) {
+                            if (frame is Frame.Text) handleWs(frame.readText())
+                        }
                     }
                 } catch (e: CancellationException) { throw e
                 } catch (e: Exception) {
@@ -119,19 +122,30 @@ class BrainRepository @Inject constructor() {
 
     private suspend fun handleWs(raw: String) {
         try {
-            val obj = jsonParser.parseToJsonElement(raw).jsonObject
+            val obj = parseObj(raw)
             when (obj["type"]?.jsonPrimitive?.content) {
-                "heartbeat" -> { val nid = obj["node_id"]?.jsonPrimitive?.content ?: return; val m = obj["metrics"]?.let { jsonParser.decodeFromJsonElement(NodeMetrics.serializer(), it) }; _events.emit(BrainEvent.NodeUpdated(ApiNode(nid, nid, metrics = m))) }
+                "heartbeat" -> {
+                    val nid = obj["node_id"]?.jsonPrimitive?.content ?: return
+                    val m = obj["metrics"]?.let { jsonParser.decodeFromJsonElement(NodeMetrics.serializer(), it) }
+                    _events.emit(BrainEvent.NodeUpdated(ApiNode(nid, nid, metrics = m)))
+                }
                 "chat_stream" -> _events.emit(BrainEvent.ChatReply(obj["delta"]?.jsonPrimitive?.content ?: ""))
                 "log" -> _events.emit(BrainEvent.LogEntry(obj["message"]?.jsonPrimitive?.content ?: "", obj["level"]?.jsonPrimitive?.content ?: "info"))
-                "connected" -> obj["nodes"]?.jsonArray?.forEach { n -> _events.emit(BrainEvent.NodeUpdated(jsonParser.decodeFromJsonElement(ApiNode.serializer(), n))) }
+                "connected" -> obj["nodes"]?.jsonArray?.forEach { n ->
+                    _events.emit(BrainEvent.NodeUpdated(jsonParser.decodeFromJsonElement(ApiNode.serializer(), n)))
+                }
             }
         } catch (e: Exception) { Log.e(TAG, "WS: $e") }
     }
 
     fun startPolling(scope: CoroutineScope, ms: Long = 5_000L) {
         scope.launch(Dispatchers.IO) {
-            while (isActive) { delay(ms); getNodes().onSuccess { nodes -> nodes.forEach { _events.emit(BrainEvent.NodeUpdated(it)) } }.onFailure { _events.emit(BrainEvent.Error(it)) } }
+            while (isActive) {
+                delay(ms)
+                getNodes()
+                    .onSuccess { nodes -> nodes.forEach { _events.emit(BrainEvent.NodeUpdated(it)) } }
+                    .onFailure { _events.emit(BrainEvent.Error(it)) }
+            }
         }
     }
 
