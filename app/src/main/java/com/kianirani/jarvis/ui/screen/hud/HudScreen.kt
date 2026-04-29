@@ -1,23 +1,63 @@
 package com.kianirani.jarvis.ui.screen.hud
 
-import androidx.compose.animation.core.*
-import androidx.compose.foundation.*
-import androidx.compose.foundation.layout.*
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
-import androidx.compose.ui.*
-import androidx.compose.ui.draw.*
-import androidx.compose.ui.geometry.*
-import androidx.compose.ui.graphics.*
-import androidx.compose.ui.graphics.drawscope.*
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Paint
+import androidx.compose.ui.graphics.PaintingStyle
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.*
-import com.kianirani.jarvis.ui.theme.*
-import kotlin.math.*
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.Canvas
+import com.kianirani.jarvis.ui.theme.JarvisColors
+import kotlin.math.PI
+import kotlin.math.abs
+import kotlin.math.cos
+import kotlin.math.sin
 
 data class NodeInfo(
     val id: String,
@@ -59,15 +99,10 @@ data class HudUiState(
 fun HudScreen(viewModel: HudViewModel) {
     val state by viewModel.uiState.collectAsState()
     val wide = LocalConfiguration.current.screenWidthDp > 600
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(JarvisColors.Background)
-    ) {
+    Box(modifier = Modifier.fillMaxSize().background(JarvisColors.Background)) {
         HexGrid(Modifier.fillMaxSize())
         ScanLine(Modifier.fillMaxSize())
-        if (wide) LandscapeLayout(state, viewModel)
-        else PortraitLayout(state, viewModel)
+        if (wide) LandscapeLayout(state, viewModel) else PortraitLayout(state, viewModel)
         CornerBrackets(Modifier.fillMaxSize())
     }
 }
@@ -109,10 +144,7 @@ fun LandscapeLayout(s: HudUiState, vm: HudViewModel) {
             modifier = Modifier.fillMaxWidth().weight(1f).padding(12.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Column(
-                modifier = Modifier.width(200.dp).fillMaxHeight(),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
+            Column(Modifier.width(200.dp).fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 s.nodes.forEach { NodeCard(it, Modifier.fillMaxWidth()) }
                 MetricPanel(s, Modifier.fillMaxWidth().weight(1f))
             }
@@ -125,10 +157,7 @@ fun LandscapeLayout(s: HudUiState, vm: HudViewModel) {
                 TypewriterPanel(s.jarvisOutput, Modifier.fillMaxWidth())
                 InputBar(s.inputText, vm::onInputChange, vm::sendChat, Modifier.fillMaxWidth())
             }
-            Column(
-                modifier = Modifier.width(200.dp).fillMaxHeight(),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
+            Column(Modifier.width(200.dp).fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 RadarPanel(s, Modifier.fillMaxWidth().height(160.dp))
                 LogPanel(s, Modifier.fillMaxWidth().weight(1f))
             }
@@ -140,21 +169,15 @@ fun LandscapeLayout(s: HudUiState, vm: HudViewModel) {
 @Composable
 fun TopBar(s: HudUiState, vm: HudViewModel, modifier: Modifier) {
     Row(
-        modifier = modifier
-            .height(52.dp)
+        modifier = modifier.height(52.dp)
             .background(Brush.horizontalGradient(listOf(JarvisColors.CyanFaint, Color.Transparent, JarvisColors.CyanFaint)))
             .padding(horizontal = 14.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             Box(
-                modifier = Modifier
-                    .size(32.dp)
-                    .clip(RoundedCornerShape(4.dp))
+                modifier = Modifier.size(32.dp).clip(RoundedCornerShape(4.dp))
                     .background(Brush.linearGradient(listOf(JarvisColors.BlueAccent, JarvisColors.BlueDeep)))
                     .border(1.dp, JarvisColors.CyanSecondary, RoundedCornerShape(4.dp)),
                 contentAlignment = Alignment.Center
@@ -167,15 +190,10 @@ fun TopBar(s: HudUiState, vm: HudViewModel, modifier: Modifier) {
             }
         }
         Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            listOf(
-                "BRAIN" to s.brainOnline,
-                "NODES" to (s.nodesOnline > 0),
-                "GROQ" to s.groqOnline
-            ).forEach { (label, ok) ->
+            listOf("BRAIN" to s.brainOnline, "NODES" to (s.nodesOnline > 0), "GROQ" to s.groqOnline).forEach { (label, ok) ->
                 val color = if (ok) JarvisColors.NeonGreen else JarvisColors.DangerRed
                 Column(
-                    modifier = Modifier
-                        .border(1.dp, color.copy(alpha = 0.3f), RoundedCornerShape(3.dp))
+                    modifier = Modifier.border(1.dp, color.copy(alpha = 0.3f), RoundedCornerShape(3.dp))
                         .background(color.copy(alpha = 0.05f), RoundedCornerShape(3.dp))
                         .padding(horizontal = 8.dp, vertical = 3.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
@@ -185,20 +203,16 @@ fun TopBar(s: HudUiState, vm: HudViewModel, modifier: Modifier) {
                 }
             }
         }
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             Box(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(3.dp))
+                modifier = Modifier.clip(RoundedCornerShape(3.dp))
                     .background(if (s.isListening) JarvisColors.CyanFaint else Color.Transparent)
                     .border(1.dp, if (s.isListening) JarvisColors.CyanPrimary else JarvisColors.Border, RoundedCornerShape(3.dp))
                     .clickable(onClick = vm::toggleListening)
                     .padding(horizontal = 10.dp, vertical = 4.dp)
             ) {
                 Text(
-                    text = if (s.isListening) "MIC ON" else "MIC OFF",
+                    if (s.isListening) "MIC ON" else "MIC",
                     style = MaterialTheme.typography.labelMedium,
                     color = if (s.isListening) JarvisColors.CyanPrimary else JarvisColors.TextDim
                 )
@@ -214,142 +228,74 @@ fun TopBar(s: HudUiState, vm: HudViewModel, modifier: Modifier) {
 @Composable
 fun OrbPanel(s: HudUiState, modifier: Modifier) {
     val inf = rememberInfiniteTransition(label = "orb")
-    val ring by inf.animateFloat(
-        0f, 360f,
-        infiniteRepeatable(tween(8000, easing = LinearEasing)),
-        label = "r1"
-    )
-    val ring2 by inf.animateFloat(
-        360f, 0f,
-        infiniteRepeatable(tween(13000, easing = LinearEasing)),
-        label = "r2"
-    )
-    val pulse by inf.animateFloat(
-        0.94f, 1.06f,
-        infiniteRepeatable(tween(2500, easing = FastOutSlowInEasing), RepeatMode.Reverse),
-        label = "p"
-    )
-    val glow by inf.animateFloat(
-        0.3f, 0.65f,
-        infiniteRepeatable(tween(2500, easing = FastOutSlowInEasing), RepeatMode.Reverse),
-        label = "g"
-    )
-    val blink by inf.animateFloat(
-        0f, 1f,
-        infiniteRepeatable(tween(900), RepeatMode.Reverse),
-        label = "b"
-    )
+    val ring by inf.animateFloat(0f, 360f, infiniteRepeatable(tween(8000, easing = LinearEasing)), label = "r1")
+    val ring2 by inf.animateFloat(360f, 0f, infiniteRepeatable(tween(13000, easing = LinearEasing)), label = "r2")
+    val pulse by inf.animateFloat(0.94f, 1.06f, infiniteRepeatable(tween(2500, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "p")
+    val glow by inf.animateFloat(0.3f, 0.65f, infiniteRepeatable(tween(2500, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "g")
+    val blink by inf.animateFloat(0f, 1f, infiniteRepeatable(tween(900), RepeatMode.Reverse), label = "b")
 
     HudCard(modifier) {
         Canvas(Modifier.fillMaxSize().padding(28.dp)) {
-            val cx = size.width / 2
-            val cy = size.height / 2
-            val maxR = minOf(cx, cy)
-            repeat(4) { i ->
-                drawCircle(JarvisColors.GridLine, maxR * (0.28f + i * 0.18f), Offset(cx, cy), style = Stroke(0.8.dp.toPx()))
-            }
+            val cx = size.width / 2; val cy = size.height / 2; val maxR = minOf(cx, cy)
+            repeat(4) { i -> drawCircle(JarvisColors.GridLine, maxR * (0.28f + i * 0.18f), Offset(cx, cy), style = Stroke(0.8.dp.toPx())) }
             rotate(ring, Offset(cx, cy)) {
                 drawCircle(JarvisColors.CyanSecondary.copy(alpha = 0.4f), maxR * 0.88f, Offset(cx, cy), style = Stroke(1.dp.toPx()))
                 drawCircle(JarvisColors.CyanPrimary, 4.dp.toPx(), Offset(cx + maxR * 0.88f, cy))
-                drawCircle(JarvisColors.CyanGlow, 8.dp.toPx(), Offset(cx + maxR * 0.88f, cy))
             }
             rotate(ring2, Offset(cx, cy)) {
-                drawCircle(
-                    JarvisColors.Border.copy(alpha = 0.5f), maxR * 0.65f, Offset(cx, cy),
-                    style = Stroke(1.dp.toPx(), pathEffect = PathEffect.dashPathEffect(floatArrayOf(10f, 8f), 0f))
-                )
+                drawCircle(JarvisColors.Border.copy(alpha = 0.5f), maxR * 0.65f, Offset(cx, cy), style = Stroke(1.dp.toPx(), pathEffect = PathEffect.dashPathEffect(floatArrayOf(10f, 8f), 0f)))
                 repeat(3) { i ->
                     val a = (i * 120f) * (PI / 180f).toFloat()
-                    val px = cx + maxR * 0.65f * cos(a)
-                    val py = cy + maxR * 0.65f * sin(a)
-                    drawCircle(JarvisColors.BlueDeep, 3.dp.toPx(), Offset(px, py))
-                    drawCircle(JarvisColors.CyanGlow, 5.dp.toPx(), Offset(px, py))
+                    drawCircle(JarvisColors.BlueDeep, 3.dp.toPx(), Offset(cx + maxR * 0.65f * cos(a), cy + maxR * 0.65f * sin(a)))
                 }
             }
             val r = maxR * 0.26f * pulse
-            drawCircle(
-                Brush.radialGradient(
-                    listOf(JarvisColors.CyanSecondary, JarvisColors.BlueDeep, JarvisColors.BlueMid),
-                    Offset(cx - r * 0.2f, cy - r * 0.2f), r
-                ),
-                r, Offset(cx, cy)
-            )
+            drawCircle(Brush.radialGradient(listOf(JarvisColors.CyanSecondary, JarvisColors.BlueDeep, JarvisColors.BlueMid), Offset(cx - r * 0.2f, cy - r * 0.2f), r), r, Offset(cx, cy))
             drawCircle(JarvisColors.CyanPrimary.copy(alpha = glow), r + 14.dp.toPx(), Offset(cx, cy), style = Stroke(2.dp.toPx()))
-            drawCircle(
-                Brush.radialGradient(listOf(JarvisColors.CyanGlow.copy(alpha = glow * 0.5f), Color.Transparent), Offset(cx, cy), r * 2.5f),
-                r * 2.5f, Offset(cx, cy)
-            )
         }
-        Column(
-            modifier = Modifier.align(Alignment.TopCenter).padding(top = 10.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
+        Column(Modifier.align(Alignment.TopCenter).padding(top = 10.dp), horizontalAlignment = Alignment.CenterHorizontally) {
             Text("JARVIS", style = MaterialTheme.typography.displayLarge, color = JarvisColors.CyanPrimary)
         }
-        Column(
-            modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 12.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            val statusColor = if (s.isListening)
-                JarvisColors.NeonGreen.copy(alpha = 0.5f + blink * 0.5f)
-            else
-                JarvisColors.CyanSecondary.copy(alpha = 0.7f)
+        Column(Modifier.align(Alignment.BottomCenter).padding(bottom = 12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
-                text = if (s.isListening) "LISTENING" else "STANDBY",
+                if (s.isListening) "LISTENING" else "STANDBY",
                 style = MaterialTheme.typography.labelMedium,
-                color = statusColor
+                color = if (s.isListening) JarvisColors.NeonGreen.copy(alpha = 0.5f + blink * 0.5f) else JarvisColors.CyanSecondary.copy(alpha = 0.7f)
             )
         }
     }
 }
 
 @Composable
-fun HudCard(modifier: Modifier = Modifier, content: @Composable BoxScope.() -> Unit) {
-    Box(
-        modifier = modifier
-            .clip(RoundedCornerShape(4.dp))
-            .background(Brush.linearGradient(listOf(Color(0xF5061525.toInt()), Color(0xFB020B18.toInt()))))
-            .border(1.dp, JarvisColors.Border, RoundedCornerShape(4.dp))
-    ) {
-        BracketDeco()
-        content()
+fun HudCard(modifier: Modifier = Modifier, content: @Composable androidx.compose.foundation.layout.BoxScope.() -> Unit) {
+    Box(modifier.clip(RoundedCornerShape(4.dp))
+        .background(Brush.linearGradient(listOf(Color(0xF5061525.toInt()), Color(0xFB020B18.toInt()))))
+        .border(1.dp, JarvisColors.Border, RoundedCornerShape(4.dp))) {
+        BracketDeco(); content()
     }
 }
 
 @Composable
-fun BracketDeco(color: Color = JarvisColors.CyanSecondary, size: Dp = 9.dp, sw: Dp = 1.5.dp) {
+fun BracketDeco() {
     Canvas(Modifier.fillMaxSize()) {
-        val s = size.toPx()
-        val p = 4.dp.toPx()
-        val w = sw.toPx()
-        val W = this.size.width
-        val H = this.size.height
-        val corners = listOf(
-            Triple(Offset(p, p), Offset(p + s, p), Offset(p, p + s)),
-            Triple(Offset(W - p, p), Offset(W - p - s, p), Offset(W - p, p + s)),
-            Triple(Offset(p, H - p), Offset(p + s, H - p), Offset(p, H - p - s)),
-            Triple(Offset(W - p, H - p), Offset(W - p - s, H - p), Offset(W - p, H - p - s))
-        )
-        corners.forEach { (o, h, v) ->
-            drawLine(color, o, h, w)
-            drawLine(color, o, v, w)
-        }
+        val s = 9.dp.toPx(); val p = 4.dp.toPx(); val w = 1.5.dp.toPx()
+        val W = this.size.width; val H = this.size.height
+        val c = JarvisColors.CyanSecondary
+        listOf(
+            Triple(Offset(p,p), Offset(p+s,p), Offset(p,p+s)),
+            Triple(Offset(W-p,p), Offset(W-p-s,p), Offset(W-p,p+s)),
+            Triple(Offset(p,H-p), Offset(p+s,H-p), Offset(p,H-p-s)),
+            Triple(Offset(W-p,H-p), Offset(W-p-s,H-p), Offset(W-p,H-p-s))
+        ).forEach { (o, h, v) -> drawLine(c, o, h, w); drawLine(c, o, v, w) }
     }
 }
 
 @Composable
 fun TypewriterPanel(text: String, modifier: Modifier) {
-    val cur by rememberInfiniteTransition(label = "cur").animateFloat(
-        0f, 1f, infiniteRepeatable(tween(800), RepeatMode.Reverse), label = "c"
-    )
+    val cur by rememberInfiniteTransition(label = "cur").animateFloat(0f, 1f, infiniteRepeatable(tween(800), RepeatMode.Reverse), label = "c")
     HudCard(modifier) {
         Column(Modifier.padding(12.dp)) {
-            Text(
-                "JARVIS OUTPUT",
-                style = MaterialTheme.typography.labelSmall,
-                color = JarvisColors.TextDim,
-                modifier = Modifier.padding(bottom = 6.dp)
-            )
+            Text("JARVIS OUTPUT", style = MaterialTheme.typography.labelSmall, color = JarvisColors.TextDim, modifier = Modifier.padding(bottom = 6.dp))
             Row {
                 Text(">> ", style = MaterialTheme.typography.bodyMedium, color = JarvisColors.CyanPrimary)
                 Text(text, style = MaterialTheme.typography.bodyMedium, color = JarvisColors.TextPrimary, maxLines = 3, overflow = TextOverflow.Ellipsis)
@@ -362,42 +308,27 @@ fun TypewriterPanel(text: String, modifier: Modifier) {
 @Composable
 fun NodeCard(n: NodeInfo, modifier: Modifier) {
     val inf = rememberInfiniteTransition(label = "dot")
-    val sc by inf.animateFloat(
-        1f, 2.5f, infiniteRepeatable(tween(1500, easing = FastOutSlowInEasing), RepeatMode.Restart), label = "s"
-    )
+    val sc by inf.animateFloat(1f, 2.5f, infiniteRepeatable(tween(1500, easing = FastOutSlowInEasing), RepeatMode.Restart), label = "s")
     val col = if (n.online) JarvisColors.NeonGreen else JarvisColors.DangerRed
     HudCard(modifier) {
         Column(Modifier.padding(10.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
+            Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween, Alignment.CenterVertically) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     Box(Modifier.size(12.dp), Alignment.Center) {
                         Box(Modifier.size(10.dp).scale(sc).clip(CircleShape).background(col.copy(alpha = 0.25f)))
                         Box(Modifier.size(6.dp).clip(CircleShape).background(col))
                     }
                     Text(n.name, style = MaterialTheme.typography.labelLarge, color = JarvisColors.TextPrimary)
                 }
-                Text(
-                    if (n.online) "ON" else "OFF",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = col
-                )
+                Text(if (n.online) "ON" else "OFF", style = MaterialTheme.typography.labelSmall, color = col)
             }
             Spacer(Modifier.height(3.dp))
             Text(n.role, style = MaterialTheme.typography.bodySmall, color = JarvisColors.TextDim)
             Spacer(Modifier.height(7.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 listOf("CPU" to "${n.cpu}%", "RAM" to "${n.ram}%").forEach { (label, value) ->
-                    Column {
-                        Text(label, style = MaterialTheme.typography.labelSmall, color = JarvisColors.TextDim)
-                        Text(value, style = MaterialTheme.typography.titleLarge, color = JarvisColors.CyanPrimary)
-                    }
+                    Column { Text(label, style = MaterialTheme.typography.labelSmall, color = JarvisColors.TextDim)
+                        Text(value, style = MaterialTheme.typography.titleLarge, color = JarvisColors.CyanPrimary) }
                 }
             }
         }
@@ -408,12 +339,7 @@ fun NodeCard(n: NodeInfo, modifier: Modifier) {
 fun MetricPanel(s: HudUiState, modifier: Modifier) {
     HudCard(modifier) {
         Column(Modifier.padding(10.dp)) {
-            Text(
-                "BRAIN METRICS",
-                style = MaterialTheme.typography.labelSmall,
-                color = JarvisColors.TextDim,
-                modifier = Modifier.padding(bottom = 8.dp)
-            )
+            Text("BRAIN METRICS", style = MaterialTheme.typography.labelSmall, color = JarvisColors.TextDim, modifier = Modifier.padding(bottom = 8.dp))
             MetricBar("CPU", s.brainCpu, JarvisColors.CyanPrimary)
             MetricBar("RAM", s.brainRam, JarvisColors.BlueDeep)
             MetricBar("NET", s.brainNet, JarvisColors.NeonGreen)
@@ -430,15 +356,9 @@ fun MetricBar(label: String, value: Float, color: Color) {
             Text("${v.toInt()}%", style = MaterialTheme.typography.labelSmall, color = color)
         }
         Spacer(Modifier.height(3.dp))
-        Box(
-            modifier = Modifier.fillMaxWidth().height(2.dp).background(JarvisColors.GridLine, RoundedCornerShape(1.dp))
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth((v / 100f).coerceIn(0f, 1f))
-                    .fillMaxHeight()
-                    .background(Brush.horizontalGradient(listOf(color.copy(alpha = 0.5f), color)), RoundedCornerShape(1.dp))
-            )
+        Box(Modifier.fillMaxWidth().height(2.dp).background(JarvisColors.GridLine, RoundedCornerShape(1.dp))) {
+            Box(Modifier.fillMaxWidth((v / 100f).coerceIn(0f, 1f)).fillMaxHeight()
+                .background(Brush.horizontalGradient(listOf(color.copy(alpha = 0.5f), color)), RoundedCornerShape(1.dp)))
         }
     }
 }
@@ -449,45 +369,21 @@ fun RadarPanel(s: HudUiState, modifier: Modifier) {
         Column(Modifier.padding(10.dp)) {
             Text("RADAR", style = MaterialTheme.typography.labelSmall, color = JarvisColors.TextDim, modifier = Modifier.padding(bottom = 4.dp))
             Canvas(Modifier.fillMaxSize()) {
-                val cx = size.width / 2
-                val cy = size.height / 2
-                val r = minOf(cx, cy) * 0.72f
+                val cx = size.width / 2; val cy = size.height / 2; val r = minOf(cx, cy) * 0.72f
                 val vals = listOf(s.brainCpu / 100f, s.brainRam / 100f, s.brainNet / 100f, 0.45f, 0.62f)
-                val n = vals.size
-                val step = (2 * PI / n).toFloat()
+                val n = vals.size; val step = (2 * PI / n).toFloat()
                 repeat(4) { i ->
-                    val gr = r * ((i + 1) / 4f)
-                    val path = Path()
-                    repeat(n) { j ->
-                        val a = step * j - (PI / 2).toFloat()
-                        val px = cx + gr * cos(a)
-                        val py = cy + gr * sin(a)
-                        if (j == 0) path.moveTo(px, py) else path.lineTo(px, py)
-                    }
-                    path.close()
-                    drawPath(path, JarvisColors.GridLine, style = Stroke(0.8.dp.toPx()))
-                }
-                repeat(n) { j ->
-                    val a = step * j - (PI / 2).toFloat()
-                    drawLine(JarvisColors.GridLine, Offset(cx, cy), Offset(cx + r * cos(a), cy + r * sin(a)), 0.7.dp.toPx())
+                    val gr = r * ((i + 1) / 4f); val path = Path()
+                    repeat(n) { j -> val a = step * j - (PI / 2).toFloat()
+                        if (j == 0) path.moveTo(cx + gr * cos(a), cy + gr * sin(a)) else path.lineTo(cx + gr * cos(a), cy + gr * sin(a)) }
+                    path.close(); drawPath(path, JarvisColors.GridLine, style = Stroke(0.8.dp.toPx()))
                 }
                 val dp = Path()
-                vals.forEachIndexed { j, v ->
-                    val a = step * j - (PI / 2).toFloat()
-                    val px = cx + r * v * cos(a)
-                    val py = cy + r * v * sin(a)
-                    if (j == 0) dp.moveTo(px, py) else dp.lineTo(px, py)
-                }
-                dp.close()
-                drawPath(dp, JarvisColors.CyanFaint)
-                drawPath(dp, JarvisColors.CyanPrimary, style = Stroke(1.5.dp.toPx()))
-                vals.forEachIndexed { j, v ->
-                    val a = step * j - (PI / 2).toFloat()
-                    val px = cx + r * v * cos(a)
-                    val py = cy + r * v * sin(a)
-                    drawCircle(JarvisColors.CyanPrimary, 3.dp.toPx(), Offset(px, py))
-                    drawCircle(JarvisColors.CyanGlow, 6.dp.toPx(), Offset(px, py))
-                }
+                vals.forEachIndexed { j, v -> val a = step * j - (PI / 2).toFloat()
+                    if (j == 0) dp.moveTo(cx + r * v * cos(a), cy + r * v * sin(a)) else dp.lineTo(cx + r * v * cos(a), cy + r * v * sin(a)) }
+                dp.close(); drawPath(dp, JarvisColors.CyanFaint); drawPath(dp, JarvisColors.CyanPrimary, style = Stroke(1.5.dp.toPx()))
+                vals.forEachIndexed { j, v -> val a = step * j - (PI / 2).toFloat()
+                    drawCircle(JarvisColors.CyanPrimary, 3.dp.toPx(), Offset(cx + r * v * cos(a), cy + r * v * sin(a))) }
             }
         }
     }
@@ -501,18 +397,8 @@ fun LogPanel(s: HudUiState, modifier: Modifier) {
             s.eventLog.takeLast(8).forEach { e ->
                 Row(Modifier.padding(bottom = 3.dp), horizontalArrangement = Arrangement.spacedBy(5.dp)) {
                     Text(e.time, style = MaterialTheme.typography.bodySmall, color = JarvisColors.TextDim)
-                    Text(
-                        e.message,
-                        style = MaterialTheme.typography.bodySmall,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        color = when (e.level) {
-                            EventLevel.OK -> JarvisColors.NeonGreen
-                            EventLevel.WARN -> JarvisColors.WarningAmber
-                            EventLevel.ERR -> JarvisColors.DangerRed
-                            else -> JarvisColors.CyanSecondary
-                        }
-                    )
+                    Text(e.message, style = MaterialTheme.typography.bodySmall, maxLines = 1, overflow = TextOverflow.Ellipsis,
+                        color = when (e.level) { EventLevel.OK -> JarvisColors.NeonGreen; EventLevel.WARN -> JarvisColors.WarningAmber; EventLevel.ERR -> JarvisColors.DangerRed; else -> JarvisColors.CyanSecondary })
                 }
             }
         }
@@ -521,97 +407,45 @@ fun LogPanel(s: HudUiState, modifier: Modifier) {
 
 @Composable
 fun InputBar(value: String, onChange: (String) -> Unit, onSend: () -> Unit, modifier: Modifier) {
-    Row(
-        modifier = modifier
-            .border(1.dp, JarvisColors.Border, RoundedCornerShape(4.dp))
-            .background(JarvisColors.CyanFaint, RoundedCornerShape(4.dp))
-            .padding(horizontal = 12.dp, vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
+    Row(modifier.border(1.dp, JarvisColors.Border, RoundedCornerShape(4.dp))
+        .background(JarvisColors.CyanFaint, RoundedCornerShape(4.dp)).padding(horizontal = 12.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(">>", color = JarvisColors.CyanPrimary, style = MaterialTheme.typography.bodyLarge)
-        BasicTextField(
-            value = value,
-            onValueChange = onChange,
-            modifier = Modifier.weight(1f),
-            textStyle = MaterialTheme.typography.bodyMedium.copy(color = JarvisColors.TextPrimary),
+        BasicTextField(value, onChange, Modifier.weight(1f), textStyle = MaterialTheme.typography.bodyMedium.copy(color = JarvisColors.TextPrimary),
             cursorBrush = SolidColor(JarvisColors.CyanPrimary),
-            decorationBox = { inner ->
-                Box {
-                    if (value.isEmpty()) {
-                        Text("Send command to JARVIS...", style = MaterialTheme.typography.bodyMedium, color = JarvisColors.TextDim)
-                    }
-                    inner()
-                }
-            }
-        )
+            decorationBox = { inner -> Box { if (value.isEmpty()) Text("Send command...", style = MaterialTheme.typography.bodyMedium, color = JarvisColors.TextDim); inner() } })
         Text("ENTER", style = MaterialTheme.typography.labelMedium, color = JarvisColors.TextDim)
     }
 }
 
 @Composable
 fun WaveformBar(amps: List<Float>, active: Boolean, modifier: Modifier) {
-    Row(
-        modifier = modifier
-            .background(Brush.horizontalGradient(listOf(JarvisColors.CyanFaint, Color.Transparent, JarvisColors.CyanFaint)))
-            .padding(horizontal = 14.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(10.dp)
-    ) {
+    Row(modifier.background(Brush.horizontalGradient(listOf(JarvisColors.CyanFaint, Color.Transparent, JarvisColors.CyanFaint))).padding(horizontal = 14.dp),
+        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
         Text("VOICE", style = MaterialTheme.typography.labelSmall, color = JarvisColors.TextDim)
-        Canvas(
-            modifier = Modifier.weight(1f).fillMaxHeight().padding(vertical = 6.dp)
-        ) {
-            val bw = (size.width - (amps.size - 1) * 3.dp.toPx()) / amps.size
-            val mh = size.height
+        Canvas(Modifier.weight(1f).fillMaxHeight().padding(vertical = 6.dp)) {
+            val bw = (size.width - (amps.size - 1) * 3.dp.toPx()) / amps.size; val mh = size.height
             amps.forEachIndexed { i, a ->
-                val bh = mh * a.coerceIn(0.02f, 1f)
-                val x = i * (bw + 3.dp.toPx())
-                val y = (mh - bh) / 2f
-                drawRect(
-                    brush = Brush.verticalGradient(
-                        colors = if (active)
-                            listOf(JarvisColors.CyanPrimary, JarvisColors.BlueDeep)
-                        else
-                            listOf(JarvisColors.CyanSecondary.copy(alpha = 0.3f), JarvisColors.BlueDeep.copy(alpha = 0.2f)),
-                        startY = y, endY = y + bh
-                    ),
-                    topLeft = Offset(x, y),
-                    size = Size(bw, bh)
-                )
+                val bh = mh * a.coerceIn(0.02f, 1f); val x = i * (bw + 3.dp.toPx()); val y = (mh - bh) / 2f
+                drawRect(Brush.verticalGradient(if (active) listOf(JarvisColors.CyanPrimary, JarvisColors.BlueDeep) else listOf(JarvisColors.CyanSecondary.copy(alpha = 0.3f), JarvisColors.BlueDeep.copy(alpha = 0.2f)), startY = y, endY = y + bh), Offset(x, y), Size(bw, bh))
             }
         }
-        Text(
-            if (active) "ON" else "48k",
-            style = MaterialTheme.typography.labelSmall,
-            color = if (active) JarvisColors.NeonGreen else JarvisColors.TextDim
-        )
+        Text(if (active) "ON" else "48k", style = MaterialTheme.typography.labelSmall, color = if (active) JarvisColors.NeonGreen else JarvisColors.TextDim)
     }
 }
 
 @Composable
 fun HexGrid(modifier: Modifier) {
     Canvas(modifier) {
-        val hw = 52.dp.toPx()
-        val hh = 60.dp.toPx()
-        val paint = Paint().apply {
-            color = JarvisColors.GridLine
-            style = PaintingStyle.Stroke
-            strokeWidth = 0.8.dp.toPx()
-        }
+        val hw = 52.dp.toPx(); val hh = 60.dp.toPx()
+        val paint = Paint().apply { color = JarvisColors.GridLine; style = PaintingStyle.Stroke; strokeWidth = 0.8.dp.toPx() }
         repeat((size.height / hh).toInt() + 2) { row ->
             repeat((size.width / hw).toInt() + 2) { col ->
-                val cx = col * hw + (if (row % 2 == 1) hw / 2 else 0f)
-                val cy = row * hh * 0.75f
+                val cx = col * hw + (if (row % 2 == 1) hw / 2 else 0f); val cy = row * hh * 0.75f
                 val path = Path()
-                repeat(6) { i ->
-                    val a = (60 * i - 30) * (PI / 180f).toFloat()
-                    val px = cx + (hw / 2) * cos(a)
-                    val py = cy + (hw / 2) * sin(a)
-                    if (i == 0) path.moveTo(px, py) else path.lineTo(px, py)
-                }
-                path.close()
-                drawContext.canvas.drawPath(path, paint)
+                repeat(6) { i -> val a = (60 * i - 30) * (PI / 180f).toFloat()
+                    if (i == 0) path.moveTo(cx + hw / 2 * cos(a), cy + hw / 2 * sin(a)) else path.lineTo(cx + hw / 2 * cos(a), cy + hw / 2 * sin(a)) }
+                path.close(); drawContext.canvas.drawPath(path, paint)
             }
         }
     }
@@ -620,37 +454,19 @@ fun HexGrid(modifier: Modifier) {
 @Composable
 fun ScanLine(modifier: Modifier) {
     val inf = rememberInfiniteTransition(label = "scan")
-    val y by inf.animateFloat(
-        -5f, 105f,
-        infiniteRepeatable(tween(4000, easing = LinearEasing)),
-        label = "sy"
-    )
+    val y by inf.animateFloat(-5f, 105f, infiniteRepeatable(tween(4000, easing = LinearEasing)), label = "sy")
     Canvas(modifier.alpha(0.3f)) {
-        drawRect(
-            brush = Brush.horizontalGradient(listOf(Color.Transparent, JarvisColors.CyanPrimary, Color.Transparent)),
-            topLeft = Offset(0f, size.height * y / 100f),
-            size = Size(size.width, 3.dp.toPx())
-        )
+        drawRect(Brush.horizontalGradient(listOf(Color.Transparent, JarvisColors.CyanPrimary, Color.Transparent)), Offset(0f, size.height * y / 100f), Size(size.width, 3.dp.toPx()))
     }
 }
 
 @Composable
 fun CornerBrackets(modifier: Modifier) {
     Canvas(modifier) {
-        val s = 44.dp.toPx()
-        val w = 2.dp.toPx()
-        val c = JarvisColors.CyanSecondary.copy(alpha = 0.45f)
-        val W = size.width
-        val H = size.height
-        val corners = listOf(
-            Triple(Offset(0f, 0f), Offset(s, 0f), Offset(0f, s)),
-            Triple(Offset(W, 0f), Offset(W - s, 0f), Offset(W, s)),
-            Triple(Offset(0f, H), Offset(s, H), Offset(0f, H - s)),
-            Triple(Offset(W, H), Offset(W - s, H), Offset(W, H - s))
-        )
-        corners.forEach { (o, h, v) ->
-            drawLine(c, o, h, w)
-            drawLine(c, o, v, w)
-        }
+        val s = 44.dp.toPx(); val w = 2.dp.toPx(); val c = JarvisColors.CyanSecondary.copy(alpha = 0.45f)
+        val W = size.width; val H = size.height
+        listOf(Triple(Offset(0f,0f), Offset(s,0f), Offset(0f,s)), Triple(Offset(W,0f), Offset(W-s,0f), Offset(W,s)),
+               Triple(Offset(0f,H), Offset(s,H), Offset(0f,H-s)), Triple(Offset(W,H), Offset(W-s,H), Offset(W,H-s))).forEach { (o, h, v) ->
+            drawLine(c, o, h, w); drawLine(c, o, v, w) }
     }
 }
