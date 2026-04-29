@@ -19,7 +19,7 @@ android {
     }
     buildTypes {
         release {
-            isMinifyEnabled = true
+            isMinifyEnabled = false
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
@@ -29,6 +29,9 @@ android {
     }
     kotlinOptions { jvmTarget = "17" }
     buildFeatures  { compose = true }
+    packaging {
+        resources { excludes += "/META-INF/{AL2.0,LGPL2.1}" }
+    }
 }
 
 dependencies {
@@ -47,7 +50,13 @@ dependencies {
     implementation(libs.serialization.json)
     implementation(libs.datastore)
 
-    implementation(libs.bundles.hud)
+    implementation(libs.haze)
+    implementation(libs.haze.materials)
+    implementation(libs.vico.compose)
+    implementation(libs.vico.core)
+    implementation(libs.lottie)
+    implementation(libs.shimmer)
 
+    debugImplementation(libs.compose.ui.tooling)
     debugImplementation(libs.compose.ui.tooling.preview)
 }
