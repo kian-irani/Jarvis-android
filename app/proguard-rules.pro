@@ -1,0 +1,5 @@
+-keep class com.kianirani.jarvis.** { *; }
+-keep class io.ktor.** { *; }
+-dontwarn io.ktor.**
+-keep class kotlinx.serialization.** { *; }
+-dontwarn kotlinx.serialization.**
