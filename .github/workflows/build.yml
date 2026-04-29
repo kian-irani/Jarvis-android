@@ -1,6 +1,8 @@
 name: Build JARVIS APK
 on:
   workflow_dispatch:
+permissions:
+  contents: write
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -24,11 +26,11 @@ jobs:
           name: JARVIS-debug-${{ github.run_number }}
           path: app/build/outputs/apk/debug/*.apk
           retention-days: 30
-      - uses: softprops/action-gh-release@v2
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
         with:
           tag_name: v4.1.${{ github.run_number }}
           name: "JARVIS v4.1.${{ github.run_number }}"
           files: app/build/outputs/apk/debug/*.apk
           body: "JARVIS Android - Brain: http://212.87.199.62:8000"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
