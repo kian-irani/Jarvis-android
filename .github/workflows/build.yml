@@ -1,8 +1,6 @@
 name: Build JARVIS APK
 
 on:
-  push:
-    branches: [ main, master ]
   workflow_dispatch:
 
 jobs:
@@ -11,30 +9,22 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
       - name: Setup JDK 17
         uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
-
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
-
-      - name: Prepare Gradle Wrapper
+      - name: Install Gradle
         run: |
-          # Install Gradle
           wget -q https://services.gradle.org/distributions/gradle-8.11.1-bin.zip -O /tmp/gradle.zip
           unzip -q /tmp/gradle.zip -d /opt/gradle
-          export PATH="/opt/gradle/gradle-8.11.1/bin:$PATH"
-          gradle --version
-          # Generate wrapper
+          echo "/opt/gradle/gradle-8.11.1/bin" >> $GITHUB_PATH
+      - name: Generate Gradle Wrapper
+        run: |
           gradle wrapper --gradle-version=8.11.1 --distribution-type=bin
           chmod +x gradlew
-          echo "gradlew generated:"
-          ls -la gradlew
-          ls -la gradle/wrapper/
-
       - name: Cache Gradle
         uses: actions/cache@v4
         with:
@@ -43,29 +33,20 @@ jobs:
             ~/.gradle/wrapper
           key: gradle-${{ hashFiles('**/*.gradle*','**/libs.versions.toml') }}
           restore-keys: gradle-
-
       - name: Build Debug APK
-        run: |
-          export PATH="/opt/gradle/gradle-8.11.1/bin:$PATH"
-          ./gradlew assembleDebug --no-daemon --stacktrace
-
+        run: ./gradlew assembleDebug --no-daemon --stacktrace
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: JARVIS-debug-${{ github.run_number }}
           path: app/build/outputs/apk/debug/*.apk
           retention-days: 30
-
       - name: Create Release
-        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v4.1.${{ github.run_number }}
           name: "JARVIS v4.1.${{ github.run_number }}"
           files: app/build/outputs/apk/debug/*.apk
-          body: |
-            ## JARVIS Android v4.1.${{ github.run_number }}
-            Brain: http://212.87.199.62:8000
-            Nodes: trvps1 + VMID-19620 + VMID-19381
+          body: "JARVIS Android v4.1 - Brain: http://212.87.199.62:8000"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
