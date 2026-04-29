@@ -21,10 +21,17 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
+      - name: Install Gradle
+        run: |
+          wget -q https://services.gradle.org/distributions/gradle-8.11.1-bin.zip -O /tmp/gradle.zip
+          unzip -q /tmp/gradle.zip -d /opt/gradle
+          echo "/opt/gradle/gradle-8.11.1/bin" >> $GITHUB_PATH
+
       - name: Generate Gradle Wrapper
         run: |
           gradle wrapper --gradle-version 8.11.1 --distribution-type bin
           chmod +x gradlew
+          ls -la gradlew gradle/wrapper/
 
       - name: Cache Gradle
         uses: actions/cache@v4
@@ -53,7 +60,10 @@ jobs:
           name: "JARVIS v4.1.${{ github.run_number }}"
           files: app/build/outputs/apk/debug/*.apk
           body: |
-            JARVIS Android v4.1.${{ github.run_number }}
-            Brain: http://212.87.199.62:8000
+            ## JARVIS Android v4.1.${{ github.run_number }}
+            - HUD Screen با Compose Canvas
+            - Brain WebSocket: ws://212.87.199.62:8000/ws/mobile
+            - 3 Nodes: trvps1 + VMID-19620 + VMID-19381
+            - GZip + WebSocket deflate compression
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
