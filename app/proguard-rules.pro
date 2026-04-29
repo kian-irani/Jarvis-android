@@ -3,3 +3,5 @@
 -dontwarn io.ktor.**
 -keep class kotlinx.serialization.** { *; }
 -dontwarn kotlinx.serialization.**
+-dontwarn okhttp3.**
+-dontwarn okio.**
