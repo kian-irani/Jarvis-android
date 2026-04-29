@@ -29,38 +29,30 @@ object JarvisColors {
 }
 
 val JarvisTypography = Typography(
-    displayLarge   = TextStyle(fontFamily = FontFamily.Monospace, fontSize = 32.sp, letterSpacing = 8.sp,   color = JarvisColors.CyanPrimary),
-    headlineLarge  = TextStyle(fontFamily = FontFamily.Monospace, fontSize = 18.sp, letterSpacing = 3.sp,   color = JarvisColors.CyanSecondary),
-    headlineMedium = TextStyle(fontFamily = FontFamily.Monospace, fontSize = 14.sp, letterSpacing = 2.sp,   color = JarvisColors.CyanSecondary),
-    bodyLarge      = TextStyle(fontFamily = FontFamily.Monospace, fontSize = 14.sp, letterSpacing = 0.5.sp, color = JarvisColors.TextPrimary,   lineHeight = 22.sp),
-    bodyMedium     = TextStyle(fontFamily = FontFamily.Monospace, fontSize = 12.sp, letterSpacing = 0.3.sp, color = JarvisColors.TextSecondary, lineHeight = 18.sp),
-    bodySmall      = TextStyle(fontFamily = FontFamily.Monospace, fontSize = 10.sp, letterSpacing = 0.sp,   color = JarvisColors.TextDim,       lineHeight = 15.sp),
-    labelLarge     = TextStyle(fontFamily = FontFamily.Monospace, fontSize = 11.sp, letterSpacing = 2.sp,   color = JarvisColors.TextTerminal),
-    labelMedium    = TextStyle(fontFamily = FontFamily.Monospace, fontSize = 10.sp, letterSpacing = 2.sp,   color = JarvisColors.TextSecondary),
-    labelSmall     = TextStyle(fontFamily = FontFamily.Monospace, fontSize = 9.sp,  letterSpacing = 2.5.sp, color = JarvisColors.TextDim),
-    titleLarge     = TextStyle(fontFamily = FontFamily.Monospace, fontSize = 20.sp, letterSpacing = 1.sp,   color = JarvisColors.CyanPrimary),
+    displayLarge   = TextStyle(fontFamily=FontFamily.Monospace, fontSize=32.sp, letterSpacing=8.sp,   color=JarvisColors.CyanPrimary),
+    headlineLarge  = TextStyle(fontFamily=FontFamily.Monospace, fontSize=18.sp, letterSpacing=3.sp,   color=JarvisColors.CyanSecondary),
+    headlineMedium = TextStyle(fontFamily=FontFamily.Monospace, fontSize=14.sp, letterSpacing=2.sp,   color=JarvisColors.CyanSecondary),
+    bodyLarge      = TextStyle(fontFamily=FontFamily.Monospace, fontSize=14.sp, letterSpacing=0.5.sp, color=JarvisColors.TextPrimary,   lineHeight=22.sp),
+    bodyMedium     = TextStyle(fontFamily=FontFamily.Monospace, fontSize=12.sp, letterSpacing=0.3.sp, color=JarvisColors.TextSecondary, lineHeight=18.sp),
+    bodySmall      = TextStyle(fontFamily=FontFamily.Monospace, fontSize=10.sp, letterSpacing=0.sp,   color=JarvisColors.TextDim,       lineHeight=15.sp),
+    labelLarge     = TextStyle(fontFamily=FontFamily.Monospace, fontSize=11.sp, letterSpacing=2.sp,   color=JarvisColors.TextTerminal),
+    labelMedium    = TextStyle(fontFamily=FontFamily.Monospace, fontSize=10.sp, letterSpacing=2.sp,   color=JarvisColors.TextSecondary),
+    labelSmall     = TextStyle(fontFamily=FontFamily.Monospace, fontSize=9.sp,  letterSpacing=2.5.sp, color=JarvisColors.TextDim),
+    titleLarge     = TextStyle(fontFamily=FontFamily.Monospace, fontSize=20.sp, letterSpacing=1.sp,   color=JarvisColors.CyanPrimary),
 )
 
 private val JarvisColorScheme = darkColorScheme(
-    primary             = JarvisColors.CyanPrimary,
-    onPrimary           = JarvisColors.Background,
-    primaryContainer    = JarvisColors.BlueAccent,
-    onPrimaryContainer  = JarvisColors.CyanPrimary,
-    secondary           = JarvisColors.BlueDeep,
-    onSecondary         = JarvisColors.Background,
-    tertiary            = JarvisColors.NeonGreen,
-    onTertiary          = JarvisColors.Background,
-    background          = JarvisColors.Background,
-    onBackground        = JarvisColors.TextPrimary,
-    surface             = JarvisColors.Surface,
-    onSurface           = JarvisColors.TextPrimary,
-    outline             = JarvisColors.Border,
-    outlineVariant      = JarvisColors.GridLine,
-    error               = JarvisColors.DangerRed,
-    onError             = JarvisColors.Background,
+    primary=JarvisColors.CyanPrimary, onPrimary=JarvisColors.Background,
+    primaryContainer=JarvisColors.BlueAccent, onPrimaryContainer=JarvisColors.CyanPrimary,
+    secondary=JarvisColors.BlueDeep, onSecondary=JarvisColors.Background,
+    tertiary=JarvisColors.NeonGreen, onTertiary=JarvisColors.Background,
+    background=JarvisColors.Background, onBackground=JarvisColors.TextPrimary,
+    surface=JarvisColors.Surface, onSurface=JarvisColors.TextPrimary,
+    outline=JarvisColors.Border, outlineVariant=JarvisColors.GridLine,
+    error=JarvisColors.DangerRed, onError=JarvisColors.Background,
 )
 
 @Composable
 fun JarvisTheme(content: @Composable () -> Unit) {
-    MaterialTheme(colorScheme = JarvisColorScheme, typography = JarvisTypography, content = content)
+    MaterialTheme(colorScheme=JarvisColorScheme, typography=JarvisTypography, content=content)
 }
