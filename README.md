@@ -11,6 +11,8 @@
 [![Platform](https://img.shields.io/badge/platform-Android-3DDC84?style=for-the-badge&logo=android&logoColor=white)](https://www.android.com/)
 [![AI](https://img.shields.io/badge/AI-LLaMA%203.3%2070B-purple?style=for-the-badge)](https://groq.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge)](LICENSE)
+[![Latest Release](https://img.shields.io/github/v/release/KIAN-IRANI/Jarvis-android?style=for-the-badge&label=Latest%20APK&color=3fb950&logo=android)](https://github.com/KIAN-IRANI/Jarvis-android/releases/latest)
+[![Download APK](https://img.shields.io/badge/Download-APK-3fb950?style=for-the-badge&logo=android&logoColor=white)](https://github.com/KIAN-IRANI/Jarvis-android/releases/latest/download/app-debug.apk)
 [![Donate TRC20](https://img.shields.io/badge/Donate-TRON%20TRC20-EF0027?style=for-the-badge&logo=tron)](DONATE.md)
 
 </div>
