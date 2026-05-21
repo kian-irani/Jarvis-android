@@ -1,36 +1,125 @@
 name: Build JARVIS APK
+
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'android/**'
+      - 'app/**'
+      - 'gradle/**'
+      - 'build.gradle.kts'
+      - 'settings.gradle.kts'
+      - '.github/workflows/build.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'android/**'
+      - 'app/**'
+
 permissions:
   contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
+        with:
+          fetch-depth: 0  # برای دسترسی به همه tag ها
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
-      - uses: android-actions/setup-android@v3
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+            /opt/gradle
+          key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            gradle-${{ runner.os }}-
+
       - name: Install Gradle and build
         run: |
-          wget -q https://services.gradle.org/distributions/gradle-8.11.1-bin.zip -O /tmp/gradle.zip
-          unzip -q /tmp/gradle.zip -d /opt/gradle
+          if [ ! -d "/opt/gradle/gradle-8.11.1" ]; then
+            wget -q https://services.gradle.org/distributions/gradle-8.11.1-bin.zip -O /tmp/gradle.zip
+            sudo unzip -q /tmp/gradle.zip -d /opt/gradle
+          fi
           export PATH="/opt/gradle/gradle-8.11.1/bin:$PATH"
           gradle wrapper --gradle-version=8.11.1 --distribution-type=bin
           chmod +x gradlew
           ./gradlew assembleDebug --no-daemon --stacktrace
-      - uses: actions/upload-artifact@v4
+
+      - name: Get APK size
+        id: apk_info
+        run: |
+          APK_PATH=$(ls app/build/outputs/apk/debug/*.apk | head -1)
+          SIZE_KB=$(du -k "$APK_PATH" | awk '{print $1}')
+          SIZE_MB=$(echo "scale=2; $SIZE_KB/1024" | bc)
+          echo "apk_path=$APK_PATH" >> $GITHUB_OUTPUT
+          echo "apk_size=${SIZE_MB}MB" >> $GITHUB_OUTPUT
+          echo "build_date=$(date -u +%Y-%m-%d)" >> $GITHUB_OUTPUT
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
         with:
           name: JARVIS-debug-${{ github.run_number }}
           path: app/build/outputs/apk/debug/*.apk
           retention-days: 30
+
       - name: Create Release
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v4.1.${{ github.run_number }}
-          name: "JARVIS v4.1.${{ github.run_number }}"
+          name: "🤖 JARVIS v4.1.${{ github.run_number }}"
           files: app/build/outputs/apk/debug/*.apk
-          body: "JARVIS Android - Brain: http://212.87.199.62:8000"
+          body: |
+            ## 🤖 JARVIS v4.1.${{ github.run_number }}
+
+            Distributed AI assistant for Android — Iron Man-style HUD launcher.
+
+            ### 📦 What's in this release
+
+            - **app-debug.apk** — Android APK (${{ steps.apk_info.outputs.apk_size }})
+            - Built: ${{ steps.apk_info.outputs.build_date }}
+            - Commit: `${{ github.sha }}`
+
+            ### 🔧 Backend
+
+            - **Brain Server:** Configure your own (see [README](https://github.com/KIAN-IRANI/Jarvis-android/blob/main/README.md))
+            - **Default port:** 8000
+
+            ### 📋 Installation
+
+            1. Download `app-debug.apk` below
+            2. Enable "Install from unknown sources" in Android settings
+            3. Install the APK
+            4. Open app → settings → set your Brain Server URL
+            5. (Optional) Deploy brain server: `docker-compose up -d` from the repo
+
+            ### 🩺 Need help?
+
+            - 💬 Telegram: [@Kian_irani_t](https://t.me/Kian_irani_t)
+            - 📢 Channel: [@kian_irani_cdn_f](https://t.me/kian_irani_cdn_f)
+
+            ### 💝 Support
+
+            If you find this useful, consider supporting via Tron TRC20:
+            ```
+            TEVuoZ7574341zbc8pc5jrrBrgqGGMys5q
+            ```
+
+            **Full changelog:** https://github.com/KIAN-IRANI/Jarvis-android/blob/main/CHANGELOG.md
           token: ${{ secrets.GITHUB_TOKEN }}
+          draft: false
+          prerelease: false
