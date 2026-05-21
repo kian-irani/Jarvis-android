@@ -24,9 +24,7 @@ Building and maintaining anti-censorship tools takes time and money:
 
 ---
 
-## 💰 How to donate
-
-### 🥇 Tron (TRC20 — recommended, instant, ~$0 fee)
+## 💰 How to donate — Tron TRC20
 
 ```
 TEVuoZ7574341zbc8pc5jrrBrgqGGMys5q
@@ -34,38 +32,27 @@ TEVuoZ7574341zbc8pc5jrrBrgqGGMys5q
 
 [![Click to copy](https://img.shields.io/badge/Click%20to%20Copy-TRON%20TRC20-EF0027?style=for-the-badge&logo=tron&logoColor=white)](https://tronscan.org/#/address/TEVuoZ7574341zbc8pc5jrrBrgqGGMys5q)
 
-**Accepted on TRC20:**
-- 💵 USDT (Tether) — most common
+**Accepted tokens on TRC20:**
+- 💵 USDT (Tether) — most common, ~$0 fee
 - 🪙 USDC
 - 🔺 TRX (native)
 
-> ⚠️ **Important:** Only send TRC20 tokens! BEP20 / ERC20 / TON will be lost.
+> ⚠️ **Important:** Only send TRC20 tokens! BEP20 / ERC20 / TON sent to this address will be **lost forever**.
 
----
+### Why TRC20?
 
-### 🥈 Toncoin (TON)
-
-Network: TON  
-Address: `(coming soon — DM @Kian_irani_t for now)`
-
----
-
-### 🥉 Iranian Card (Persian users only)
-
-```
-***REMOVED***
-```
-**Name:** ***REMOVED*** (Bank: Blu)
-
-Use [@Mhrv_script_bot](https://t.me/Mhrv_script_bot) → "💎 حمایت/خرید" for guided payment flow.
+- ⚡ Near-instant confirmation (~3 seconds)
+- 💸 Almost zero fee (~$0 — vs $5-20 on ERC20)
+- 🌍 Available on every major exchange (Binance, OKX, Nobitex, etc.)
+- 🔐 Stable and well-tested
 
 ---
 
 ## 🎁 What you get
 
-Donations are **purely voluntary** — all tools remain free.
+Donations are **purely voluntary** — all tools remain free for everyone.
 
-But supporters who DM [@Kian_irani_t](https://t.me/Kian_irani_t) with proof of donation get:
+But supporters who DM [@Kian_irani_t](https://t.me/Kian_irani_t) with transaction hash get:
 
 | Amount | Perks |
 |---|---|
@@ -88,19 +75,19 @@ Big thanks to these supporters who keep the project alive:
 
 ## 📊 Transparency
 
-Monthly cost breakdown (May 2026):
+Monthly cost breakdown:
 
 | Item | Cost |
 |---|---|
 | Netlen Turkey VPS (main) | $5.49 |
-| Backup VPS (Netherlands) | $5.00 |
+| Backup VPS | $5.00 |
 | Cloudflare CDN | $0 (free tier) |
 | Domain (chickenkiller.com) | $0 (free dynamic DNS) |
 | Groq AI API | $0 (free tier, may go paid) |
 | GitHub | $0 (free) |
 | **Total monthly** | **~$10** |
 
-When the project grows, we'll add:
+Future growth needs:
 - Multi-region tunnel nodes ($15-30/month)
 - Paid AI tier for faster debug responses ($20/month)
 - Monitoring (UptimeRobot Pro) ($7/month)
@@ -137,9 +124,7 @@ Can't donate? You can still help massively:
 - 📡 **پهنای باند** برای ۱۵۰۰+ کاربر فعال
 - 🤖 **توکن‌های هوش مصنوعی** ربات اشکال‌زدای رایگان
 
-### 💰 روش‌های حمایت
-
-**🥇 ترون TRC20 (پیشنهاد — سریع، بدون کارمزد):**
+### 💰 روش حمایت — ترون TRC20
 
 ```
 TEVuoZ7574341zbc8pc5jrrBrgqGGMys5q
@@ -147,29 +132,24 @@ TEVuoZ7574341zbc8pc5jrrBrgqGGMys5q
 
 روی این کیف، **USDT**، **USDC** یا **TRX** قابل دریافته.
 
-⚠️ **مهم:** فقط TRC20! اگه BEP20 یا ERC20 یا TON بفرستی، پولت گم می‌شه.
+- ⚡ سریع (۳ ثانیه تأیید)
+- 💸 کارمزد نزدیک به صفر
+- 🌍 در همه صرافی‌ها موجود (بایننس، Nobitex، ...)
 
-**🥈 کارت ایرانی:**
-
-```
-***REMOVED***
-```
-***REMOVED*** — ***REMOVED***
-
-برای حمایت با راهنمای کامل، در ربات [@Mhrv_script_bot](https://t.me/Mhrv_script_bot) → دکمه «💎 حمایت/خرید»
+⚠️ **مهم:** فقط TRC20! اگه BEP20 یا ERC20 یا TON بفرستی، **پولت گم می‌شه**.
 
 ### 🎁 چی نصیبت می‌شه؟
 
 حمایت کاملاً اختیاریه — همه ابزارها رایگان می‌مونن.
 
-ولی اگه به [@Kian_irani_t](https://t.me/Kian_irani_t) با اسکرین‌شات حمایت پیام بدی:
+ولی اگه به [@Kian_irani_t](https://t.me/Kian_irani_t) با hash تراکنش پیام بدی:
 
 | مبلغ | پاداش |
 |---|---|
-| ۲۰۰هزار+ | 🙏 تشکر شخصی، پشتیبانی اولویت‌دار |
-| ۱ میلیون+ | ⭐ اسمت در Hall of Fame |
-| ۲ میلیون+ | 🎯 رأی در اولویت feature بعدی |
-| ۵ میلیون+ | 🚀 مشاوره مستقیم (یک ساعت راه‌اندازی سرور) |
+| ۵+ دلار | 🙏 تشکر شخصی، پشتیبانی اولویت‌دار |
+| ۲۵+ دلار | ⭐ اسمت در Hall of Fame |
+| ۵۰+ دلار | 🎯 رأی در اولویت feature بعدی |
+| ۱۰۰+ دلار | 🚀 مشاوره مستقیم (یک ساعت راه‌اندازی سرور) |
 
 ### 💬 کمک رایگان
 
