@@ -3,6 +3,8 @@
 # ⚡ Vision Agent OS
 ### سابقاً: Jarvis-android
 
+![Vision Agent OS](assets/promo/banner.png)
+
 **همه‌چیز در یک نگاه — همراهی که با تو زندگی می‌کند**  
 *Everything in one glance — a companion that lives with you*
 

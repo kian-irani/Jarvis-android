@@ -1,0 +1,87 @@
+<svg width="1280" height="640" viewBox="0 0 1280 640" xmlns="http://www.w3.org/2000/svg" font-family="Arial, Helvetica, sans-serif">
+  <defs>
+    <radialGradient id="bg" cx="32%" cy="50%" r="80%">
+      <stop offset="0%" stop-color="#0e1320"/>
+      <stop offset="55%" stop-color="#0a0a0f"/>
+      <stop offset="100%" stop-color="#050507"/>
+    </radialGradient>
+    <linearGradient id="cyan" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#00F0FF"/>
+      <stop offset="100%" stop-color="#19a7c4"/>
+    </linearGradient>
+    <linearGradient id="mag" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#FF00AA"/>
+      <stop offset="100%" stop-color="#b3007a"/>
+    </linearGradient>
+    <filter id="glow" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="6" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="softglow" x="-80%" y="-80%" width="260%" height="260%">
+      <feGaussianBlur stdDeviation="14"/>
+    </filter>
+  </defs>
+
+  <rect width="1280" height="640" fill="url(#bg)"/>
+
+  <!-- faint grid -->
+  <g stroke="#10303a" stroke-width="1" opacity="0.30">
+    <line x1="0" y1="160" x2="1280" y2="160"/><line x1="0" y1="320" x2="1280" y2="320"/>
+    <line x1="0" y1="480" x2="1280" y2="480"/>
+    <line x1="320" y1="0" x2="320" y2="640"/><line x1="640" y1="0" x2="640" y2="640"/>
+    <line x1="960" y1="0" x2="960" y2="640"/>
+  </g>
+  <!-- scanlines -->
+  <g stroke="#0af" stroke-width="1" opacity="0.04">
+    <line x1="0" y1="40" x2="1280" y2="40"/><line x1="0" y1="80" x2="1280" y2="80"/>
+    <line x1="0" y1="120" x2="1280" y2="120"/><line x1="0" y1="200" x2="1280" y2="200"/>
+    <line x1="0" y1="240" x2="1280" y2="240"/><line x1="0" y1="280" x2="1280" y2="280"/>
+    <line x1="0" y1="360" x2="1280" y2="360"/><line x1="0" y1="400" x2="1280" y2="400"/>
+    <line x1="0" y1="440" x2="1280" y2="440"/><line x1="0" y1="520" x2="1280" y2="520"/>
+    <line x1="0" y1="560" x2="1280" y2="560"/><line x1="0" y1="600" x2="1280" y2="600"/>
+  </g>
+
+  <!-- Arc Reactor on left -->
+  <g transform="translate(250,320)">
+    <circle r="150" fill="#00F0FF" opacity="0.12" filter="url(#softglow)"/>
+    <circle r="138" fill="none" stroke="url(#cyan)" stroke-width="2" opacity="0.5"/>
+    <circle r="120" fill="none" stroke="url(#cyan)" stroke-width="6" filter="url(#glow)"/>
+    <circle r="92" fill="none" stroke="#FF00AA" stroke-width="2" opacity="0.55"/>
+    <!-- segmented ring -->
+    <g stroke="#00F0FF" stroke-width="9" filter="url(#glow)">
+      <line x1="0" y1="-108" x2="0" y2="-128"/>
+      <line x1="76" y1="-76" x2="90" y2="-90"/>
+      <line x1="108" y1="0" x2="128" y2="0"/>
+      <line x1="76" y1="76" x2="90" y2="90"/>
+      <line x1="0" y1="108" x2="0" y2="128"/>
+      <line x1="-76" y1="76" x2="-90" y2="90"/>
+      <line x1="-108" y1="0" x2="-128" y2="0"/>
+      <line x1="-76" y1="-76" x2="-90" y2="-90"/>
+    </g>
+    <circle r="46" fill="#00F0FF" opacity="0.25" filter="url(#softglow)"/>
+    <circle r="34" fill="#aefff4" filter="url(#glow)"/>
+    <circle r="16" fill="#ffffff"/>
+  </g>
+
+  <!-- Text block -->
+  <g transform="translate(470,0)">
+    <text x="0" y="250" font-size="118" font-weight="bold" letter-spacing="6" fill="url(#cyan)" filter="url(#glow)">VISION</text>
+    <text x="4" y="350" font-size="78" font-weight="bold" letter-spacing="14" fill="url(#mag)" filter="url(#glow)">AGENT OS</text>
+    <text x="6" y="398" font-size="22" letter-spacing="3" fill="#8b96a8">CYBERPUNK&#160;AGENT&#160;OS&#160;FOR&#160;ANDROID</text>
+    <text x="6" y="436" font-size="18" letter-spacing="2" fill="#5f6b7d">formerly&#160;Jarvis-android</text>
+
+    <!-- tag chips -->
+    <g font-size="17" font-weight="bold">
+      <rect x="6" y="468" width="92" height="34" rx="6" fill="none" stroke="#00F0FF" opacity="0.8"/>
+      <text x="22" y="490" fill="#00F0FF">HUD AI</text>
+      <rect x="110" y="468" width="158" height="34" rx="6" fill="none" stroke="#00F0FF" opacity="0.8"/>
+      <text x="126" y="490" fill="#00F0FF">AGENT ENGINE</text>
+      <rect x="280" y="468" width="158" height="34" rx="6" fill="none" stroke="#FF00AA" opacity="0.85"/>
+      <text x="296" y="490" fill="#FF66cc">MESH NETWORK</text>
+    </g>
+  </g>
+
+  <!-- right edge accent -->
+  <rect x="1268" y="0" width="12" height="640" fill="url(#mag)" opacity="0.7" filter="url(#glow)"/>
+  <rect x="0" y="0" width="6" height="640" fill="url(#cyan)" opacity="0.6"/>
+</svg>
