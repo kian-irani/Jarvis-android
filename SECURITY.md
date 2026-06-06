@@ -1,4 +1,4 @@
-# Security Policy
+# Security Policy — Vision Agent OS
 
 ## 🔒 Reporting a vulnerability
 
@@ -54,3 +54,6 @@ We may extend timelines for complex issues, with regular updates to the reporter
 ---
 
 Thank you for helping keep this project and its users safe.
+
+## 🔑 Activation / Token issues
+توکن‌های فعال‌سازی از طریق ربات رسمی [@kian_irani_cdn_f](https://t.me/kian_irani_cdn_f) صادر می‌شوند. اگر موردی از دور زدن فعال‌سازی، نشت یا سوءاستفاده از توکن یافتید، به‌صورت خصوصی گزارش دهید.

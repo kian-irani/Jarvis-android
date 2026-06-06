@@ -1,239 +1,159 @@
 <div align="center">
 
-# 🤖 JARVIS
+# ⚡ Vision Agent OS
+### سابقاً: Jarvis-android
 
-### Distributed AI assistant for Android — Iron Man-style HUD launcher
+**همه‌چیز در یک نگاه — همراهی که با تو زندگی می‌کند**  
+*Everything in one glance — a companion that lives with you*
 
-**🇮🇷 [نسخه فارسی پایین صفحه](#معرفی-فارسی)**
-
-[![Build APK](https://github.com/KIAN-IRANI/Jarvis-android/actions/workflows/build.yml/badge.svg)](https://github.com/KIAN-IRANI/Jarvis-android/actions)
-[![Version](https://img.shields.io/badge/version-4.0.0-blue?style=for-the-badge)](https://github.com/KIAN-IRANI/Jarvis-android/releases)
+[![License: Source-Available (Proprietary)](https://img.shields.io/badge/License-Source--Available%20(Proprietary)-red.svg?style=for-the-badge)](LICENSE)
+[![Status](https://img.shields.io/badge/status-active%20development-magenta?style=for-the-badge)](ROADMAP.md)
 [![Platform](https://img.shields.io/badge/platform-Android-3DDC84?style=for-the-badge&logo=android&logoColor=white)](https://www.android.com/)
-[![AI](https://img.shields.io/badge/AI-LLaMA%203.3%2070B-purple?style=for-the-badge)](https://groq.com/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge)](LICENSE)
-[![Latest Release](https://img.shields.io/github/v/release/KIAN-IRANI/Jarvis-android?style=for-the-badge&label=Latest%20APK&color=3fb950&logo=android)](https://github.com/KIAN-IRANI/Jarvis-android/releases/latest)
-[![Download APK](https://img.shields.io/badge/Download-APK-3fb950?style=for-the-badge&logo=android&logoColor=white)](https://github.com/KIAN-IRANI/Jarvis-android/releases/latest/download/app-debug.apk)
-[![Donate TRC20](https://img.shields.io/badge/Donate-TRON%20TRC20-EF0027?style=for-the-badge&logo=tron)](DONATE.md)
+[![Activation](https://img.shields.io/badge/Activation-via%20kiancdn%20bot-0088cc?style=for-the-badge&logo=telegram)](docs/ACTIVATION.md)
+[![Contribute](https://img.shields.io/badge/Contributors-Welcome%20(CLA)-cyan?style=for-the-badge)](CONTRIBUTING.md)
 
 </div>
 
 ---
 
-## 🎯 What is this?
-
-**JARVIS** is a distributed AI assistant ecosystem with three components:
-
-- 📱 **Android Launcher** — Iron Man HUD-style home screen
-- 🧠 **Brain Server** — FastAPI backend with LLM integration
-- 🔗 **Node Mesh** — every device on your network is a Node
-
-The AI brain runs **LLaMA 3.3 70B via Groq** (free tier), and any device on your network can talk to it through the Node Agent. Your Android phone becomes a voice-activated assistant that knows about your home, your servers, your schedule.
+> ⚠️ **این پروژه اوپن‌سورس نیست.** کد برای شفافیت و توسعه‌ی مشارکتی *قابل‌مشاهده* (source-available) است، اما استفاده‌ی تجاری، بازانتشار و ساخت اثر مشتق **ممنوع** است. متن کامل: [LICENSE](LICENSE).
+>
+> **This is NOT open source.** The code is *source-available* for transparency and collaboration only. Commercial use, redistribution, and derivative works are prohibited — see [LICENSE](LICENSE).
 
 ---
 
-## 🏗️ Architecture
+## ویژن چیست؟ / What is Vision?
+
+**Vision** یک **Agent OS** کامل برای اندروید است — نه فقط یک لانچر.  
+گوشی شما را به یک **CyberDeck شخصی زنده** تبدیل می‌کند.
+
+**Vision** turns your Android phone into a **living, breathing personal CyberDeck** —
+a cyberpunk HUD launcher backed by a multi-provider AI brain, a real agent engine,
+and a distributed mesh of your own devices.
 
 ```
-📱 JARVIS Android (Kotlin)
-    ↓  HTTPS + WebSocket
-🧠 Brain Server (Python/FastAPI on VPS)
-    ↓  Groq API
-🤖 LLaMA 3.3 70B (free)
-
-   ↑
-🔗 Node Agents (Python)
-   └── Home server, NAS, IoT devices, etc.
+Android Phone  →  [ Vision ]  →  Living CyberDeck
+                    │
+          ┌─────────┼─────────┐
+        HUD AI    Agent    Mesh
+      Cyberpunk  Engine  Network
 ```
 
----
-
-## ✨ Features
-
-### Android Launcher
-- 🎨 **HUD overlay** — Iron Man-inspired widget showing system stats, calendar, weather, AI suggestions
-- 🎤 **Voice activation** — "Hey JARVIS"
-- 📊 **Quick info cards** — battery, network, time, smart home
-- 🎯 **App launcher** with AI-suggested apps based on context
-
-### Brain Server
-- 🧠 **LLM integration** — LLaMA 3.3 70B / Mixtral / Gemma via Groq
-- 💬 **Multi-turn conversations** with session memory
-- 🔌 **Plugin system** — extend with custom commands
-- 📡 **WebSocket** for real-time push to Android
-- 🔐 **Per-user auth** with token-based access
-
-### Node Agents
-- 🐍 **Lightweight Python** (~30MB RAM)
-- 🔗 **Auto-discovery** on local network
-- 📊 **System metrics** reported to Brain
-- 🎛️ **Remote command** execution (with security restrictions)
+> **در یک جمله:** Vision = Iron Man HUD + Claude Code + Server Manager + Automation — همه روی گوشی
 
 ---
 
-## 📦 Components
+## 🔑 فعال‌سازی / Activation
 
-| Folder | Description |
-|--------|-------------|
-| [`android/`](android/) | Kotlin Android launcher (Jetpack Compose) |
-| [`app/`](app/) | Legacy Android module |
-| [`brain/`](brain/) | FastAPI brain server (deploy on VPS) |
-| [`node-agent/`](node-agent/) | Python agent for non-Android devices |
-| [`dashboard.html`](dashboard.html) | Web dashboard for brain monitoring |
-| [`docker-compose.yml`](docker-compose.yml) | One-shot deploy for brain + dashboard |
+Vision یک محصول **فعال‌سازی‌محور** است. برای استفاده از اپ، کاربر یک **توکن فعال‌سازی** از ربات رسمی دریافت می‌کند:
 
----
-
-## 🚀 Quick Start
-
-### Brain Server (VPS or local)
-
-```bash
-git clone https://github.com/KIAN-IRANI/Jarvis-android.git
-cd Jarvis-android
-cp .env.example .env
-# Edit .env with your Groq API key and admin token
-docker-compose up -d
+```
+کاربر  →  ربات تلگرام «kiancdn»  →  دریافت توکن  →  وارد کردن در اپ  →  فعال‌سازی
+User   →  «kiancdn» Telegram bot →  receive token →  enter in app    →  activated
 ```
 
-Brain will be available at `http://localhost:8000`.
+- 🤖 ربات فعال‌سازی: **[@kian_irani_cdn_f](https://t.me/kian_irani_cdn_f)** (kiancdn)
+- 📄 جریان کامل، امنیت توکن و معماری: **[docs/ACTIVATION.md](docs/ACTIVATION.md)**
 
-### Android App
+> توکن‌ها شخصی، قابل‌ابطال و دارای محدودیت نرخ هستند. اشتراک‌گذاری یا دور زدن فعال‌سازی نقض لایسنس است.
 
-Download latest APK from [Releases](https://github.com/KIAN-IRANI/Jarvis-android/releases) → install → configure Brain URL.
+---
 
-### Node Agent (other devices)
+## ✨ ویژگی‌های کلیدی / Core Features
 
-```bash
-pip install -r node-agent/requirements.txt
-python node-agent/agent.py --brain http://your-brain:8000
+| حوزه | ویژگی‌ها |
+|------|-----------|
+| 🎨 **HUD هولوگرافیک** | Arc Reactor، Glassmorphism (Haze 2.0)، Glitch Engine، AGSL Shaders، Audio-Reactive، تم‌های Night City / Iron Vision / Neon Hacker |
+| 🤖 **هوش مصنوعی** | Multi-Provider (OpenAI، Anthropic، Gemini، DeepSeek، Groq، OpenRouter، Ollama، MLC) + Token Pool با Failover و Budget Control |
+| 🎙️ **Voice Engine** | Wake Word «هی ویژن»، Vosk STT فارسی/انگلیسی، Piper TTS، Voice HUD |
+| ⚙️ **Agent Engine** | ReAct، Multi-Agent (Planner/Coder/Researcher/Writer/Device)، Tool Calling sandboxed |
+| 📦 **Management** | File · App · Server (SSH/Docker/VPS) · Message · Coding Workspace |
+| 🌐 **Mesh Network** | کنترل دستگاه‌های اطراف به‌عنوان Nodes/Drones |
+| 🔒 **Security** | Permission Sandbox، Action Approval، Secret Vault (Keystore + بیومتریک)، Audit Log |
+
+جزئیات کامل: [ROADMAP.md](ROADMAP.md) · [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
+
+---
+
+## 🏗️ معماری / Architecture
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                      Vision Agent OS                        │
+├──────────────┬──────────────┬─────────────┬────────────────┤
+│  HUD Layer   │  AI Core     │ Agent Engine│  Mesh Network  │
+│  Cyberpunk   │  Multi-API   │  Multi-Agent│  Distributed   │
+├──────────────┴──────────────┴─────────────┴────────────────┤
+│   Activation & Licensing  (kiancdn token service)          │
+├─────────────────────────────────────────────────────────────┤
+│   Management Skills · Security & Privacy Layer              │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**Tech Stack**
+```
+Android   : Kotlin + Jetpack Compose + Haze 2.0 + AGSL
+Backend   : Python FastAPI + LiteLLM + WebSocket
+Activation: kiancdn Telegram bot → token service (HMAC-signed)
+Voice     : Vosk (STT) + Piper (TTS)
+Security  : Android Keystore + EncryptedDataStore
 ```
 
 ---
 
-## 🗺️ Roadmap
+## 🚀 شروع / Getting Started
 
-See [ROADMAP.md](ROADMAP.md) for detailed plans. Highlights:
+این مخزن **سورس‌کد** است، نه محل دانلود APK عمومی. برای استفاده‌ی واقعی:
 
-- [ ] Local LLM fallback (Ollama support)
-- [ ] Voice synthesis (offline TTS)
-- [ ] Custom wake-word training
-- [ ] Smart home integrations (Home Assistant, Tasmota)
-- [ ] Multi-user with role-based access
+1. به ربات **[@kian_irani_cdn_f](https://t.me/kian_irani_cdn_f)** بروید و توکن فعال‌سازی بگیرید.
+2. بیلد رسمی Vision را از طریق همان ربات/کانال دریافت کنید.
+3. اپ را باز کنید → توکن را وارد کنید → فعال‌سازی.
 
----
-
-## 🛠️ Tech Stack
-
-- **Android:** Kotlin + Jetpack Compose
-- **Brain:** Python 3.11+ + FastAPI + WebSocket
-- **AI:** Groq API (LLaMA 3.3 70B default, configurable)
-- **Storage:** SQLite (brain memory)
-- **Deploy:** Docker + docker-compose
-- **Build:** Gradle 8 (Android), uv (Python)
+> **توسعه‌دهندگان:** برای build از سورس و راه‌اندازی Brain Server، [CONTRIBUTING.md](CONTRIBUTING.md) و [docs/SETUP.md](docs/SETUP.md) را ببینید. ساخت از سورس فقط برای مشارکت تحت [CLA](CLA.md) مجاز است.
 
 ---
 
-## 🤝 Contributing
+## 🤝 دعوت به همکاری / Call for Contributors
 
-PRs welcome! Especially:
-- 🌍 Translations
-- 🎨 UI/HUD widgets
-- 🔌 New plugin integrations
-- 📖 Documentation improvements
+ما به‌دنبال توسعه‌دهندگان جدی هستیم. مشارکت تحت **[CLA](CLA.md)** انجام می‌شود (کد source-available می‌ماند، نه اوپن‌سورس).
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) (coming soon).
+| حوزه | مهارت | اولویت |
+|------|-------|--------|
+| 🎨 HUD/UI | Kotlin + Compose + AGSL | 🔴 فوری |
+| 🤖 AI Integration | Python + LiteLLM | 🔴 فوری |
+| 🔑 Activation/Backend | FastAPI + Telegram Bot | 🔴 فوری |
+| 🔒 Security | Android Security + Crypto | 🟠 زیاد |
+| 🎙️ Voice | Vosk + Piper | 🟠 زیاد |
 
----
-
-## 💝 Support this project
-
-If you find this project useful, please consider supporting via **Tron TRC20**:
-
-```
-TEVuoZ7574341zbc8pc5jrrBrgqGGMys5q
-```
-
-(Accepts USDT, USDC, TRX. See [DONATE.md](DONATE.md) for full details.)
+👉 راهنمای کامل: **[CONTRIBUTING.md](CONTRIBUTING.md)** · تماس: [@Kian_irani_t](https://t.me/Kian_irani_t)
 
 ---
 
-## 🆘 Support & Community
+## 📚 مستندات / Documentation
 
-- 💬 Telegram: [@Kian_irani_t](https://t.me/Kian_irani_t)
-- 📢 Channel: [@kian_irani_cdn_f](https://t.me/kian_irani_cdn_f)
+| فایل | محتوا |
+|------|--------|
+| [ROADMAP.md](ROADMAP.md) | نقشه راه فازی |
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | معماری فنی |
+| [docs/ACTIVATION.md](docs/ACTIVATION.md) | جریان فعال‌سازی و سرویس توکن kiancdn |
+| [docs/SETUP.md](docs/SETUP.md) | راه‌اندازی توسعه |
+| [CONTRIBUTING.md](CONTRIBUTING.md) · [CLA.md](CLA.md) | همکاری |
+| [SECURITY.md](SECURITY.md) | گزارش آسیب‌پذیری |
+| [LICENSE](LICENSE) | لایسنس انحصاری source-available |
 
 ---
 
-## 📄 License
+## 📄 لایسنس / License
 
-MIT — see [LICENSE](LICENSE)
+**Vision Agent OS Source-Available License (VAOS-SAL) v1.0** — © 2026 Kian Irani.  
+کد قابل‌مشاهده است؛ استفاده‌ی تجاری/بازانتشار/اثر مشتق ممنوع. متن کامل: [LICENSE](LICENSE).
 
 ---
 
 <div align="center">
 
-## معرفی فارسی
+**Vision** — نه فقط یک اپلیکیشن. **آینده‌ی تعامل انسان و هوش مصنوعی روی موبایل.**
 
-</div>
-
-### 🤖 JARVIS — دستیار هوشمند توزیع‌شده
-
-یه سیستم اکوسیستم AI با ۳ بخش:
-
-- 📱 **لانچر اندروید** — رابط کاربری HUD سبک آیرون مَن
-- 🧠 **Brain Server** — سرور FastAPI با هوش مصنوعی
-- 🔗 **Node Mesh** — هر دستگاه شبکه‌ت یه Node
-
-موتور AI با **LLaMA 3.3 70B از Groq** (رایگان) کار می‌کنه. گوشی اندرویدت می‌شه یه دستیار صوتی که از خونه، سرورها، و برنامه‌ت خبر داره.
-
-### 🏗️ معماری
-
-```
-📱 JARVIS Android (Kotlin)
-    ↓  HTTPS + WebSocket
-🧠 Brain Server (Python/FastAPI روی VPS)
-    ↓  Groq API
-🤖 LLaMA 3.3 70B (رایگان)
-```
-
-### ✨ ویژگی‌ها
-
-- 🎨 **HUD overlay** سبک آیرون من — آمار سیستم، تقویم، آب‌وهوا
-- 🎤 **فعال‌سازی صوتی** — «هی جارویس»
-- 🧠 **LLaMA 3.3 70B** از Groq (رایگان)
-- 🔗 **Node Mesh** — همه دستگاه‌های شبکه قابل کنترل
-- 🐍 **Node Agent سبک** (~۳۰ مگ RAM)
-
-### 🚀 شروع سریع
-
-```bash
-git clone https://github.com/KIAN-IRANI/Jarvis-android.git
-cd Jarvis-android
-cp .env.example .env
-# .env رو با کلید Groq و توکن admin ویرایش کن
-docker-compose up -d
-```
-
-اپلیکیشن اندرویدش رو از [Releases](https://github.com/KIAN-IRANI/Jarvis-android/releases) دانلود کن.
-
-### 💬 ارتباط
-
-- 💬 پشتیبانی: [@Kian_irani_t](https://t.me/Kian_irani_t)
-- 📢 کانال: [@kian_irani_cdn_f](https://t.me/kian_irani_cdn_f)
-
-### 💝 حمایت
-
-ترون TRC20 (USDT/USDC/TRX):
-```
-TEVuoZ7574341zbc8pc5jrrBrgqGGMys5q
-```
-
-جزئیات: [DONATE.md](DONATE.md)
-
----
-
-<div align="center">
-
-⭐ **Star if you like the idea!**
+*Made with ❤️ and Neon — by Kian Irani & contributors*
 
 </div>

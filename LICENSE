@@ -1,21 +1,79 @@
-MIT License
+Vision Agent OS — Source-Available License (VAOS-SAL) v1.0
+Copyright (c) 2026 Kian Irani. All rights reserved.
 
-Copyright (c) 2026 Kian Irani
+This is NOT an open-source license. The source code in this repository is made
+publicly visible ("source-available") for transparency, security review, and
+collaborative development under a signed Contributor License Agreement (CLA).
+All rights not expressly granted below are reserved by the copyright holder.
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+================================================================================
+1. DEFINITIONS
+================================================================================
+"Software" means the Vision Agent OS source code, documentation, assets, and any
+derivative works in this repository.
+"Official Build" means an application binary distributed through an official
+channel and activated with a valid token issued by the official activation
+service (the "kiancdn" Telegram bot).
+"You" means any individual or entity accessing the Software.
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+================================================================================
+2. GRANT (LIMITED)
+================================================================================
+Subject to full compliance with this License, You are granted a non-exclusive,
+non-transferable, revocable license to:
+  (a) VIEW and READ the source code for personal study and evaluation;
+  (b) RUN an Official Build for personal, non-commercial use after activating it
+      with a valid token issued by the official activation service;
+  (c) SUBMIT contributions, provided You have signed the CLA (see CLA.md).
 
+================================================================================
+3. RESTRICTIONS
+================================================================================
+You MAY NOT, without prior written permission from the copyright holder:
+  (a) use the Software, in whole or in part, for any COMMERCIAL purpose;
+  (b) REDISTRIBUTE, publish, sublicense, sell, rent, or host the Software or any
+      build of it, including republishing the source or APKs;
+  (c) create or distribute DERIVATIVE WORKS, forks intended for redistribution,
+      or competing products;
+  (d) remove, bypass, or tamper with the activation/token mechanism, license
+      checks, or attribution;
+  (e) use the name "Vision", "Vision Agent OS", logos, or branding except to
+      refer to this project.
+
+Forking on GitHub for the sole purpose of submitting a Pull Request under the
+CLA is permitted. Any other redistribution is prohibited.
+
+================================================================================
+4. ACTIVATION & TOKENS
+================================================================================
+End-user operation of an Official Build requires a valid activation token issued
+exclusively by the official activation service. Tokens are personal, may be
+rate-limited, revoked, or expired, and may not be shared, resold, or automated
+against. Circumventing activation is a material breach of this License.
+
+================================================================================
+5. CONTRIBUTIONS
+================================================================================
+By submitting any contribution (code, docs, assets) You agree to the terms in
+CLA.md and assign to the copyright holder a perpetual, worldwide, royalty-free
+license to use, relicense, and distribute Your contribution as part of the
+Software.
+
+================================================================================
+6. TERMINATION
+================================================================================
+This License terminates automatically upon any breach. Upon termination You must
+cease all use and destroy all copies in Your possession.
+
+================================================================================
+7. DISCLAIMER & LIABILITY
+================================================================================
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+IMPLIED. IN NO EVENT SHALL THE COPYRIGHT HOLDER BE LIABLE FOR ANY CLAIM, DAMAGES,
+OR OTHER LIABILITY ARISING FROM THE SOFTWARE OR ITS USE.
+
+================================================================================
+8. CONTACT / COMMERCIAL LICENSING
+================================================================================
+For commercial licenses, partnerships, or written permission:
+  Telegram: @Kian_irani_t   ·   Email: kian.irani.gh@gmail.com

@@ -1,61 +1,49 @@
-# Contributing
+# 🤝 مشارکت در Vision Agent OS / Contributing
 
-Thanks for considering contributing! Here's how to help.
+از علاقه‌ات به Vision ممنونیم! ما فعالانه به‌دنبال **توسعه‌دهندگان جدی** هستیم.
 
-## 🐛 Found a bug?
-
-1. Check [existing issues](https://github.com/KIAN-IRANI/Jarvis-android/issues) first
-2. If new, [open an issue](https://github.com/KIAN-IRANI/Jarvis-android/issues/new) with:
-   - What you expected vs what happened
-   - Steps to reproduce
-   - Your OS, VPS provider, app version
-   - Relevant logs (sanitize secrets!)
-
-## 💡 Have an idea?
-
-[Open a discussion](https://github.com/KIAN-IRANI/Jarvis-android/discussions) or contact [@Kian_irani_t](https://t.me/Kian_irani_t) on Telegram.
-
-## 🔧 Want to contribute code?
-
-1. Fork the repo
-2. Create a feature branch (`git checkout -b feature/amazing-thing`)
-3. Test your changes locally
-4. Commit with clear message
-5. Push and open a Pull Request
-
-### What we accept
-
-- 🐛 Bug fixes (always welcome)
-- 📖 Documentation improvements (especially translations to other languages)
-- ✨ New features that help end users
-- 🌍 Translations of the interactive guide
-
-### What we don't accept
-
-- ❌ Major architecture changes without prior discussion
-- ❌ Features that only work for specific VPS providers
-- ❌ Dependencies that aren't strictly necessary
-- ❌ Code that breaks Persian text rendering or RTL layout
-
-## 🌍 Translating
-
-The interactive page is **bilingual** (English + Persian). To add another language:
-
-1. Copy `index.html` to `index.<lang>.html`
-2. Translate user-facing text (keep CSS/JS unchanged)
-3. Add a language switcher in the header
-4. PR with screenshot
-
-## 📜 Code style
-
-- **Bash scripts:** POSIX-compatible when possible, `set -e` always
-- **HTML/CSS:** No build step — pure HTML/CSS/JS, no React/Vue
-- **Comments:** English in code; user-facing text bilingual where appropriate
-
-## 🤝 Code of Conduct
-
-Be kind. Don't be a jerk. Help people learn. That's it.
+> ⚠️ **مهم:** Vision **اوپن‌سورس نیست**. کد source-available است و مشارکت تحت **[CLA](CLA.md)** انجام می‌شود. با ارسال هر Pull Request، شرایط CLA را می‌پذیرید: حق استفاده/توزیع/relicense مشارکت شما به دارنده‌ی حق‌نشر واگذار می‌شود و کد ممکن است در بیلدهای انحصاری استفاده شود.
 
 ---
 
-By contributing, you agree your contributions will be licensed under the [MIT License](LICENSE).
+## 🎯 حوزه‌های مورد نیاز / Where we need help
+
+| حوزه | مهارت | اولویت |
+|------|-------|--------|
+| 🎨 HUD/UI | Kotlin + Jetpack Compose + AGSL | 🔴 فوری |
+| 🤖 AI Integration | Python + LiteLLM + Token Pool | 🔴 فوری |
+| 🔑 Activation/Backend | FastAPI + Telegram Bot (kiancdn) | 🔴 فوری |
+| 🔒 Security | Android Keystore + Crypto | 🟠 زیاد |
+| 🎙️ Voice | Vosk (STT) + Piper (TTS) | 🟠 زیاد |
+| 📁 Skills | Android Storage / SSH / Docker | 🟡 متوسط |
+
+---
+
+## 🔧 جریان مشارکت / Workflow
+
+1. **اول هماهنگ کن:** قبل از کار، یک Issue باز کن یا با [@Kian_irani_t](https://t.me/Kian_irani_t) هماهنگ کن (برای جلوگیری از کار موازی).
+2. **[CLA](CLA.md) را بپذیر:** در اولین PR، تأیید کن که CLA را خوانده و می‌پذیری.
+3. Fork → branch (`feat/...` یا `fix/...`) → کد → PR به `main`.
+4. کد را تمیز، تست‌شده و مطابق سبک پروژه نگه دار.
+5. **اسرار را هرگز commit نکن** (توکن، کلید، `.env`). از `.env.example` استفاده کن.
+
+> Fork فقط برای ارسال PR مجاز است؛ هرگونه بازانتشار دیگر طبق [LICENSE](LICENSE) ممنوع است.
+
+---
+
+## 🐛 گزارش باگ / Bug reports
+
+از [قالب Issue](.github/ISSUE_TEMPLATE/bug_report.yml) استفاده کن: انتظار vs واقعیت، مراحل بازتولید، نسخه، لاگ (بدون اسرار).
+
+## 🔒 آسیب‌پذیری امنیتی
+
+**Issue عمومی باز نکن.** طبق [SECURITY.md](SECURITY.md) به‌صورت خصوصی گزارش بده.
+
+---
+
+## 📞 تماس / Contact
+- 💬 Telegram: [@Kian_irani_t](https://t.me/Kian_irani_t)
+- 🤖 کانال/ربات: [@kian_irani_cdn_f](https://t.me/kian_irani_cdn_f)
+- 📧 Email: kian.irani.gh@gmail.com
+
+> با هم بسازیم — اما با قواعد روشن. 🌀

@@ -1,4 +1,4 @@
-name: Build JARVIS APK
+name: Build Vision APK (internal artifact only)
 
 on:
   workflow_dispatch:
@@ -76,50 +76,6 @@ jobs:
           path: app/build/outputs/apk/debug/*.apk
           retention-days: 30
 
-      - name: Create Release
-        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: v4.1.${{ github.run_number }}
-          name: "🤖 JARVIS v4.1.${{ github.run_number }}"
-          files: app/build/outputs/apk/debug/*.apk
-          body: |
-            ## 🤖 JARVIS v4.1.${{ github.run_number }}
-
-            Distributed AI assistant for Android — Iron Man-style HUD launcher.
-
-            ### 📦 What's in this release
-
-            - **app-debug.apk** — Android APK (${{ steps.apk_info.outputs.apk_size }})
-            - Built: ${{ steps.apk_info.outputs.build_date }}
-            - Commit: `${{ github.sha }}`
-
-            ### 🔧 Backend
-
-            - **Brain Server:** Configure your own (see [README](https://github.com/KIAN-IRANI/Jarvis-android/blob/main/README.md))
-            - **Default port:** 8000
-
-            ### 📋 Installation
-
-            1. Download `app-debug.apk` below
-            2. Enable "Install from unknown sources" in Android settings
-            3. Install the APK
-            4. Open app → settings → set your Brain Server URL
-            5. (Optional) Deploy brain server: `docker-compose up -d` from the repo
-
-            ### 🩺 Need help?
-
-            - 💬 Telegram: [@Kian_irani_t](https://t.me/Kian_irani_t)
-            - 📢 Channel: [@kian_irani_cdn_f](https://t.me/kian_irani_cdn_f)
-
-            ### 💝 Support
-
-            If you find this useful, consider supporting via Tron TRC20:
-            ```
-            TEVuoZ7574341zbc8pc5jrrBrgqGGMys5q
-            ```
-
-            **Full changelog:** https://github.com/KIAN-IRANI/Jarvis-android/blob/main/CHANGELOG.md
-          token: ${{ secrets.GITHUB_TOKEN }}
-          draft: false
-          prerelease: false
+      # NOTE: Public GitHub Releases disabled for Vision Agent OS (source-available, activation-gated).
+      # Distribution happens via the official kiancdn bot, not public APK downloads.
+      # Build output stays as a private Actions artifact only (above).
