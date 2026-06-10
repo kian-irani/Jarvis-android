@@ -1,8 +1,11 @@
 version: '3.8'
+
+# Vision OS — Brain stack (M0)
+# Workflow engine: Temporal (replaces n8n per ROADMAP v16).
 services:
   redis:
     image: redis:alpine
-    container_name: jarvis-redis
+    container_name: vision-redis
     ports:
       - "6379:6379"
     volumes:
@@ -11,13 +14,41 @@ services:
 
   postgres:
     image: postgres:15-alpine
-    container_name: jarvis-postgres
+    container_name: vision-postgres
     environment:
-      POSTGRES_DB: jarvis
-      POSTGRES_USER: jarvis
-      POSTGRES_PASSWORD: jarvis2026
+      POSTGRES_DB: vision
+      POSTGRES_USER: vision
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-vision2026}
     ports:
       - "5432:5432"
     volumes:
       - ./data/postgres:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  # Temporal Workflow Engine — Temporal Workflow Engine replaces the former n8n flow.
+  temporal:
+    image: temporalio/auto-setup:1.24
+    container_name: vision-temporal
+    depends_on:
+      - postgres
+    environment:
+      DB: postgres12
+      DB_PORT: 5432
+      POSTGRES_USER: vision
+      POSTGRES_PWD: ${POSTGRES_PASSWORD:-vision2026}
+      POSTGRES_SEEDS: postgres
+    ports:
+      - "7233:7233"   # gRPC frontend
+    restart: unless-stopped
+
+  temporal-ui:
+    image: temporalio/ui:2.26.2
+    container_name: vision-temporal-ui
+    depends_on:
+      - temporal
+    environment:
+      TEMPORAL_ADDRESS: temporal:7233
+      TEMPORAL_CORS_ORIGINS: http://localhost:3000
+    ports:
+      - "8233:8080"   # Temporal Web UI
     restart: unless-stopped

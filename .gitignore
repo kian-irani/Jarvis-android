@@ -6,3 +6,6 @@ __pycache__/
 build/
 *.apk
 local.properties
+
+# local knowledge-graph cache (nodesify-graphify)
+.graphify/

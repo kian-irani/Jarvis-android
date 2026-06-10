@@ -1,0 +1,44 @@
+name: CI · Brain (Python)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'brain/**'
+      - '.github/workflows/ci-brain.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'brain/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  brain:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: .
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r brain/requirements-dev.txt
+
+      - name: Ruff (lint)
+        run: ruff check brain
+
+      - name: mypy (types)
+        run: mypy brain
+        continue-on-error: true   # informational until types are annotated (M1)
+
+      - name: pytest
+        run: python -m pytest brain -q

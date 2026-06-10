@@ -1,16 +1,21 @@
+import asyncio
+import json
+import time
+import uuid
+
+import aiohttp
+import psutil
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
-import asyncio, json, uuid, time, psutil, aiohttp
-from typing import Dict, List
 
 app = FastAPI(title="JARVIS Brain", version="2.0.0")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
-nodes: Dict[str, dict] = {}
-node_sockets: Dict[str, WebSocket] = {}
+nodes: dict[str, dict] = {}
+node_sockets: dict[str, WebSocket] = {}
 
 # Groq Key Rotation
-GROQ_KEYS: List[str] = [
+GROQ_KEYS: list[str] = [
     "GROQ_KEY_1",
     "GROQ_KEY_2",
     "GROQ_KEY_3",
@@ -70,7 +75,7 @@ async def node_connect(ws: WebSocket):
                     await ws.send_text(json.dumps({"type": "pong"}))
                 elif data.get("type") == "task_result":
                     print(f"📦 {nodes[node_id]['name']}: {data.get('result','')[:100]}")
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 if node_id in nodes:
                     nodes[node_id]["status"] = "idle"
     except WebSocketDisconnect:
@@ -118,4 +123,22 @@ async def health():
         "nodes_total": len(nodes),
         "groq_keys": len(GROQ_KEYS),
         "active_key": groq_index % len(GROQ_KEYS) + 1
+    }
+
+
+# --- M0: split health surface (Kubernetes/Caddy-style probes) ---
+@app.get("/health/live")
+async def health_live():
+    """Liveness: process is up. Cheap, no dependency checks."""
+    return {"status": "alive"}
+
+
+@app.get("/health/ready")
+async def health_ready():
+    """Readiness: brain can accept work (mesh + provider keys present)."""
+    return {
+        "status": "ready",
+        "nodes_online": len([n for n in nodes.values() if n.get("status") == "online"]),
+        "nodes_total": len(nodes),
+        "groq_keys": len(GROQ_KEYS),
     }

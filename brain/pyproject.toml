@@ -1,0 +1,28 @@
+# Vision Brain — tooling config (M0)
+# Hexagonal architecture · Python 3.12 · FastAPI
+[project]
+name = "vision-brain"
+version = "16.0.0"
+description = "Vision OS — Distributed Brain (Sovereign Intelligence Edition)"
+requires-python = ">=3.11"
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+extend-exclude = ["migrations", "__pycache__"]
+
+[tool.ruff.lint]
+# Lenient foundation ruleset — pyflakes + a safe subset; tighten per-milestone.
+select = ["E", "F", "I", "UP", "B"]
+ignore = ["E501", "B008"]  # long lines OK for now; B008 = FastAPI Depends() default
+
+[tool.mypy]
+python_version = "3.11"
+ignore_missing_imports = true   # psutil/aiohttp ship no stubs
+check_untyped_defs = false
+warn_unused_ignores = false
+exclude = ["migrations/", "tests/"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
