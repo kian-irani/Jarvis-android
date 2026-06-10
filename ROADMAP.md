@@ -1635,3 +1635,14 @@ Zero-Trust — هر درخواست:
 *آینده تعامل انسان و هوش مصنوعی. هر دستگاه یک مغز. هر زبانی خوش‌آمد است.*
 
 **Built with Claude AI (Anthropic) · v16.0 · June 2026**
+
+---
+
+## 🎨 UI/UX Design Principle (added 2026-06-10, by user directive)
+
+All mobile app UI work MUST use advanced design plugins/skills so Vision has a unique, distinctive look — not a generic Material template:
+
+- `ui-ux-pro-max` — applies to mobile (Compose) screen design as well
+- `frontend-design` / `frontend:design-system` — design direction and tokens
+- `ecc:liquid-glass-design`, `ecc:motion-ui` / `ecc:motion-patterns` — glassmorphism + motion language
+- Every new screen (HUD, Setup Wizard, Brain Election UI, …) goes through a design pass with these skills before implementation.
