@@ -1,12 +1,12 @@
 <div align="center">
 
 # ⚡ Vision OS
-### Sovereign Intelligence Edition · v16.0 · سابقاً: Jarvis-android
+### Sovereign Intelligence Edition · v16.0 · formerly Jarvis-android
 
 ![Vision OS](assets/promo/banner.png)
 
-**یک لایه‌ی هوش شخصی حاکمیتی — که با تو زندگی می‌کند و هر روز باهوش‌تر می‌شود**  
-*A sovereign Personal Intelligence Operating Layer — it lives with you and gets smarter every day*
+**A sovereign Personal Intelligence Operating Layer — it lives with you and gets smarter every day**  
+*یک لایه‌ی هوش شخصی حاکمیتی — که با تو زندگی می‌کند و هر روز باهوش‌تر می‌شود*
 
 [![License: Source-Available (Proprietary)](https://img.shields.io/badge/License-Source--Available%20(Proprietary)-red.svg?style=for-the-badge)](LICENSE)
 [![Status](https://img.shields.io/badge/status-build--ready%20v16-magenta?style=for-the-badge)](ROADMAP.md)
@@ -19,22 +19,24 @@
 
 ---
 
-> ⚠️ **این پروژه اوپن‌سورس نیست.** کد برای شفافیت و توسعه‌ی مشارکتی *قابل‌مشاهده* (source-available) است، اما استفاده‌ی تجاری، بازانتشار و ساخت اثر مشتق **ممنوع** است. متن کامل: [LICENSE](LICENSE).
+> ⚠️ **This is NOT open source.** The code is *source-available* for transparency and collaboration only. Commercial use, redistribution, and derivative works are prohibited — see [LICENSE](LICENSE).
 >
-> **This is NOT open source.** The code is *source-available* for transparency and collaboration only. Commercial use, redistribution, and derivative works are prohibited — see [LICENSE](LICENSE).
+> ⚠️ *این پروژه اوپن‌سورس نیست. کد فقط برای شفافیت و مشارکت قابل‌مشاهده است؛ استفاده‌ی تجاری/بازانتشار/اثر مشتق ممنوع.*
 
-> 🤖 این پروژه با کمک **Claude AI (Anthropic)** طراحی و ساخته می‌شود. · *Designed and built with the assistance of Claude AI by Anthropic.*
+> 🤖 Designed and built with the assistance of **Claude AI (Anthropic)**.
 
 ---
 
-## ویژن چیست؟ / What is Vision?
+## What is Vision?
 
-**Vision یک Launcher نیست. یک Chatbot نیست. یک Agent منفرد نیست.**
+**Vision is NOT a launcher. NOT a chatbot. NOT a single agent.**
 
-**Vision یک لایه‌ی عاملِ هوش شخصی (Personal Intelligence Operating Layer) است** — لایه‌ای حاکمیتی که روی سخت‌افزارِ **خودِ** کاربر اجرا می‌شود، تمام دستگاه‌ها، داده‌ها و قابلیت‌های AI را در یک اکوسیستم واحد متحد می‌کند، و هر روز هوشمندتر می‌شود.
+**Vision is a Personal Intelligence Operating Layer** — a sovereign layer that runs on the user's *own*
+hardware, unifies all devices, data, and AI capabilities into one ecosystem, and gets smarter every day.
 
-**Vision** turns *your own* devices into a single, sovereign AI layer — local-first, offline-capable,
-provider-agnostic, and privacy-preserving. You don't operate tools. You talk to Vision, and Vision does the rest.
+You don't operate tools. You talk to Vision, and Vision does the rest.
+
+*ویژن یک لانچر، چت‌بات یا agent منفرد نیست — یک لایه‌ی عاملِ هوش شخصی حاکمیتی است که روی سخت‌افزار خودِ کاربر اجرا می‌شود و هر روز باهوش‌تر می‌شود.*
 
 ```
         ┌──────────────────────────────────────────────┐
@@ -43,71 +45,73 @@ provider-agnostic, and privacy-preserving. You don't operate tools. You talk to 
         └──────────────────────────────────────────────┘
                  │            │            │
             ┌────┴───┐   ┌────┴────┐  ┌────┴────┐
-            │ Phone  │   │  VPS/PC │  │  Mesh   │   ← هر دستگاه = یک مغز بالقوه
-            │ Brain  │   │  Brain  │  │  Nodes  │     every device is a Brain
+            │ Phone  │   │  VPS/PC │  │  Mesh   │   ← every device is a potential Brain
+            │ Brain  │   │  Brain  │  │  Nodes  │
             └────────┘   └─────────┘  └─────────┘
 ```
 
-> **اصل محوری — Distributed Brain:** هر دستگاه می‌تواند به‌تنهایی Vision را اجرا کند. دستگاه جدید که به Mesh اضافه شود، منابعش (CPU/RAM/GPU) با رضایت کاربر به Brain اضافه می‌شود و Vision سریع‌تر و قدرتمندتر می‌شود. هر node می‌تواند آفلاین شود بدون اینکه سیستم بخوابد.
+> **Core principle — Distributed Brain:** every device can run Vision on its own. When a new device joins
+> the Mesh, its resources (CPU/RAM/GPU) are added to the Brain with user consent, making Vision faster and
+> smarter. Any node can go offline without taking the system down.
 
-> **در یک جمله:** Vision = Iron Man HUD + Claude Code + Server Manager + Distributed Brain — روی سخت‌افزار خودت، آفلاین، با هر مدلی.
+> **In one line:** Vision = Iron Man HUD + Claude Code + Server Manager + Distributed Brain — on your own hardware, offline, with any model.
 
 ---
 
-## 🌍 Vision در برابر جهان / Competitive Edge
+## 🌍 Competitive Edge
 
-| ویژگی | Microsoft Solara | Google Gemini OS | **Vision v16.0** |
-|--------|:---:|:---:|:---:|
-| سخت‌افزار مورد نیاز | Badge/Desk جدید | Android XR اختصاصی | ✅ **هر دستگاه موجود** |
-| آفلاین کامل | ❌ | ❌ | ✅ **Local-First** |
-| AI Providers | فقط Azure | فقط Google | ✅ **نامحدود** |
-| هزینه ماهانه | Enterprise | ۱۰۰$ | ✅ **۳ دلار** |
-| حریم خصوصی | Cloud | دسترسی Gmail/Calendar | ✅ **Zero-Knowledge Local** |
-| Brain روی هر دستگاه | ❌ | ❌ | ✅ **Phone/VPS/PC** |
+| Feature | Microsoft Solara | Google Gemini OS | **Vision v16.0** |
+|---------|:---:|:---:|:---:|
+| Hardware required | new Badge/Desk | dedicated Android XR | ✅ **any existing device** |
+| Full offline | ❌ | ❌ | ✅ **Local-First** |
+| AI providers | Azure only | Google only | ✅ **unlimited** |
+| Monthly cost | Enterprise | $100 | ✅ **$3** |
+| Privacy | Cloud | Gmail/Calendar access | ✅ **Zero-Knowledge Local** |
+| Brain on every device | ❌ | ❌ | ✅ **Phone/VPS/PC** |
 | Distributed compute | ❌ | ❌ | ✅ **Mesh CPU/GPU** |
-| همه‌ی زبان‌های دنیا | محدود | محدود | ✅ **Universal** |
+| Every world language | limited | limited | ✅ **Universal** |
 
 ---
 
-## 🔑 فعال‌سازی / Activation
+## 🔑 Activation
 
-Vision یک محصول **فعال‌سازی‌محور** است. کاربر یک **توکن فعال‌سازی** از ربات رسمی دریافت می‌کند:
+Vision is an **activation-based** product. The user receives an **activation token** from the official bot:
 
 ```
-کاربر  →  ربات تلگرام «kiancdn»  →  دریافت توکن  →  وارد کردن در اپ  →  فعال‌سازی
-User   →  «kiancdn» Telegram bot →  receive token →  enter in app    →  activated
+User → «kiancdn» Telegram bot → receive token → enter in app → activated
 ```
 
-- 🤖 ربات فعال‌سازی: **[@kian_irani_cdn_f](https://t.me/kian_irani_cdn_f)** (kiancdn)
-- 💳 پلن: **۳ دلار در ماه** یا **۳۰ دلار در سال** · ۱۴ روز trial کامل بدون کارت
-- 📄 جریان کامل، امنیت توکن و معماری: **[docs/ACTIVATION.md](docs/ACTIVATION.md)**
+- 🤖 Activation bot: **[@kian_irani_cdn_f](https://t.me/kian_irani_cdn_f)** (kiancdn)
+- 💳 Plan: **$3/month** or **$30/year** · 14-day full trial, no card
+- 📄 Full flow, token security & architecture: **[docs/ACTIVATION.md](docs/ACTIVATION.md)**
 
-> توکن‌ها شخصی، قابل‌ابطال و دارای محدودیت نرخ هستند. اشتراک‌گذاری یا دور زدن فعال‌سازی نقض لایسنس است.
-
----
-
-## ✨ ویژگی‌های کلیدی v16 / Core Features
-
-| حوزه | ویژگی‌ها |
-|------|-----------|
-| 🧠 **Distributed Brain** | سه Tier (Brain-Nano / Lite / Full)، انتخاب خودکار بهترین مغز با **Brain Score**، Auto-Failover، کارکرد کامل روی گوشی بدون VPS |
-| 🔀 **Multi-Token AI Router** | providerهای نامحدود (Claude · Gemini · Groq · OpenAI · Grok · OpenRouter · Ollama)، سوئیچ < ۱۰۰ms، Fallback Chain، Cost Dashboard |
-| ⚡ **VISN Protocol** | انتقال فایل فوق‌سریع بین nodeها (LZ4/zstd هوشمند، chunked، resume، ≥۳× سریع‌تر) |
-| 🤖 **Agentic Core** | ReAct + LangGraph، Plan DAG، Self-Correction، Agent Pool (Browser/File/Code/Research…)، **Vision Scheduler** زبان‌طبیعی |
-| 🔒 **Trust Level System** | Read / Suggest / Auto / Critical — هر agent سطح اعتماد خودش، Audit Trail ضدتغییر |
-| 🧪 **Vision Lab** | اجرای dry-run هر workflow با داده‌ی mock قبل از اجرای واقعی + Chain Visualizer |
-| 🔍 **AnySearch + Timeline + Notes** | جستجوی semantic روی همه‌ی دستگاه‌ها، خط‌زمانی دیجیتال local، یادداشت هوشمند متصل به Memory |
-| 🎙️ **Voice & Persona** | Wake Word دلخواه، STT/TTS فارسی + Persona Sliders، تشخیص احساس و زمینه |
-| 🌐 **Universal Language** | پشتیبانی واقعی از **همه‌ی زبان‌های دنیا** (سه‌لایه: فارسی کامل → ۹ زبان Full → Universal fallback) |
-| 🎨 **Cyberpunk HUD** | Arc Reactor، Glassmorphism (Haze 2.0)، AGSL Shaders، Audio-Reactive، < ۵٪ CPU @ 60fps |
-| 🛡️ **Zero-Trust Security** | Secret Vault (Keystore + بیومتریک)، Behavioral Baseline، **Privacy Threat Monitor** فعال |
-| 🤝 **Mesh & Handoff** | Session Handoff بین دستگاه‌ها، Universal Clipboard، Distributed Compute Mesh |
-
-جزئیات کامل ۲۰+ فاز: **[ROADMAP.md](ROADMAP.md)** · معماری: **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)**
+> Tokens are personal, revocable and rate-limited. Sharing or bypassing activation violates the license.
+> *توکن‌ها شخصی، قابل‌ابطال و دارای محدودیت نرخ‌اند.*
 
 ---
 
-## 🏗️ معماری / Architecture
+## ✨ Core Features (v16)
+
+| Area | Capabilities |
+|------|--------------|
+| 🧠 **Distributed Brain** | Three tiers (Brain-Nano / Lite / Full), auto-election via **Brain Score**, Auto-Failover, full phone operation without a VPS |
+| 🔀 **Multi-Token AI Router** | Unlimited providers (Claude · Gemini · Groq · OpenAI · Grok · OpenRouter · Ollama), < 100 ms switch, Fallback Chain, Cost Dashboard |
+| ⚡ **VISN Protocol** | Ultra-fast file transfer between nodes (smart LZ4/zstd, chunked, resumable, ≥3× faster) |
+| 🤖 **Agentic Core** | ReAct + LangGraph, Plan DAG, Self-Correction, Agent Pool (Browser/File/Code/Research…), natural-language **Vision Scheduler** |
+| 🔒 **Trust Level System** | Read / Suggest / Auto / Critical — per-agent trust, tamper-evident Audit Trail |
+| 🧪 **Vision Lab** | Dry-run any workflow with mock data before real execution + Chain Visualizer |
+| 🔍 **AnySearch + Timeline + Notes** | Semantic search across all devices, local digital timeline, smart notes wired to Memory |
+| 🎙️ **Voice & Persona** | Custom wake word, Persian STT/TTS + Persona sliders, emotion & context detection |
+| 🌐 **Universal Language** | True support for **every language** (3-tier: full Persian → 9 full languages → universal fallback) |
+| 🎨 **Cyberpunk HUD** | Arc Reactor, Glassmorphism (Haze 2.0), AGSL shaders, audio-reactive, < 5% CPU @ 60fps |
+| 🛡️ **Zero-Trust Security** | Secret Vault (Keystore + biometrics), Behavioral Baseline, active **Privacy Threat Monitor** |
+| 🤝 **Mesh & Handoff** | Cross-device Session Handoff, Universal Clipboard, Distributed Compute Mesh |
+
+Full 20+ phases: **[ROADMAP.md](ROADMAP.md)** · architecture: **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)**
+
+---
+
+## 🏗️ Architecture
 
 ```
 ┌────────────────────────────────────────────────────────────────┐
@@ -129,7 +133,7 @@ User   →  «kiancdn» Telegram bot →  receive token →  enter in app    →
 ```
 Android   : Kotlin 2.0 + Jetpack Compose + Haze 2.0 + AGSL · Clean Arch + MVI · Hilt
 Brain     : Python 3.12 + FastAPI + LangGraph · Hexagonal (Ports & Adapters)
-Workflow  : Temporal Workflow Engine  (جایگزین n8n)
+Workflow  : Temporal Workflow Engine  (replaces n8n)
 Transfer  : VISN Protocol — LZ4 + zstd + XXH3, chunked/resumable
 Data      : Room/SQLite (Lite) · PostgreSQL + Redis + ChromaDB (Full) · CRDT sync
 Voice     : Vosk / faster-whisper (STT) + Coqui XTTS v2 / Piper (TTS)
@@ -137,75 +141,78 @@ Security  : Android Keystore + EncryptedDataStore · Behavioral Baseline
 Quality   : Detekt/ktlint · Ruff/mypy · pytest · GitHub Actions CI/CD · OpenTelemetry
 ```
 
----
-
-## 🗺️ نقشه‌ی فازها / Phase Map (v16)
-
-| محدوده | فازها | تمرکز |
-|--------|-------|-------|
-| 🔴 پایه | PX · P0 · P1 · P1.5 · P2 | Code Standards، Foundation Fix، Flexible Brain، VISN، Router |
-| 🟠 محصول | P3 · P4 · P4.5 · P5 · P5.5 · P6 · P7 · P7.5 | Launcher MVP، Licensing، Trust، Agentic، Lab، Search/Notes، Voice/Language، Capture/A11y |
-| 🟡 شبکه | P8 → P12 | Device Mesh، Offline، Memory/RAG، OS-Integration، MCP & Plugins |
-| 🔴 امنیت | P13 | Zero-Trust + Behavioral Baseline + Privacy Monitor |
-| 🟢 افق | P14 → P20 | Communication، Health، IoT، Marketplace، Full Vision OS |
-
-**نقطه عطف Beta:** پایان فاز ۷ (هفته ۲۰) · **M0 Foundation Ready:** روز ۷
+See the full target tree in **[ROADMAP.md](ROADMAP.md)** and module map in [`android/MODULES.md`](android/MODULES.md) · [`brain/MODULES.md`](brain/MODULES.md).
 
 ---
 
-## 🚀 شروع / Getting Started
+## 🗺️ Phase Map (v16)
 
-این مخزن **سورس‌کد** است، نه محل دانلود APK عمومی. برای استفاده‌ی واقعی:
+| Band | Phases | Focus |
+|------|--------|-------|
+| 🔴 Foundation | PX · P0 · P1 · P1.5 · P2 | Code Standards, Foundation Fix, Flexible Brain, VISN, Router |
+| 🟠 Product | P3 · P4 · P4.5 · P5 · P5.5 · P6 · P7 · P7.5 | Launcher MVP, Licensing, Trust, Agentic, Lab, Search/Notes, Voice/Language, Capture/A11y |
+| 🟡 Network | P8 → P12 | Device Mesh, Offline, Memory/RAG, OS-Integration, MCP & Plugins |
+| 🔴 Security | P13 | Zero-Trust + Behavioral Baseline + Privacy Monitor |
+| 🟢 Horizon | P14 → P20 | Communication, Health, IoT, Marketplace, Full Vision OS |
 
-1. به ربات **[@kian_irani_cdn_f](https://t.me/kian_irani_cdn_f)** بروید و توکن فعال‌سازی بگیرید.
-2. بیلد رسمی Vision را از طریق همان ربات/کانال دریافت کنید.
-3. اپ را باز کنید → توکن را وارد کنید → فعال‌سازی.
-
-> **توسعه‌دهندگان:** برای build از سورس و راه‌اندازی Brain Server، [CONTRIBUTING.md](CONTRIBUTING.md) و [docs/SETUP.md](docs/SETUP.md) را ببینید. ساخت از سورس فقط برای مشارکت تحت [CLA](CLA.md) مجاز است.
-
----
-
-## 🤝 دعوت به همکاری / Call for Contributors
-
-ما به‌دنبال توسعه‌دهندگان جدی هستیم. مشارکت تحت **[CLA](CLA.md)** انجام می‌شود (کد source-available می‌ماند، نه اوپن‌سورس).
-
-| حوزه | مهارت | اولویت |
-|------|-------|--------|
-| 🧠 Brain Core | Python + FastAPI + LangGraph | 🔴 فوری |
-| 🔀 AI Router | Python + LiteLLM | 🔴 فوری |
-| 🎨 HUD/UI | Kotlin + Compose + AGSL | 🔴 فوری |
-| ⚡ VISN Transfer | Kotlin + Python (LZ4/zstd) | 🟠 زیاد |
-| 🔒 Security | Android Security + Crypto | 🟠 زیاد |
-| 🎙️ Voice/Language | Vosk + Whisper + Coqui | 🟠 زیاد |
-
-👉 راهنمای کامل: **[CONTRIBUTING.md](CONTRIBUTING.md)** · تماس: [@Kian_irani_t](https://t.me/Kian_irani_t)
+**Beta milestone:** end of Phase 7 (week 20) · **M0 Foundation Ready:** day 7
 
 ---
 
-## 📚 مستندات / Documentation
+## 🚀 Getting Started
 
-| فایل | محتوا |
-|------|--------|
-| [ROADMAP.md](ROADMAP.md) | نقشه راه کامل v16 — ۲۰+ فاز، Milestones، ADRها |
-| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | معماری فنی |
-| [docs/ACTIVATION.md](docs/ACTIVATION.md) | جریان فعال‌سازی و سرویس توکن kiancdn |
-| [docs/SETUP.md](docs/SETUP.md) | راه‌اندازی توسعه |
-| [CONTRIBUTING.md](CONTRIBUTING.md) · [CLA.md](CLA.md) | همکاری |
-| [SECURITY.md](SECURITY.md) | گزارش آسیب‌پذیری |
-| [LICENSE](LICENSE) | لایسنس انحصاری source-available |
+This repository is **source code**, not a public APK download. For real use:
+
+1. Go to **[@kian_irani_cdn_f](https://t.me/kian_irani_cdn_f)** and get an activation token.
+2. Get the official Vision build via the same bot/channel.
+3. Open the app → enter the token → activate.
+
+> **Developers:** to build from source and run the Brain Server, see [CONTRIBUTING.md](CONTRIBUTING.md) and [docs/SETUP.md](docs/SETUP.md). Building from source is permitted only for contribution under the [CLA](CLA.md).
 
 ---
 
-## 📄 لایسنس / License
+## 🤝 Call for Contributors
+
+We're looking for serious developers. Contributions are under the **[CLA](CLA.md)** (the code stays source-available, not open source).
+
+| Area | Skills | Priority |
+|------|--------|----------|
+| 🧠 Brain Core | Python + FastAPI + LangGraph | 🔴 urgent |
+| 🔀 AI Router | Python + LiteLLM | 🔴 urgent |
+| 🎨 HUD/UI | Kotlin + Compose + AGSL | 🔴 urgent |
+| ⚡ VISN Transfer | Kotlin + Python (LZ4/zstd) | 🟠 high |
+| 🔒 Security | Android Security + Crypto | 🟠 high |
+| 🎙️ Voice/Language | Vosk + Whisper + Coqui | 🟠 high |
+
+👉 Full guide: **[CONTRIBUTING.md](CONTRIBUTING.md)** · contact: [@Kian_irani_t](https://t.me/Kian_irani_t)
+
+---
+
+## 📚 Documentation
+
+| File | Content |
+|------|---------|
+| [ROADMAP.md](ROADMAP.md) | Full v16 roadmap — 20+ phases, milestones, ADRs |
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Technical architecture |
+| [docs/ACTIVATION.md](docs/ACTIVATION.md) | Activation flow & kiancdn token service |
+| [docs/SETUP.md](docs/SETUP.md) | Development setup |
+| [docs/adr/](docs/adr/) | Architecture Decision Records (ADR-001…011) |
+| [CONTRIBUTING.md](CONTRIBUTING.md) · [CLA.md](CLA.md) | Contribution |
+| [SECURITY.md](SECURITY.md) | Vulnerability reporting |
+| [LICENSE](LICENSE) | Source-available proprietary license |
+
+---
+
+## 📄 License
 
 **Vision OS Source-Available License (VAOS-SAL) v1.0** — © 2026 Kian Irani.  
-کد قابل‌مشاهده است؛ استفاده‌ی تجاری/بازانتشار/اثر مشتق ممنوع. متن کامل: [LICENSE](LICENSE).
+Source is viewable; commercial use / redistribution / derivatives prohibited. Full text: [LICENSE](LICENSE).
 
 ---
 
 <div align="center">
 
-**Vision** — نه فقط یک اپلیکیشن. **آینده‌ی تعامل انسان و هوش مصنوعی، روی سخت‌افزار خودت.**
+**Vision** — not just an app. **The future of human–AI interaction, on your own hardware.**
 
 *Made with ❤️ and Neon — by Kian Irani & contributors · Built with Claude AI*
 
