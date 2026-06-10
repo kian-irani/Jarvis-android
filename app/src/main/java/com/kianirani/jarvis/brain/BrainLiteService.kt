@@ -1,0 +1,72 @@
+package com.kianirani.jarvis.brain
+
+import android.app.Notification
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.Service
+import android.content.Intent
+import android.os.IBinder
+import com.kianirani.jarvis.brain.data.ChatRepository
+import com.kianirani.jarvis.brain.data.EmbeddingRepository
+import com.kianirani.jarvis.brain.data.EventBus
+import com.kianirani.jarvis.brain.data.FileRepository
+import com.kianirani.jarvis.brain.data.MemoryRepository
+import com.kianirani.jarvis.brain.data.NodeRepository
+import com.kianirani.jarvis.brain.data.TaskRepository
+import com.kianirani.jarvis.brain.server.KtorServer
+import com.kianirani.jarvis.brain.server.routes.HealthState
+import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import javax.inject.Inject
+
+@AndroidEntryPoint
+class BrainLiteService : Service() {
+    @Inject lateinit var chat: ChatRepository
+    @Inject lateinit var embedding: EmbeddingRepository
+    @Inject lateinit var memory: MemoryRepository
+    @Inject lateinit var nodes: NodeRepository
+    @Inject lateinit var tasks: TaskRepository
+    @Inject lateinit var files: FileRepository
+    @Inject lateinit var bus: EventBus
+
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    private var server: KtorServer? = null
+
+    override fun onCreate() {
+        super.onCreate()
+        startForeground(NOTIF_ID, buildNotification("Brain-Lite running on :7799"))
+        server = KtorServer(
+            healthState = HealthState(version = "16.0.0", embedReady = embedding::isReady, storageUsedBytes = embedding::usedBytes),
+            chat = chat, embedPort = embedding, memory = memory, nodes = nodes,
+            tasks = tasks, files = files, bus = bus,
+            keyStatus = { chat.keyStatus.toList() },
+        ).also { it.start() }
+        tasks.startWorker(scope)
+    }
+
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int) = START_STICKY
+    override fun onBind(intent: Intent?): IBinder? = null
+
+    override fun onDestroy() {
+        tasks.stopWorker()
+        server?.stop()
+        scope.cancel()
+        super.onDestroy()
+    }
+
+    private fun buildNotification(text: String): Notification {
+        val channelId = "brain_lite"
+        val nm = getSystemService(NotificationManager::class.java)
+        nm.createNotificationChannel(NotificationChannel(channelId, "Brain-Lite", NotificationManager.IMPORTANCE_LOW))
+        return Notification.Builder(this, channelId)
+            .setContentTitle("Vision Brain-Lite")
+            .setContentText(text)
+            .setSmallIcon(android.R.drawable.stat_notify_sync)
+            .build()
+    }
+
+    companion object { const val NOTIF_ID = 7799 }
+}

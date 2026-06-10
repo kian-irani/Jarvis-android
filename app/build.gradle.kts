@@ -16,6 +16,8 @@ android {
         targetSdk     = 35
         versionCode   = 1
         versionName   = "4.1.0"
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        buildConfigField("String", "GROQ_KEYS", "\"${System.getenv("GROQ_KEYS") ?: ""}\"")
     }
     buildTypes {
         release {
@@ -28,7 +30,7 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
     kotlinOptions { jvmTarget = "17" }
-    buildFeatures  { compose = true }
+    buildFeatures  { compose = true; buildConfig = true }
     packaging {
         resources { excludes += "/META-INF/{AL2.0,LGPL2.1}" }
     }
@@ -59,6 +61,8 @@ dependencies {
     testImplementation(libs.ktor.server.test.host)
     testImplementation(libs.mockwebserver)
     testImplementation(libs.coroutines.test)
+    androidTestImplementation("androidx.test.ext:junit:1.2.1")
+    androidTestImplementation("androidx.test:runner:1.6.2")
     implementation(libs.coroutines.android)
     implementation(libs.serialization.json)
     implementation(libs.datastore)
