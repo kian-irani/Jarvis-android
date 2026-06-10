@@ -32,13 +32,13 @@ class ModelManager(
     }
 }
 
-class EmbeddingRepository(private val manager: ModelManager, private val embedderFactory: () -> Embedder) {
+class EmbeddingRepository(private val manager: ModelManager, private val embedderFactory: () -> Embedder) : com.kianirani.jarvis.brain.server.routes.EmbedPort {
     private var embedder: Embedder? = null
-    fun isReady() = manager.isReady()
+    override fun isReady() = manager.isReady()
     fun usedBytes() = manager.usedBytes()
     suspend fun ensureModel() = manager.ensureModel()
 
-    fun embed(texts: List<String>): List<FloatArray> {
+    override fun embed(texts: List<String>): List<FloatArray> {
         if (!manager.isReady()) throw BrainException.modelNotReady()
         val e = embedder ?: embedderFactory().also { embedder = it }
         return e.embed(texts)

@@ -24,11 +24,11 @@ class ChatRepository(
     private val baseUrl: String = "https://api.groq.com/openai/v1/",
     private val client: OkHttpClient = OkHttpClient(),
     private val defaultModel: String = "llama-3.3-70b-versatile",
-) {
+) : com.kianirani.jarvis.brain.server.routes.ChatPort {
     private val keyIndex = AtomicInteger(0)
     val keyStatus = Array(keys.size) { "ok" }
 
-    suspend fun chat(messages: List<ChatMessage>, model: String?): ChatReply = withContext(Dispatchers.IO) {
+    override suspend fun chat(messages: List<ChatMessage>, model: String?): ChatReply = withContext(Dispatchers.IO) {
         val body = brainJson.encodeToString(GroqRequest.serializer(), GroqRequest(model ?: defaultModel, messages))
         repeat(keys.size) {
             val i = keyIndex.get() % keys.size
