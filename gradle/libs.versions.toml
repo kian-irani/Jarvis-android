@@ -1,5 +1,6 @@
 [versions]
 room                 = "2.6.1"
+zxing                = "3.5.3"
 onnxruntime          = "1.20.0"
 mockk                = "1.13.16"
 mockwebserver        = "4.12.0"
@@ -37,6 +38,7 @@ hilt-compiler            = { group = "com.google.dagger",          name = "hilt-
 hilt-navigation-compose  = { group = "androidx.hilt",             name = "hilt-navigation-compose",         version.ref = "hilt-nav" }
 ktor-core                = { group = "io.ktor",                    name = "ktor-client-core",                version.ref = "ktor" }
 ktor-okhttp              = { group = "io.ktor",                    name = "ktor-client-okhttp",              version.ref = "ktor" }
+zxing-core               = { group = "com.google.zxing",            name = "core",                            version.ref = "zxing" }
 ktor-websockets          = { group = "io.ktor",                    name = "ktor-client-websockets",          version.ref = "ktor" }
 ktor-content-neg         = { group = "io.ktor",                    name = "ktor-client-content-negotiation", version.ref = "ktor" }
 ktor-serialization-json  = { group = "io.ktor",                    name = "ktor-serialization-kotlinx-json", version.ref = "ktor" }
