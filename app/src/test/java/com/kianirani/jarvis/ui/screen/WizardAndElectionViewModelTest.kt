@@ -44,7 +44,7 @@ class SetupWizardViewModelTest {
     }
     private var handshakeResult = true
     private var handshakeTarget: Pair<String, Int>? = null
-    private val handshake = BrainHandshake { host, port ->
+    private val handshake = BrainHandshake { host, port, _ ->
         handshakeTarget = host to port
         handshakeResult
     }

@@ -1,6 +1,7 @@
 package com.kianirani.jarvis.brain.server.routes
 
 import com.kianirani.jarvis.brain.server.success
+import io.ktor.server.response.header
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.get
@@ -11,6 +12,8 @@ class HealthState(
     val embedReady: () -> Boolean,
     val storageUsedBytes: () -> Long,
     val startedAtMs: Long = System.currentTimeMillis(),
+    /** sha256 hex of this brain's pairing token — echoed so clients can verify the brain knows the secret. */
+    val pairTokenSha: () -> String? = { null },
 )
 
 @Serializable
@@ -27,6 +30,7 @@ data class StatusData(val keys: List<String>, val requestCount: Long)
 
 fun Route.healthRoutes(state: HealthState) {
     get("/health") {
+        state.pairTokenSha()?.let { call.response.header("X-Pair-Ack", it) }
         call.respond(
             success(
                 HealthData(

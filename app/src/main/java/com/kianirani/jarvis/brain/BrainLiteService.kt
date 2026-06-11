@@ -45,7 +45,14 @@ class BrainLiteService : Service() {
         super.onCreate()
         startForeground(NOTIF_ID, buildNotification("Brain-Lite running on :7799"))
         server = KtorServer(
-            healthState = HealthState(version = "16.0.0", embedReady = embedding::isReady, storageUsedBytes = embedding::usedBytes),
+            healthState = HealthState(
+                version = "16.0.0", embedReady = embedding::isReady, storageUsedBytes = embedding::usedBytes,
+                pairTokenSha = {
+                    com.kianirani.jarvis.brain.discovery.sha256Hex(
+                        com.kianirani.jarvis.brain.discovery.LocalPairingInfoProvider(this).pairToken(),
+                    )
+                },
+            ),
             chat = chat, embedPort = embedding, memory = memory, nodes = nodes,
             tasks = tasks, files = files, bus = bus,
             keyStatus = { chat.keyStatus.toList() },

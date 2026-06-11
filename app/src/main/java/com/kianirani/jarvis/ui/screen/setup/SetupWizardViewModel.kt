@@ -114,7 +114,7 @@ class SetupWizardViewModel @Inject constructor(
             val target = s.joinPayload?.let { it.host to it.port }
                 ?: s.selectedCandidate?.let { it.host to it.port }
             val ok = if (target != null) {
-                handshake.check(target.first, target.second)
+                handshake.check(target.first, target.second, s.joinPayload?.token ?: s.token.ifBlank { null })
             } else {
                 delay(600) // no known target (plain token / dev) — keep flow usable
                 true

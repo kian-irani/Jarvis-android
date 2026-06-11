@@ -6,10 +6,14 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.util.concurrent.TimeUnit
 
-/** Verifies a discovered/entered brain is actually reachable before finishing setup. */
+/** Verifies a discovered/entered brain is reachable — and, when [token] is known, that it owns the pairing secret (X-Pair-Ack = sha256(token)). */
 fun interface BrainHandshake {
-    suspend fun check(host: String, port: Int): Boolean
+    suspend fun check(host: String, port: Int, token: String?): Boolean
 }
+
+internal fun sha256Hex(v: String): String =
+    java.security.MessageDigest.getInstance("SHA-256").digest(v.encodeToByteArray())
+        .joinToString("") { "%02x".format(it) }
 
 /** Real handshake: GET http://host:port/health with a short timeout. */
 class HttpBrainHandshake(
@@ -18,10 +22,14 @@ class HttpBrainHandshake(
         .readTimeout(3, TimeUnit.SECONDS)
         .build(),
 ) : BrainHandshake {
-    override suspend fun check(host: String, port: Int): Boolean = withContext(Dispatchers.IO) {
+    override suspend fun check(host: String, port: Int, token: String?): Boolean = withContext(Dispatchers.IO) {
         runCatching {
             client.newCall(Request.Builder().url("http://$host:$port/health").build())
-                .execute().use { it.isSuccessful }
+                .execute().use { res ->
+                    val ack = res.header("X-Pair-Ack")
+                    // rogue-brain guard: if we know the token AND the brain echoes an ack, it must match
+                    res.isSuccessful && (token == null || ack == null || ack == sha256Hex(token))
+                }
         }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it }
             .getOrDefault(false)
     }
