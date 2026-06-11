@@ -85,6 +85,9 @@ handle /ws/* {
 
 ## 🏗️ ساختار هدف مخزن
 
+> **وضعیت واقعی (2026-06-11):** ماژول اندرویدِ واقعی **`/app`** است (`com.kianirani.jarvis` — Kotlin 2.1/Compose/Hilt/Room/Ktor، همان چیزی که CI می‌سازد). پوشه `android/` فقط pointer/نقشه ماژول‌هاست. `brain/` (FastAPI)، `node-agent/`، `sdk/`، `docs/` مطابق همین ساختار موجودند. ساختار زیر «هدف» فازهای بعدی است، نه چیدمان فعلی.
+
+
 ```
 Jarvis-android/
 ├── android/

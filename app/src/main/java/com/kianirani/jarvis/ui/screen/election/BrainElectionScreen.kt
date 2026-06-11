@@ -53,6 +53,8 @@ fun BrainElectionScreen(viewModel: BrainElectionViewModel = hiltViewModel()) {
                 )
             }
         }
+        Spacer(Modifier.height(14.dp))
+        PairDeviceSection()
         Spacer(Modifier.weight(1f))
         if (state.manualOverrideId != null) {
             Text(
