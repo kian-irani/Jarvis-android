@@ -8,6 +8,13 @@ import psutil
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 
+try:
+    from .logging_config import setup_logging  # package import (brain.main)
+except ImportError:  # run directly from brain/ (uvicorn main:app)
+    from logging_config import setup_logging  # type: ignore[no-redef]
+
+logger = setup_logging()
+
 app = FastAPI(title="JARVIS Brain", version="2.0.0")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
@@ -41,12 +48,12 @@ async def ask_groq(message: str, system: str = "You are JARVIS, a helpful AI ass
                 if "choices" in data:
                     return data["choices"][0]["message"]["content"]
                 elif data.get("error", {}).get("code") == "rate_limit_exceeded":
-                    print(f"⚠️ Key {groq_index % len(GROQ_KEYS) + 1} محدود شد — کلید بعدی")
+                    logger.warning("groq key rate-limited, rotating", extra={"key_index": groq_index % len(GROQ_KEYS) + 1})
                     groq_index += 1
                 else:
                     return f"خطا: {data.get('error', {}).get('message', 'نامشخص')}"
-        except Exception as e:
-            print(f"⚠️ خطا: {e}")
+        except Exception:
+            logger.exception("groq request failed, rotating key")
             groq_index += 1
     return "همه کلیدها محدود شدن — بعداً تلاش کن"
 
@@ -62,7 +69,7 @@ async def node_connect(ws: WebSocket):
         info["status"] = "online"
         nodes[node_id] = info
         node_sockets[node_id] = ws
-        print(f"✅ Node: {info.get('name')} [{info.get('device_type')}]")
+        logger.info("node registered", extra={"node": info.get("name"), "device_type": info.get("device_type")})
         await ws.send_text(json.dumps({"status": "registered", "node_id": node_id}))
         while True:
             try:
@@ -74,7 +81,7 @@ async def node_connect(ws: WebSocket):
                     nodes[node_id]["status"] = "online"
                     await ws.send_text(json.dumps({"type": "pong"}))
                 elif data.get("type") == "task_result":
-                    print(f"📦 {nodes[node_id]['name']}: {data.get('result','')[:100]}")
+                    logger.info("task result", extra={"node": nodes[node_id]["name"], "result": data.get("result", "")[:100]})
             except TimeoutError:
                 if node_id in nodes:
                     nodes[node_id]["status"] = "idle"
@@ -108,7 +115,7 @@ async def chat(body: dict):
     message = body.get("message", "")
     if not message:
         return {"error": "پیام خالی"}
-    print(f"💬 chat: {message}")
+    logger.info("chat request", extra={"chars": len(message)})
     response = await ask_groq(message)
     return {"response": response, "model": "llama-3.3-70b", "key_index": groq_index % len(GROQ_KEYS) + 1}
 
