@@ -1,6 +1,12 @@
 package com.kianirani.jarvis.ui.screen.setup
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import com.kianirani.jarvis.brain.discovery.BrainCandidate
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
@@ -57,7 +63,11 @@ fun SetupWizardScreen(
         ) { step ->
             when (step) {
                 0 -> StepWelcome(state.deviceName, viewModel::onDeviceNameChanged)
-                1 -> StepDiscovery(state.discoveryMethod, viewModel::onDiscoveryMethodSelected, state.token, viewModel::onTokenChanged)
+                1 -> StepDiscovery(
+                    state.discoveryMethod, viewModel::onDiscoveryMethodSelected,
+                    state.token, viewModel::onTokenChanged,
+                    state.candidates, state.selectedCandidate, viewModel::onCandidateSelected,
+                )
                 2 -> StepConnect(state.connectStatus)
                 else -> StepDone(state.deviceName)
             }
@@ -107,7 +117,15 @@ private fun StepWelcome(name: String, onName: (String) -> Unit) {
 }
 
 @Composable
-private fun StepDiscovery(selected: DiscoveryMethod, onSelect: (DiscoveryMethod) -> Unit, token: String, onToken: (String) -> Unit) {
+private fun StepDiscovery(
+    selected: DiscoveryMethod,
+    onSelect: (DiscoveryMethod) -> Unit,
+    token: String,
+    onToken: (String) -> Unit,
+    candidates: List<BrainCandidate> = emptyList(),
+    selectedCandidate: BrainCandidate? = null,
+    onCandidate: (BrainCandidate) -> Unit = {},
+) {
     Column {
         Text("FIND YOUR BRAIN", style = MaterialTheme.typography.headlineLarge)
         Spacer(Modifier.height(16.dp))
@@ -136,6 +154,53 @@ private fun StepDiscovery(selected: DiscoveryMethod, onSelect: (DiscoveryMethod)
         if (selected == DiscoveryMethod.TOKEN) {
             Spacer(Modifier.height(12.dp))
             WizardField(token, onToken, label = "PAIRING TOKEN", helper = "From your Brain's setup output.")
+        }
+        if (selected == DiscoveryMethod.MDNS) {
+            Spacer(Modifier.height(14.dp))
+            if (candidates.isEmpty()) ScanningPulse() else CandidateList(candidates, selectedCandidate, onCandidate)
+        }
+    }
+}
+
+/** HUD scanning indicator while mDNS has found nothing yet. */
+@Composable
+private fun ScanningPulse() {
+    val transition = rememberInfiniteTransition(label = "scan")
+    val alpha by transition.animateFloat(
+        initialValue = 0.25f, targetValue = 1f,
+        animationSpec = infiniteRepeatable(tween(900), RepeatMode.Reverse), label = "scanAlpha",
+    )
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Text("◉", color = JarvisColors.CyanPrimary.copy(alpha = alpha))
+        Spacer(Modifier.width(10.dp))
+        Text("SCANNING MESH FOR BRAINS…", style = MaterialTheme.typography.labelLarge, color = JarvisColors.TextDim)
+    }
+}
+
+@Composable
+private fun CandidateList(candidates: List<BrainCandidate>, selected: BrainCandidate?, onSelect: (BrainCandidate) -> Unit) {
+    Column {
+        Text("BRAINS IN RANGE — ${candidates.size}", style = MaterialTheme.typography.labelMedium, color = JarvisColors.CyanSecondary)
+        candidates.forEach { c ->
+            val active = c.name == selected?.name
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 4.dp)
+                    .clip(RoundedCornerShape(6.dp))
+                    .border(1.dp, if (active) JarvisColors.NeonGreen else JarvisColors.Border, RoundedCornerShape(6.dp))
+                    .background(if (active) JarvisColors.CyanFaint else JarvisColors.Surface)
+                    .clickable { onSelect(c) }
+                    .padding(horizontal = 14.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(if (active) "◈" else "◇", color = if (active) JarvisColors.NeonGreen else JarvisColors.TextDim)
+                Spacer(Modifier.width(12.dp))
+                Column {
+                    Text(c.name, style = MaterialTheme.typography.bodyLarge)
+                    Text("${c.host}:${c.port}", style = MaterialTheme.typography.bodySmall, color = JarvisColors.TextDim)
+                }
+            }
         }
     }
 }
