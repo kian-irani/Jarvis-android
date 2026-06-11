@@ -27,6 +27,27 @@
 
 ---
 
+
+## 📊 Status — what's actually built (updated 2026-06-11)
+
+| Area | Status | Where |
+|---|---|---|
+| Brain-Lite server (10 REST endpoints, Ktor on :7799) | ✅ DONE | `app/src/main/java/com/kianirani/jarvis/brain/server/` |
+| Room DB (memories / nodes / tasks) + repositories | ✅ DONE | `app/.../brain/data/` |
+| Brain Score election + auto-failover | ✅ DONE | `app/.../brain/score/` |
+| Election UI on live node registry (90s freshness) | ✅ DONE | `app/.../ui/screen/election/` |
+| Heartbeats (stable id, 30s client sender) | ✅ DONE | `app/.../brain/data/HeartbeatSender.kt` |
+| Brain Discovery: `vision://join` payload + mDNS advertise/scan | ✅ DONE | `app/.../brain/discovery/` |
+| Setup Wizard: live candidates list + real /health handshake | ✅ DONE | `app/.../ui/screen/setup/` |
+| Pairing persistence (Keystore-encrypted) | ✅ DONE | `BrainSelectionStore.kt` |
+| QR pairing core (zxing generate, round-trip tested) | ✅ DONE | `QrPairing.kt` |
+| QR screens (render + CameraX scanner) | 🔜 next | — |
+| Brain-Full (Python FastAPI: health probes, JSON logging, CI) | ✅ M0 DONE | `brain/` |
+| Temporal workflow engine (replaces n8n) | ✅ DONE | `docker-compose.yml` |
+
+> **Where is the Android code?** In [`/app`](app) (`com.kianirani.jarvis`). The `android/` folder is only a pointer/module map. Full plan: [ROADMAP.md](ROADMAP.md).
+
+
 ## What is Vision?
 
 **Vision is NOT a launcher. NOT a chatbot. NOT a single agent.**
