@@ -53,6 +53,7 @@ dependencies {
     implementation(libs.ktor.server.status.pages)
     implementation(libs.ktor.server.sse)
     implementation(libs.zxing.core)
+    implementation(libs.security.crypto)
     implementation(libs.room.runtime)
     implementation(libs.room.ktx)
     ksp(libs.room.compiler)

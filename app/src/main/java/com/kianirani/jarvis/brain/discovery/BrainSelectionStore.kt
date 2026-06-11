@@ -1,6 +1,9 @@
 package com.kianirani.jarvis.brain.discovery
 
 import android.content.Context
+import android.content.SharedPreferences
+import androidx.security.crypto.EncryptedSharedPreferences
+import androidx.security.crypto.MasterKey
 
 /**
  * Persists the paired brain (spec: 2026-06-11-discovery-ux-design). Saved on a
@@ -12,9 +15,21 @@ interface BrainSelectionStore {
     fun clear()
 }
 
-/** SharedPreferences-backed impl (decision: no new DataStore dependency needed for 3 keys). */
+/**
+ * Keystore-encrypted impl (review CRITICAL fix: pairing token must never sit in
+ * plaintext prefs). Falls back to plain prefs only if the Keystore is broken,
+ * so pairing keeps working on degraded devices.
+ */
 class PrefsBrainSelectionStore(context: Context) : BrainSelectionStore {
-    private val prefs = context.getSharedPreferences("brain_lite", Context.MODE_PRIVATE)
+    private val prefs: SharedPreferences = runCatching {
+        EncryptedSharedPreferences.create(
+            context,
+            "brain_lite_secure",
+            MasterKey.Builder(context).setKeyScheme(MasterKey.KeyScheme.AES256_GCM).build(),
+            EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+            EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM,
+        )
+    }.getOrElse { context.getSharedPreferences("brain_lite_secure", Context.MODE_PRIVATE) }
 
     override fun save(p: JoinPayload) {
         prefs.edit().putString("brain_host", p.host).putInt("brain_port", p.port).putString("brain_token", p.token).apply()
