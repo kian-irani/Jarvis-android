@@ -1,12 +1,17 @@
 package com.kianirani.jarvis.ui.screen.election
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.kianirani.jarvis.brain.data.NodeRepository
 import com.kianirani.jarvis.brain.score.BrainScoreCalculator
 import com.kianirani.jarvis.brain.score.DeviceMetrics
+import com.kianirani.jarvis.brain.score.LocalDeviceMetricsProvider
+import com.kianirani.jarvis.brain.score.NodeMetricsCodec
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 data class BrainNodeUi(
@@ -24,24 +29,52 @@ data class BrainElectionState(
 )
 
 /**
- * Holds mesh metrics and runs [BrainScoreCalculator] election. Metrics arrive
- * from the node registry (follow-up: live wiring); seeded with local device
- * until heartbeats stream in.
+ * Runs [BrainScoreCalculator] election over live node-registry data: observes
+ * the Room `nodes` table (heartbeats land there via POST /nodes), decodes each
+ * row's capabilities into [DeviceMetrics], and treats rows with a stale
+ * `last_seen` as offline. The local device is always a candidate, seeded from
+ * [LocalDeviceMetricsProvider].
  */
 @HiltViewModel
-class BrainElectionViewModel @Inject constructor() : ViewModel() {
+class BrainElectionViewModel(
+    nodeRepository: NodeRepository,
+    localMetrics: LocalDeviceMetricsProvider,
+    private val clock: () -> Long,
+) : ViewModel() {
 
-    private val metrics = MutableStateFlow<Map<String, DeviceMetrics>>(
-        mapOf("local" to DeviceMetrics(ramFreeGb = 2.0, cpuCores = 8, batteryPercent = 100))
-    )
-    private val names = mutableMapOf("local" to "this device")
-    private val online = mutableSetOf("local")
+    @Inject constructor(nodeRepository: NodeRepository, localMetrics: LocalDeviceMetricsProvider) :
+        this(nodeRepository, localMetrics, System::currentTimeMillis)
+
+    companion object {
+        /** Heartbeats arrive every ~30s; 3 missed beats ⇒ offline. */
+        const val ONLINE_WINDOW_MS: Long = 90_000
+        const val LOCAL_ID = "local"
+    }
+
+    private val metrics = MutableStateFlow(mapOf(LOCAL_ID to localMetrics.current()))
+    private val names = mutableMapOf(LOCAL_ID to "this device")
+    private val online = mutableSetOf(LOCAL_ID)
     private val override = MutableStateFlow<String?>(null)
 
     private val _state = MutableStateFlow(BrainElectionState())
     val state: StateFlow<BrainElectionState> = _state
 
-    init { recompute() }
+    init {
+        recompute()
+        viewModelScope.launch {
+            nodeRepository.observe().collect { entities ->
+                entities.forEach { e ->
+                    onNodeMetrics(
+                        id = e.id,
+                        name = e.name,
+                        m = NodeMetricsCodec.decode(e.capabilities)
+                            ?: DeviceMetrics(ramFreeGb = 0.0, cpuCores = 0, batteryPercent = 0),
+                        isOnline = clock() - e.last_seen <= ONLINE_WINDOW_MS,
+                    )
+                }
+            }
+        }
+    }
 
     /** Node registry heartbeat entry point. */
     fun onNodeMetrics(id: String, name: String, m: DeviceMetrics, isOnline: Boolean = true) {

@@ -54,6 +54,7 @@ interface MemoryDao {
 interface NodeDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun upsert(n: NodeEntity)
     @Query("SELECT * FROM nodes ORDER BY brain_score DESC") suspend fun list(): List<NodeEntity>
+    @Query("SELECT * FROM nodes ORDER BY brain_score DESC") fun observe(): kotlinx.coroutines.flow.Flow<List<NodeEntity>>
 }
 
 @Dao
