@@ -31,15 +31,20 @@ data class HudUiState(
     val currentTime: String = "", val eventLog: List<LogEvent> = emptyList()
 )
 
-@Composable fun HudScreen(viewModel: HudViewModel) {
+@Composable fun HudScreen(viewModel: HudViewModel, onOpenElection: () -> Unit = {}) {
     val state by viewModel.uiState.collectAsState()
     val wide = LocalConfiguration.current.screenWidthDp > 600
     Box(Modifier.fillMaxSize().background(JarvisColors.Background)) {
         HexGrid(Modifier.fillMaxSize()); ScanLine(Modifier.fillMaxSize())
-        if (wide) LandscapeLayout(state, viewModel) else PortraitLayout(state, viewModel)
+        CompositionLocalProvider(LocalOpenElection provides onOpenElection) {
+            if (wide) LandscapeLayout(state, viewModel) else PortraitLayout(state, viewModel)
+        }
         CornerBrackets(Modifier.fillMaxSize())
     }
 }
+
+/** Tap the JARVIS logo in the TopBar to open the Brain Election screen. */
+val LocalOpenElection = staticCompositionLocalOf<() -> Unit> { {} }
 
 @Composable fun PortraitLayout(s: HudUiState, vm: HudViewModel) {
     Column(Modifier.fillMaxSize()) {
@@ -75,7 +80,8 @@ data class HudUiState(
     Row(modifier.height(52.dp).background(Brush.horizontalGradient(listOf(JarvisColors.CyanFaint, Color.Transparent, JarvisColors.CyanFaint))).padding(horizontal = 14.dp),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            Box(Modifier.size(32.dp).clip(RoundedCornerShape(4.dp)).background(Brush.linearGradient(listOf(JarvisColors.BlueAccent, JarvisColors.BlueDeep))).border(1.dp, JarvisColors.CyanSecondary, RoundedCornerShape(4.dp)), Alignment.Center) { Text("J", color = JarvisColors.CyanPrimary, style = MaterialTheme.typography.headlineMedium) }
+            val openElection = LocalOpenElection.current
+            Box(Modifier.size(44.dp).clip(RoundedCornerShape(4.dp)).background(Brush.linearGradient(listOf(JarvisColors.BlueAccent, JarvisColors.BlueDeep))).border(1.dp, JarvisColors.CyanSecondary, RoundedCornerShape(4.dp)).clickable(onClick = openElection), Alignment.Center) { Text("J", color = JarvisColors.CyanPrimary, style = MaterialTheme.typography.headlineMedium) }
             Column { Text("JARVIS", style = MaterialTheme.typography.headlineLarge, color = JarvisColors.CyanPrimary); Text("v4.1.0", style = MaterialTheme.typography.labelSmall, color = JarvisColors.TextDim) }
         }
         Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
