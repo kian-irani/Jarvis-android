@@ -60,13 +60,25 @@ class SetupWizardViewModel @Inject constructor(
     private val _state = MutableStateFlow(SetupWizardState())
     val state: StateFlow<SetupWizardState> = _state
 
-    private val scan = scanner.scan { list ->
-        _state.update { s ->
-            s.copy(
-                candidates = list,
-                selectedCandidate = s.selectedCandidate?.takeIf { sel -> list.any { it.name == sel.name } },
-            )
+    private val scanner0 = scanner
+    private var scan: AutoCloseable? = null
+
+    /** Lazy mDNS: hardware scan runs only while the user is on the discovery step. */
+    private fun startScanIfNeeded() {
+        if (scan != null) return
+        scan = scanner0.scan { list ->
+            _state.update { s ->
+                s.copy(
+                    candidates = list,
+                    selectedCandidate = s.selectedCandidate?.takeIf { sel -> list.any { it.name == sel.name } },
+                )
+            }
         }
+    }
+
+    private fun stopScan() {
+        runCatching { scan?.close() }
+        scan = null
     }
 
     fun onDeviceNameChanged(v: String) = _state.update { it.copy(deviceName = v.take(32)) }
@@ -78,14 +90,20 @@ class SetupWizardViewModel @Inject constructor(
         it.copy(token = if (payload != null) payload.token else v.trim(), joinPayload = payload)
     }
 
-    fun back() = _state.update { if (it.step > 0) it.copy(step = it.step - 1, connectStatus = ConnectStatus.IDLE) else it }
+    fun back() {
+        _state.update { if (it.step > 0) it.copy(step = it.step - 1, connectStatus = ConnectStatus.IDLE) else it }
+        if (_state.value.step == 1) startScanIfNeeded() else stopScan()
+    }
 
     fun next() {
         val s = _state.value
         if (!s.canAdvance) return
         when (s.step) {
             2 -> connect()
-            else -> _state.update { it.copy(step = it.step + 1) }
+            else -> {
+                _state.update { it.copy(step = it.step + 1) }
+                if (_state.value.step == 1) startScanIfNeeded() else stopScan()
+            }
         }
     }
 
@@ -114,7 +132,7 @@ class SetupWizardViewModel @Inject constructor(
     }
 
     override fun onCleared() {
-        runCatching { scan.close() }
+        stopScan()
         super.onCleared()
     }
 }

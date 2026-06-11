@@ -39,20 +39,37 @@ class NsdDiscovery(context: Context) {
         registration = null
     }
 
+    // NsdManager allows only ONE concurrent resolve below API 34 — serialize via queue.
+    private val resolveQueue = ArrayDeque<NsdServiceInfo>()
+    private var resolving = false
+
+    private fun resolveNext(onFound: (BrainCandidate) -> Unit) {
+        val next = synchronized(resolveQueue) {
+            if (resolving) return
+            resolveQueue.removeFirstOrNull()?.also { resolving = true }
+        } ?: return
+        nsd.resolveService(
+            next,
+            object : NsdManager.ResolveListener {
+                override fun onServiceResolved(r: NsdServiceInfo) {
+                    r.host?.hostAddress?.let { onFound(BrainCandidate(r.serviceName, it, r.port)) }
+                    synchronized(resolveQueue) { resolving = false }
+                    resolveNext(onFound)
+                }
+                override fun onResolveFailed(r: NsdServiceInfo, error: Int) {
+                    synchronized(resolveQueue) { resolving = false }
+                    resolveNext(onFound)
+                }
+            },
+        )
+    }
+
     fun discover(onFound: (BrainCandidate) -> Unit, onLost: (String) -> Unit = {}) {
         stopDiscovery()
         discovery = object : NsdManager.DiscoveryListener {
             override fun onServiceFound(s: NsdServiceInfo) {
-                nsd.resolveService(
-                    s,
-                    object : NsdManager.ResolveListener {
-                        override fun onServiceResolved(r: NsdServiceInfo) {
-                            val host = r.host?.hostAddress ?: return
-                            onFound(BrainCandidate(r.serviceName, host, r.port))
-                        }
-                        override fun onResolveFailed(r: NsdServiceInfo, error: Int) {}
-                    },
-                )
+                synchronized(resolveQueue) { resolveQueue.addLast(s) }
+                resolveNext(onFound)
             }
             override fun onServiceLost(s: NsdServiceInfo) = onLost(s.serviceName)
             override fun onDiscoveryStarted(type: String) {}

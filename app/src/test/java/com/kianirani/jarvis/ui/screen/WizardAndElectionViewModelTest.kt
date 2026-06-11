@@ -100,6 +100,8 @@ class SetupWizardViewModelTest {
 
     @Test fun `mdns candidates stream into state and selection survives updates`() {
         val vm = SetupWizardViewModel()
+        assertNull(pushCandidates) // lazy: no scan before discovery step
+        vm.onDeviceNameChanged("pixel"); vm.next() // -> step 1 starts scan
         val brainA = BrainCandidate("Vision-A", "10.0.0.2", 7799)
         pushCandidates!!(listOf(brainA))
         assertEquals(listOf(brainA), vm.state.value.candidates)
