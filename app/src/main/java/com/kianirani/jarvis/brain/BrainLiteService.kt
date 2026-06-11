@@ -12,7 +12,9 @@ import com.kianirani.jarvis.brain.data.EventBus
 import com.kianirani.jarvis.brain.data.FileRepository
 import com.kianirani.jarvis.brain.data.MemoryRepository
 import com.kianirani.jarvis.brain.data.NodeRepository
+import com.kianirani.jarvis.brain.data.HeartbeatSender
 import com.kianirani.jarvis.brain.data.TaskRepository
+import com.kianirani.jarvis.brain.score.LocalDeviceMetricsProvider
 import com.kianirani.jarvis.brain.server.KtorServer
 import com.kianirani.jarvis.brain.server.routes.HealthState
 import dagger.hilt.android.AndroidEntryPoint
@@ -31,6 +33,7 @@ class BrainLiteService : Service() {
     @Inject lateinit var tasks: TaskRepository
     @Inject lateinit var files: FileRepository
     @Inject lateinit var bus: EventBus
+    @Inject lateinit var localMetrics: LocalDeviceMetricsProvider
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private var server: KtorServer? = null
@@ -45,6 +48,20 @@ class BrainLiteService : Service() {
             keyStatus = { chat.keyStatus.toList() },
         ).also { it.start() }
         tasks.startWorker(scope)
+        HeartbeatSender(
+            nodeId = stableNodeId(),
+            nodeName = android.os.Build.MODEL ?: "android-device",
+            address = "127.0.0.1:7799",
+            brainBaseUrl = { "http://127.0.0.1:7799" }, // TODO Brain Discovery: point at elected brain
+            metrics = localMetrics::current,
+        ).start(scope)
+    }
+
+    /** Stable per-install node id so heartbeats refresh one registry row. */
+    private fun stableNodeId(): String {
+        val prefs = getSharedPreferences("brain_lite", MODE_PRIVATE)
+        return prefs.getString("node_id", null) ?: java.util.UUID.randomUUID().toString()
+            .also { prefs.edit().putString("node_id", it).apply() }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int) = START_STICKY
