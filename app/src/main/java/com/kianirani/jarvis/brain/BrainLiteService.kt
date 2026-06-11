@@ -35,6 +35,7 @@ class BrainLiteService : Service() {
     @Inject lateinit var files: FileRepository
     @Inject lateinit var bus: EventBus
     @Inject lateinit var localMetrics: LocalDeviceMetricsProvider
+    @Inject lateinit var brainStore: com.kianirani.jarvis.brain.discovery.BrainSelectionStore
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private var server: KtorServer? = null
@@ -54,7 +55,9 @@ class BrainLiteService : Service() {
             nodeId = stableNodeId(),
             nodeName = android.os.Build.MODEL ?: "android-device",
             address = "127.0.0.1:7799",
-            brainBaseUrl = { "http://127.0.0.1:7799" }, // TODO Brain Discovery: point at elected brain
+            brainBaseUrl = {
+                brainStore.load()?.let { "http://${it.host}:${it.port}" } ?: "http://127.0.0.1:7799"
+            },
             metrics = localMetrics::current,
         ).start(scope)
         nsd = NsdDiscovery(this).also {

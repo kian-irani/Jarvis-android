@@ -2,6 +2,8 @@ package com.kianirani.jarvis.di
 
 import android.content.Context
 import com.kianirani.jarvis.brain.discovery.BrainHandshake
+import com.kianirani.jarvis.brain.discovery.BrainSelectionStore
+import com.kianirani.jarvis.brain.discovery.PrefsBrainSelectionStore
 import com.kianirani.jarvis.brain.discovery.DiscoveryScanner
 import com.kianirani.jarvis.brain.discovery.HttpBrainHandshake
 import com.kianirani.jarvis.brain.discovery.NsdDiscovery
@@ -32,4 +34,8 @@ object AppModule {
 
     @Provides @Singleton
     fun provideBrainHandshake(): BrainHandshake = HttpBrainHandshake()
+
+    @Provides @Singleton
+    fun provideBrainSelectionStore(@ApplicationContext ctx: Context): BrainSelectionStore =
+        PrefsBrainSelectionStore(ctx)
 }

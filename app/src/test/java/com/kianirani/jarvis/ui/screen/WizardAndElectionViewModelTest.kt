@@ -49,7 +49,14 @@ class SetupWizardViewModelTest {
         handshakeResult
     }
 
-    private fun SetupWizardViewModel() = SetupWizardViewModel(scanner, handshake)
+    private var savedBrain: com.kianirani.jarvis.brain.discovery.JoinPayload? = null
+    private val store = object : com.kianirani.jarvis.brain.discovery.BrainSelectionStore {
+        override fun save(p: com.kianirani.jarvis.brain.discovery.JoinPayload) { savedBrain = p }
+        override fun load() = savedBrain
+        override fun clear() { savedBrain = null }
+    }
+
+    private fun SetupWizardViewModel() = SetupWizardViewModel(scanner, handshake, store)
 
     @Test fun `step0 blocked until device name entered`() {
         val vm = SetupWizardViewModel()
@@ -111,6 +118,7 @@ class SetupWizardViewModelTest {
         advanceUntilIdle()
         assertEquals("10.0.0.9" to 7799, handshakeTarget)
         assertEquals(ConnectStatus.OK, vm.state.value.connectStatus)
+        assertEquals("10.0.0.9", savedBrain?.host) // paired brain persisted on success
     }
 
     @Test fun `failed handshake sets FAILED and stays on connect step`() = runTest(dispatcher) {

@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kianirani.jarvis.brain.discovery.BrainCandidate
 import com.kianirani.jarvis.brain.discovery.BrainHandshake
+import com.kianirani.jarvis.brain.discovery.BrainSelectionStore
 import com.kianirani.jarvis.brain.discovery.DiscoveryScanner
 import com.kianirani.jarvis.brain.discovery.JoinPayload
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -53,6 +54,7 @@ data class SetupWizardState(
 class SetupWizardViewModel @Inject constructor(
     scanner: DiscoveryScanner,
     private val handshake: BrainHandshake,
+    private val selectionStore: BrainSelectionStore,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(SetupWizardState())
@@ -98,6 +100,11 @@ class SetupWizardViewModel @Inject constructor(
             } else {
                 delay(600) // no known target (plain token / dev) — keep flow usable
                 true
+            }
+            if (ok && target != null) {
+                selectionStore.save(
+                    s.joinPayload ?: JoinPayload(target.first, target.second, s.token.ifBlank { "mdns" }),
+                )
             }
             _state.update {
                 if (ok) it.copy(connectStatus = ConnectStatus.OK, step = 3)
