@@ -8,6 +8,19 @@
 
 ---
 
+## ✅ Progress Snapshot — 2026-06-11 (auto-updated)
+
+**M0 Foundation: COMPLETE** — CI green (brain ruff/mypy/pytest + android ktlint + APK build), detect-secrets gate, ADR-001..011, JSON structured logging, health probes, n8n→Temporal.
+
+**M1 Brain-Lite: backend COMPLETE, discovery UI in progress**
+- Brain-Lite server: 10 endpoints on :7799 (Ktor CIO + Room + Hilt) — `ead4b70`
+- Brain Score election + live Election UI on real registry data — `b5a51ea`, `0276893`
+- Stable heartbeats (server `a9705b9` + 30s client sender `f6f1307`)
+- Brain Discovery: `vision://join` payload `eb122f7` · mDNS advertise/scan `94fb20c` · wizard live candidates + real /health handshake `81c7073`/`1867580` · pairing persistence `820459b` · QR generation core `f7e29db`
+- Security review fixes `deca3c0`; remaining hardening tracked in workspace PLAN
+
+**Next:** QR scanner UI (CameraX/ML Kit), QR pairing screen, encrypted token storage, token-echo handshake.
+
 ## 🎯 North Star — Vision چیست؟
 
 Vision **یک Launcher نیست.**
@@ -205,28 +218,28 @@ Python Brain — Hexagonal (Ports & Adapters):
   Infrastructure (PostgreSQL, Redis, ChromaDB)
 ```
 
-- [ ] **ADR-001** — Clean Architecture for Android
-- [ ] **ADR-002** — Hexagonal for Brain-Full
-- [ ] **ADR-003** — CRDT for sync
-- [ ] **ADR-004** — LangGraph for ReAct
-- [ ] **ADR-005** — LZ4+zstd for file transfer (VISN Protocol)
-- [ ] **ADR-006** — Brain Score Algorithm for auto-election
-- [ ] **ADR-007** — Trust Level System for agent permissions
-- [ ] **ADR-008** — Offline Mode degradation policy
-- [ ] **ADR-009** — Universal Language Support architecture  ← NEW v16
-- [ ] **ADR-010** — Behavioral Baseline for security anomaly detection  ← NEW v16
+- [x] **ADR-001** — Clean Architecture for Android
+- [x] **ADR-002** — Hexagonal for Brain-Full
+- [x] **ADR-003** — CRDT for sync
+- [x] **ADR-004** — LangGraph for ReAct
+- [x] **ADR-005** — LZ4+zstd for file transfer (VISN Protocol)
+- [x] **ADR-006** — Brain Score Algorithm for auto-election
+- [x] **ADR-007** — Trust Level System for agent permissions
+- [x] **ADR-008** — Offline Mode degradation policy
+- [x] **ADR-009** — Universal Language Support architecture  ← NEW v16
+- [x] **ADR-010** — Behavioral Baseline for security anomaly detection  ← NEW v16
 - [ ] **ADR-011** — Privacy Threat Monitor policy  ← NEW v16
 
 ### X.2 — Android Code Standards
 
 **ابزارها:**
 - [ ] **Detekt** — static analysis با `detekt.yml`
-- [ ] **ktlint** — code formatting یکپارچه
-- [ ] **Hilt** — Dependency Injection (نه Koin)
-- [ ] **Kotlin Coroutines + Flow** — همه async ops
-- [ ] **Kotlin Serialization** — (نه Gson)
+- [x] **ktlint** — code formatting یکپارچه
+- [x] **Hilt** — Dependency Injection (نه Koin)
+- [x] **Kotlin Coroutines + Flow** — همه async ops
+- [x] **Kotlin Serialization** — (نه Gson)
 - [ ] **JUnit 5 + Turbine** — unit testing با Flow testing
-- [ ] **Mockk** — mocking
+- [x] **Mockk** — mocking
 
 **نسخه‌های target:**
 ```
@@ -240,9 +253,9 @@ Compose BOM = 2025.06.x
 ### X.3 — Python Brain Code Standards
 
 **ابزارها:**
-- [ ] **Ruff** — linting + formatting
-- [ ] **mypy** — strict type checking
-- [ ] **pytest + pytest-asyncio** — testing
+- [x] **Ruff** — linting + formatting
+- [x] **mypy** — strict type checking
+- [x] **pytest + pytest-asyncio** — testing
 - [ ] **pytest-cov** — coverage: حداقل ۷۰٪ برای core modules
 - [ ] **Pydantic v2** — validation و serialization
 - [ ] **SQLAlchemy 2.x async** — ORM
