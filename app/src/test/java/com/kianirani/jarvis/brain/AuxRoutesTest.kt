@@ -34,7 +34,7 @@ class AuxRoutesTest {
     @Test
     fun `POST nodes registers and GET lists`() = testApplication {
         val nodes = mockk<NodeRepository>()
-        coEvery { nodes.register("phone", "127.0.0.1:7799", "{}", 80) } returns "n1"
+        coEvery { nodes.register("phone", "127.0.0.1:7799", "{}", 80, null) } returns "n1"
         coEvery { nodes.list() } returns emptyList()
         application { installBrainPlugins(); routing { nodeRoutes(nodes) } }
         val res = client.post("/nodes") {
@@ -44,6 +44,19 @@ class AuxRoutesTest {
         assertEquals(HttpStatusCode.OK, res.status)
         assertTrue(res.bodyAsText().contains("n1"))
         assertEquals(HttpStatusCode.OK, client.get("/nodes").status)
+    }
+
+    @Test
+    fun `POST nodes with stable id passes it through for heartbeat upsert`() = testApplication {
+        val nodes = mockk<NodeRepository>()
+        coEvery { nodes.register("phone", "127.0.0.1:7799", "{}", 80, "hb-1") } returns "hb-1"
+        application { installBrainPlugins(); routing { nodeRoutes(nodes) } }
+        val res = client.post("/nodes") {
+            contentType(ContentType.Application.Json)
+            setBody("""{"id":"hb-1","name":"phone","address":"127.0.0.1:7799","capabilities":"{}","brain_score":80}""")
+        }
+        assertEquals(HttpStatusCode.OK, res.status)
+        assertTrue(res.bodyAsText().contains("hb-1"))
     }
 
     @Test
