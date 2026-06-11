@@ -30,7 +30,7 @@ data class JoinPayload(val host: String, val port: Int, val token: String) {
                 val i = p.indexOf('=')
                 if (i <= 0) null
                 else p.take(i) to URLDecoder.decode(p.substring(i + 1), Charsets.UTF_8.name())
-            }.toMap()
+            }.groupBy({ it.first }, { it.second }).mapValues { it.value.first() }
             val host = params["host"]?.takeIf { it.isNotBlank() } ?: return null
             val port = params["port"]?.toIntOrNull()?.takeIf { it in 1..65535 } ?: return null
             val token = params["token"]?.takeIf { it.isNotBlank() } ?: return null

@@ -22,7 +22,8 @@ class HttpBrainHandshake(
         runCatching {
             client.newCall(Request.Builder().url("http://$host:$port/health").build())
                 .execute().use { it.isSuccessful }
-        }.getOrDefault(false)
+        }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it }
+            .getOrDefault(false)
     }
 }
 
@@ -36,9 +37,10 @@ fun interface DiscoveryScanner {
 class NsdDiscoveryScanner(private val nsd: NsdDiscovery) : DiscoveryScanner {
     override fun scan(onUpdate: (List<BrainCandidate>) -> Unit): AutoCloseable {
         val found = LinkedHashMap<String, BrainCandidate>()
+        // snapshot inside the lock, call out after releasing it (no lock-while-calling-out)
         nsd.discover(
-            onFound = { c -> synchronized(found) { found[c.name] = c; onUpdate(found.values.toList()) } },
-            onLost = { name -> synchronized(found) { found.remove(name); onUpdate(found.values.toList()) } },
+            onFound = { c -> onUpdate(synchronized(found) { found[c.name] = c; found.values.toList() }) },
+            onLost = { name -> onUpdate(synchronized(found) { found.remove(name); found.values.toList() }) },
         )
         return AutoCloseable { nsd.stopDiscovery() }
     }

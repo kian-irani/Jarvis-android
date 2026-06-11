@@ -90,9 +90,9 @@ class SetupWizardViewModel @Inject constructor(
     }
 
     private fun connect() {
+        val s = _state.value // capture at press time, not after scheduling
         _state.update { it.copy(connectStatus = ConnectStatus.CONNECTING) }
         viewModelScope.launch {
-            val s = _state.value
             val target = s.joinPayload?.let { it.host to it.port }
                 ?: s.selectedCandidate?.let { it.host to it.port }
             val ok = if (target != null) {

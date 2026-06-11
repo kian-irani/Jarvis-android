@@ -69,7 +69,7 @@ class BrainLiteService : Service() {
     private fun stableNodeId(): String {
         val prefs = getSharedPreferences("brain_lite", MODE_PRIVATE)
         return prefs.getString("node_id", null) ?: java.util.UUID.randomUUID().toString()
-            .also { prefs.edit().putString("node_id", it).apply() }
+            .also { prefs.edit().putString("node_id", it).commit() }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int) = START_STICKY
