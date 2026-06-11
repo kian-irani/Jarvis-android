@@ -2,6 +2,7 @@ package com.kianirani.jarvis.brain.score
 
 import android.app.ActivityManager
 import android.content.Context
+import android.net.wifi.WifiManager
 import android.os.BatteryManager
 import android.os.PowerManager
 
@@ -23,6 +24,14 @@ class AndroidDeviceMetricsProvider(private val context: Context) : LocalDeviceMe
             batteryPercent = bm.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY).coerceIn(0, 100),
             isOnBattery = !bm.isCharging,
             thermalThrottling = pm.currentThermalStatus >= PowerManager.THERMAL_STATUS_SEVERE,
+            networkMbps = wifiLinkMbps(),
         )
     }
+
+    /** Current Wi-Fi link speed in Mbps; 0.0 when unavailable (cellular/no permission). */
+    private fun wifiLinkMbps(): Double = runCatching {
+        val wifi = context.applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager
+        @Suppress("DEPRECATION")
+        wifi.connectionInfo?.linkSpeed?.takeIf { it > 0 }?.toDouble() ?: 0.0
+    }.getOrDefault(0.0)
 }
