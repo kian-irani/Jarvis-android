@@ -2,6 +2,7 @@ package com.kianirani.jarvis.ui.screen.setup
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.kianirani.jarvis.brain.discovery.JoinPayload
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -23,6 +24,8 @@ data class SetupWizardState(
     val deviceName: String = "",
     val discoveryMethod: DiscoveryMethod = DiscoveryMethod.MDNS,
     val token: String = "",
+    /** Parsed when the user pastes/scans a full vision://join URI; null for plain tokens. */
+    val joinPayload: JoinPayload? = null,
     val connectStatus: ConnectStatus = ConnectStatus.IDLE,
 ) {
     val canAdvance: Boolean
@@ -47,7 +50,10 @@ class SetupWizardViewModel @Inject constructor() : ViewModel() {
 
     fun onDeviceNameChanged(v: String) = _state.update { it.copy(deviceName = v.take(32)) }
     fun onDiscoveryMethodSelected(m: DiscoveryMethod) = _state.update { it.copy(discoveryMethod = m) }
-    fun onTokenChanged(v: String) = _state.update { it.copy(token = v.trim()) }
+    fun onTokenChanged(v: String) = _state.update {
+        val payload = JoinPayload.decode(v)
+        it.copy(token = if (payload != null) payload.token else v.trim(), joinPayload = payload)
+    }
 
     fun back() = _state.update { if (it.step > 0) it.copy(step = it.step - 1, connectStatus = ConnectStatus.IDLE) else it }
 
