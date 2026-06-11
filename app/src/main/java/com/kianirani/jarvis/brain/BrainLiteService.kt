@@ -13,6 +13,7 @@ import com.kianirani.jarvis.brain.data.FileRepository
 import com.kianirani.jarvis.brain.data.MemoryRepository
 import com.kianirani.jarvis.brain.data.NodeRepository
 import com.kianirani.jarvis.brain.data.HeartbeatSender
+import com.kianirani.jarvis.brain.discovery.NsdDiscovery
 import com.kianirani.jarvis.brain.data.TaskRepository
 import com.kianirani.jarvis.brain.score.LocalDeviceMetricsProvider
 import com.kianirani.jarvis.brain.server.KtorServer
@@ -37,6 +38,7 @@ class BrainLiteService : Service() {
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private var server: KtorServer? = null
+    private var nsd: NsdDiscovery? = null
 
     override fun onCreate() {
         super.onCreate()
@@ -55,6 +57,9 @@ class BrainLiteService : Service() {
             brainBaseUrl = { "http://127.0.0.1:7799" }, // TODO Brain Discovery: point at elected brain
             metrics = localMetrics::current,
         ).start(scope)
+        nsd = NsdDiscovery(this).also {
+            it.advertise(name = "Vision-${android.os.Build.MODEL ?: "node"}", port = 7799)
+        }
     }
 
     /** Stable per-install node id so heartbeats refresh one registry row. */
@@ -68,6 +73,7 @@ class BrainLiteService : Service() {
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onDestroy() {
+        nsd?.stopAdvertise()
         tasks.stopWorker()
         server?.stop()
         scope.cancel()
