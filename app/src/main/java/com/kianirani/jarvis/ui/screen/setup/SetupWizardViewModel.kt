@@ -2,6 +2,9 @@ package com.kianirani.jarvis.ui.screen.setup
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.kianirani.jarvis.brain.discovery.BrainCandidate
+import com.kianirani.jarvis.brain.discovery.BrainHandshake
+import com.kianirani.jarvis.brain.discovery.DiscoveryScanner
 import com.kianirani.jarvis.brain.discovery.JoinPayload
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.delay
@@ -26,6 +29,9 @@ data class SetupWizardState(
     val token: String = "",
     /** Parsed when the user pastes/scans a full vision://join URI; null for plain tokens. */
     val joinPayload: JoinPayload? = null,
+    /** Live mDNS results while on the discovery step. */
+    val candidates: List<BrainCandidate> = emptyList(),
+    val selectedCandidate: BrainCandidate? = null,
     val connectStatus: ConnectStatus = ConnectStatus.IDLE,
 ) {
     val canAdvance: Boolean
@@ -38,18 +44,33 @@ data class SetupWizardState(
 }
 
 /**
- * Wizard flow state. Step 2 CONNECT performs the brain handshake (follow-up:
- * real mDNS/QR/token transport); simulated success path for now so the UI
- * flow is testable end-to-end.
+ * Wizard flow state. The discovery step streams live mDNS [BrainCandidate]s;
+ * CONNECT performs a real /health handshake against the join target (payload
+ * host or selected candidate). With no known target (plain token, dev) the
+ * legacy simulated path keeps the flow usable.
  */
 @HiltViewModel
-class SetupWizardViewModel @Inject constructor() : ViewModel() {
+class SetupWizardViewModel @Inject constructor(
+    scanner: DiscoveryScanner,
+    private val handshake: BrainHandshake,
+) : ViewModel() {
 
     private val _state = MutableStateFlow(SetupWizardState())
     val state: StateFlow<SetupWizardState> = _state
 
+    private val scan = scanner.scan { list ->
+        _state.update { s ->
+            s.copy(
+                candidates = list,
+                selectedCandidate = s.selectedCandidate?.takeIf { sel -> list.any { it.name == sel.name } },
+            )
+        }
+    }
+
     fun onDeviceNameChanged(v: String) = _state.update { it.copy(deviceName = v.take(32)) }
     fun onDiscoveryMethodSelected(m: DiscoveryMethod) = _state.update { it.copy(discoveryMethod = m) }
+    fun onCandidateSelected(c: BrainCandidate) = _state.update { it.copy(selectedCandidate = c) }
+
     fun onTokenChanged(v: String) = _state.update {
         val payload = JoinPayload.decode(v)
         it.copy(token = if (payload != null) payload.token else v.trim(), joinPayload = payload)
@@ -69,8 +90,24 @@ class SetupWizardViewModel @Inject constructor() : ViewModel() {
     private fun connect() {
         _state.update { it.copy(connectStatus = ConnectStatus.CONNECTING) }
         viewModelScope.launch {
-            delay(600) // handshake placeholder — replaced by real discovery transport
-            _state.update { it.copy(connectStatus = ConnectStatus.OK, step = 3) }
+            val s = _state.value
+            val target = s.joinPayload?.let { it.host to it.port }
+                ?: s.selectedCandidate?.let { it.host to it.port }
+            val ok = if (target != null) {
+                handshake.check(target.first, target.second)
+            } else {
+                delay(600) // no known target (plain token / dev) — keep flow usable
+                true
+            }
+            _state.update {
+                if (ok) it.copy(connectStatus = ConnectStatus.OK, step = 3)
+                else it.copy(connectStatus = ConnectStatus.FAILED)
+            }
         }
+    }
+
+    override fun onCleared() {
+        runCatching { scan.close() }
+        super.onCleared()
     }
 }

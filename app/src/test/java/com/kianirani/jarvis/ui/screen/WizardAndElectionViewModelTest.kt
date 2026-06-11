@@ -1,6 +1,9 @@
 package com.kianirani.jarvis.ui.screen
 
 import com.kianirani.jarvis.brain.data.NodeRepository
+import com.kianirani.jarvis.brain.discovery.BrainCandidate
+import com.kianirani.jarvis.brain.discovery.BrainHandshake
+import com.kianirani.jarvis.brain.discovery.DiscoveryScanner
 import com.kianirani.jarvis.brain.data.db.NodeDao
 import com.kianirani.jarvis.brain.data.db.NodeEntity
 import com.kianirani.jarvis.brain.score.DeviceMetrics
@@ -32,6 +35,21 @@ class SetupWizardViewModelTest {
 
     @Before fun setUp() { Dispatchers.setMain(dispatcher) }
     @After fun tearDown() { Dispatchers.resetMain() }
+
+    /** Fake scanner: captures the update callback so tests can push candidates. */
+    private var pushCandidates: ((List<BrainCandidate>) -> Unit)? = null
+    private val scanner = DiscoveryScanner { onUpdate ->
+        pushCandidates = onUpdate
+        AutoCloseable { pushCandidates = null }
+    }
+    private var handshakeResult = true
+    private var handshakeTarget: Pair<String, Int>? = null
+    private val handshake = BrainHandshake { host, port ->
+        handshakeTarget = host to port
+        handshakeResult
+    }
+
+    private fun SetupWizardViewModel() = SetupWizardViewModel(scanner, handshake)
 
     @Test fun `step0 blocked until device name entered`() {
         val vm = SetupWizardViewModel()
@@ -71,6 +89,39 @@ class SetupWizardViewModelTest {
         vm.back()
         assertEquals(1, vm.state.value.step)
         assertEquals(ConnectStatus.IDLE, vm.state.value.connectStatus)
+    }
+
+    @Test fun `mdns candidates stream into state and selection survives updates`() {
+        val vm = SetupWizardViewModel()
+        val brainA = BrainCandidate("Vision-A", "10.0.0.2", 7799)
+        pushCandidates!!(listOf(brainA))
+        assertEquals(listOf(brainA), vm.state.value.candidates)
+        vm.onCandidateSelected(brainA)
+        pushCandidates!!(listOf(brainA, BrainCandidate("Vision-B", "10.0.0.3", 7799)))
+        assertEquals(brainA, vm.state.value.selectedCandidate)
+        pushCandidates!!(emptyList()) // A disappears → selection cleared
+        assertNull(vm.state.value.selectedCandidate)
+    }
+
+    @Test fun `connect uses real handshake against join payload target`() = runTest(dispatcher) {
+        val vm = SetupWizardViewModel()
+        vm.onDeviceNameChanged("pixel"); vm.next()
+        vm.onTokenChanged("vision://join?host=10.0.0.9&port=7799&token=abc"); vm.next()
+        vm.next() // CONNECT
+        advanceUntilIdle()
+        assertEquals("10.0.0.9" to 7799, handshakeTarget)
+        assertEquals(ConnectStatus.OK, vm.state.value.connectStatus)
+    }
+
+    @Test fun `failed handshake sets FAILED and stays on connect step`() = runTest(dispatcher) {
+        handshakeResult = false
+        val vm = SetupWizardViewModel()
+        vm.onDeviceNameChanged("pixel"); vm.next(); vm.next()
+        vm.onCandidateSelected(BrainCandidate("Vision-A", "10.0.0.2", 7799))
+        vm.next() // CONNECT
+        advanceUntilIdle()
+        assertEquals(ConnectStatus.FAILED, vm.state.value.connectStatus)
+        assertEquals(2, vm.state.value.step)
     }
 }
 

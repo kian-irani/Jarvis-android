@@ -1,6 +1,11 @@
 package com.kianirani.jarvis.di
 
 import android.content.Context
+import com.kianirani.jarvis.brain.discovery.BrainHandshake
+import com.kianirani.jarvis.brain.discovery.DiscoveryScanner
+import com.kianirani.jarvis.brain.discovery.HttpBrainHandshake
+import com.kianirani.jarvis.brain.discovery.NsdDiscovery
+import com.kianirani.jarvis.brain.discovery.NsdDiscoveryScanner
 import com.kianirani.jarvis.brain.score.AndroidDeviceMetricsProvider
 import com.kianirani.jarvis.brain.score.LocalDeviceMetricsProvider
 import com.kianirani.jarvis.data.repository.BrainRepository
@@ -20,4 +25,11 @@ object AppModule {
     @Provides @Singleton
     fun provideLocalDeviceMetrics(@ApplicationContext ctx: Context): LocalDeviceMetricsProvider =
         AndroidDeviceMetricsProvider(ctx)
+
+    @Provides @Singleton
+    fun provideDiscoveryScanner(@ApplicationContext ctx: Context): DiscoveryScanner =
+        NsdDiscoveryScanner(NsdDiscovery(ctx))
+
+    @Provides @Singleton
+    fun provideBrainHandshake(): BrainHandshake = HttpBrainHandshake()
 }
