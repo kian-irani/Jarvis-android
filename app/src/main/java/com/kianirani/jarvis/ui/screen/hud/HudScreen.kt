@@ -2,6 +2,7 @@ package com.kianirani.jarvis.ui.screen.hud
 
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.*
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -31,16 +32,31 @@ data class HudUiState(
     val currentTime: String = "", val eventLog: List<LogEvent> = emptyList()
 )
 
-@Composable fun HudScreen(viewModel: HudViewModel, onOpenElection: () -> Unit = {}, onOpenAiSettings: () -> Unit = {}) {
+@Composable fun HudScreen(
+    viewModel: HudViewModel,
+    onOpenElection: () -> Unit = {},
+    onOpenAiSettings: () -> Unit = {},
+    onOpenApps: () -> Unit = {},
+    onOpenSettings: () -> Unit = {},
+) {
     val state by viewModel.uiState.collectAsState()
+    val settingsVm: com.kianirani.jarvis.ui.screen.settings.SettingsHubViewModel = androidx.hilt.navigation.compose.hiltViewModel()
+    val auroraOn by settingsVm.settings.aurora.collectAsState()
+    val scanOn by settingsVm.settings.scanLine.collectAsState()
     val wide = LocalConfiguration.current.screenWidthDp > 600
     // Background art runs edge-to-edge under the system bars; interactive
     // content is inset so it never collides with the status bar clock/icons.
     Box(Modifier.fillMaxSize().background(VisionColors.ScreenBackdrop)) {
-        PlasmaAurora(Modifier.fillMaxSize())
-        HexGrid(Modifier.fillMaxSize()); ScanLine(Modifier.fillMaxSize())
+        if (auroraOn) PlasmaAurora(Modifier.fillMaxSize())
+        HexGrid(Modifier.fillMaxSize())
+        if (scanOn) ScanLine(Modifier.fillMaxSize())
         Box(Modifier.fillMaxSize().systemBarsPadding()) {
-            CompositionLocalProvider(LocalOpenElection provides onOpenElection, LocalOpenAiSettings provides onOpenAiSettings) {
+            CompositionLocalProvider(
+                LocalOpenElection provides onOpenElection,
+                LocalOpenAiSettings provides onOpenAiSettings,
+                LocalOpenApps provides onOpenApps,
+                LocalOpenSettings provides onOpenSettings,
+            ) {
                 if (wide) LandscapeLayout(state, viewModel) else PortraitLayout(state, viewModel)
             }
             CornerBrackets(Modifier.fillMaxSize())
@@ -48,25 +64,96 @@ data class HudUiState(
     }
 }
 
-/** Tap the JARVIS logo in the TopBar to open the Brain Election screen. */
+/** Tap the VISION logo in the TopBar to open the Brain Election screen. */
 val LocalOpenElection = staticCompositionLocalOf<() -> Unit> { {} }
 val LocalOpenAiSettings = staticCompositionLocalOf<() -> Unit> { {} }
+val LocalOpenApps = staticCompositionLocalOf<() -> Unit> { {} }
+val LocalOpenSettings = staticCompositionLocalOf<() -> Unit> { {} }
 
+/**
+ * Portrait home (REDESIGN 2026-06-12, user directive): the Eye of Vision is
+ * the single focal point — reactor-iris center stage, status constellation
+ * under it, conversation panel, command bar, then a launcher dock.
+ */
 @Composable fun PortraitLayout(s: HudUiState, vm: HudViewModel) {
     Column(Modifier.fillMaxSize()) {
         TopBar(s.brainOnline, s.nodesOnline, s.groqOnline, s.isListening, s.currentTime, vm::toggleListening, Modifier.fillMaxWidth())
-        Row(Modifier.fillMaxWidth().weight(1f).padding(8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Column(Modifier.weight(0.42f).fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                s.nodes.forEachIndexed { i, n -> NodeCard(n, Modifier.fillMaxWidth().visionEnter(i)) }
-                MetricPanel(s, Modifier.fillMaxWidth().weight(1f).visionEnter(2))
-            }
-            Column(Modifier.weight(0.58f).fillMaxHeight(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                OrbPanel(s, Modifier.fillMaxWidth().weight(1f).visionEnter(1))
-                TypewriterPanel(s.jarvisOutput, Modifier.fillMaxWidth().visionEnter(2))
-                InputBar(s.inputText, vm::onInputChange, vm::sendChat, Modifier.fillMaxWidth().visionEnter(3))
+        Column(
+            Modifier.fillMaxWidth().weight(1f).padding(horizontal = 16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            ReactorEye(
+                listening = s.isListening,
+                modifier = Modifier.fillMaxWidth().weight(1f).visionEnter(0)
+                    .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null, onClick = vm::toggleListening),
+            )
+            Text(
+                if (s.isListening) "● LISTENING — speak now" else "tap the eye to talk",
+                style = MaterialTheme.typography.labelMedium,
+                color = if (s.isListening) JarvisColors.NeonGreen else JarvisColors.TextDim,
+                modifier = Modifier.padding(bottom = 10.dp),
+            )
+            StatusConstellation(s, Modifier.fillMaxWidth().visionEnter(1))
+            Spacer(Modifier.height(10.dp))
+            TypewriterPanel(s.jarvisOutput, Modifier.fillMaxWidth().visionEnter(2))
+            Spacer(Modifier.height(10.dp))
+            InputBar(s.inputText, vm::onInputChange, vm::sendChat, Modifier.fillMaxWidth().visionEnter(3))
+            Spacer(Modifier.height(12.dp))
+            LauncherDock(s.isListening, vm::toggleListening, Modifier.fillMaxWidth().visionEnter(4))
+            Spacer(Modifier.height(8.dp))
+        }
+        WaveformBar(s.waveformAmplitudes, s.isListening, Modifier.fillMaxWidth().height(48.dp))
+    }
+}
+
+/** Compact status chips: brain, mesh nodes, cloud AI. */
+@Composable fun StatusConstellation(s: HudUiState, modifier: Modifier) {
+    Row(modifier, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        listOf(
+            Triple("BRAIN", s.brainOnline, if (s.brainOnline) "ONLINE" else "OFFLINE"),
+            Triple("MESH", s.nodesOnline > 0, "${s.nodesOnline} NODE${if (s.nodesOnline == 1) "" else "S"}"),
+            Triple("CLOUD", s.groqOnline, if (s.groqOnline) "READY" else "NO KEY"),
+        ).forEach { (lbl, ok, detail) ->
+            val c = if (ok) JarvisColors.NeonGreen else JarvisColors.DangerRed
+            Column(
+                Modifier.weight(1f)
+                    .border(1.dp, c.copy(alpha = 0.3f), RoundedCornerShape(6.dp))
+                    .background(c.copy(alpha = 0.05f), RoundedCornerShape(6.dp))
+                    .padding(vertical = 6.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Text(lbl, style = MaterialTheme.typography.labelSmall, color = JarvisColors.TextDim)
+                Text(detail, style = MaterialTheme.typography.labelSmall, color = c)
             }
         }
-        WaveformBar(s.waveformAmplitudes, s.isListening, Modifier.fillMaxWidth().height(60.dp))
+    }
+}
+
+/** Bottom dock — launcher-grade shortcuts with big touch targets. */
+@Composable fun LauncherDock(listening: Boolean, onMic: () -> Unit, modifier: Modifier) {
+    val apps = LocalOpenApps.current
+    val settings = LocalOpenSettings.current
+    val election = LocalOpenElection.current
+    Row(
+        modifier.glassPanel(radius = 16.dp).padding(horizontal = 10.dp, vertical = 8.dp),
+        horizontalArrangement = Arrangement.SpaceEvenly,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        DockButton("▦", "APPS", JarvisColors.CyanPrimary, apps)
+        DockButton("◆", "BRAIN", JarvisColors.CyanSecondary, election)
+        DockButton(if (listening) "●" else "○", "MIC", if (listening) JarvisColors.NeonGreen else JarvisColors.CyanSecondary, onMic)
+        DockButton("⚙", "CONFIG", JarvisColors.CyanSecondary, settings)
+    }
+}
+
+@Composable private fun DockButton(glyph: String, label: String, tint: Color, onClick: () -> Unit) {
+    Column(
+        Modifier.clip(RoundedCornerShape(12.dp)).clickable(onClick = onClick)
+            .padding(horizontal = 18.dp, vertical = 6.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Text(glyph, style = MaterialTheme.typography.headlineMedium, color = tint)
+        Text(label, style = MaterialTheme.typography.labelSmall, color = JarvisColors.TextDim)
     }
 }
 
