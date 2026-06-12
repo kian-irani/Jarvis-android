@@ -69,6 +69,11 @@ dependencies {
     implementation(libs.serialization.json)
     implementation(libs.datastore)
 
+    implementation(libs.camera.camera2)
+    implementation(libs.camera.lifecycle)
+    implementation(libs.camera.view)
+    implementation(libs.mlkit.barcode.scanning)
+
     implementation(libs.haze)
     implementation(libs.haze.materials)
     implementation(libs.vico.compose)

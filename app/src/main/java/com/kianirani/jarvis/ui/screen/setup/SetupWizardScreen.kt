@@ -46,6 +46,13 @@ fun SetupWizardScreen(
     onFinished: () -> Unit = {},
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    if (state.scanning) {
+        QrScanScreen(
+            onScanned = viewModel::onQrScanned,
+            onCancel = viewModel::closeScanner,
+        )
+        return
+    }
     Column(
         Modifier
             .fillMaxSize()
@@ -72,6 +79,7 @@ fun SetupWizardScreen(
                     state.discoveryMethod, viewModel::onDiscoveryMethodSelected,
                     state.token, viewModel::onTokenChanged,
                     state.candidates, state.selectedCandidate, viewModel::onCandidateSelected,
+                    onScan = viewModel::openScanner,
                 )
                 2 -> StepConnect(state.connectStatus)
                 else -> StepDone(state.deviceName)
@@ -131,6 +139,7 @@ private fun StepDiscovery(
     candidates: List<BrainCandidate> = emptyList(),
     selectedCandidate: BrainCandidate? = null,
     onCandidate: (BrainCandidate) -> Unit = {},
+    onScan: () -> Unit = {},
 ) {
     Column {
         Text("FIND YOUR BRAIN", style = MaterialTheme.typography.headlineLarge)
@@ -157,9 +166,11 @@ private fun StepDiscovery(
                 }
             }
         }
-        if (selected == DiscoveryMethod.TOKEN) {
+        if (selected == DiscoveryMethod.TOKEN || selected == DiscoveryMethod.QR) {
             Spacer(Modifier.height(12.dp))
-            WizardField(token, onToken, label = "PAIRING TOKEN", helper = "From your Brain's setup output.")
+            WizardField(token, onToken, label = "PAIRING TOKEN OR URI", helper = "Paste vision://join… or your Brain token.")
+            Spacer(Modifier.height(10.dp))
+            WizardButton("SCAN QR", primary = true, Modifier.fillMaxWidth(), onClick = onScan)
         }
         if (selected == DiscoveryMethod.MDNS) {
             Spacer(Modifier.height(14.dp))

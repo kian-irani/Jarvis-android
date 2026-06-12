@@ -34,6 +34,8 @@ data class SetupWizardState(
     val candidates: List<BrainCandidate> = emptyList(),
     val selectedCandidate: BrainCandidate? = null,
     val connectStatus: ConnectStatus = ConnectStatus.IDLE,
+    /** True while the camera QR scanner overlay is shown. */
+    val scanning: Boolean = false,
 ) {
     val canAdvance: Boolean
         get() = when (step) {
@@ -88,6 +90,15 @@ class SetupWizardViewModel @Inject constructor(
     fun onTokenChanged(v: String) = _state.update {
         val payload = JoinPayload.decode(v)
         it.copy(token = if (payload != null) payload.token else v.trim(), joinPayload = payload)
+    }
+
+    fun openScanner() = _state.update { it.copy(scanning = true) }
+    fun closeScanner() = _state.update { it.copy(scanning = false) }
+
+    /** A scanned vision://join QR follows the exact same path as a pasted URI. */
+    fun onQrScanned(payload: JoinPayload) {
+        onTokenChanged(payload.encode())
+        _state.update { it.copy(scanning = false) }
     }
 
     fun back() {
