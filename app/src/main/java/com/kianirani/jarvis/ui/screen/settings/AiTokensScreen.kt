@@ -46,21 +46,25 @@ class AiTokensViewModel @Inject constructor(private val store: AiProviderStore) 
     private val _saved = MutableStateFlow(snapshot())
     val saved = _saved.asStateFlow()
 
-    private fun snapshot(): Map<AiProvider, Boolean> =
-        AiProvider.entries.associateWith { store.token(it) != null }
+    private fun snapshot(): Map<AiProvider, List<String>> =
+        AiProvider.entries.associateWith { store.tokens(it) }
 
-    fun save(p: AiProvider, token: String) {
-        store.setToken(p, token)
+    fun add(p: AiProvider, token: String) {
+        store.addToken(p, token)
         _saved.value = snapshot()
     }
 
-    fun clear(p: AiProvider) {
-        store.setToken(p, null)
+    fun remove(p: AiProvider, token: String) {
+        store.removeToken(p, token)
         _saved.value = snapshot()
     }
 }
 
-/** AI PROVIDERS settings — token slot per provider, encrypted at rest. */
+/** Last characters of a key, enough to tell keys apart without exposing them. */
+private fun mask(token: String): String =
+    if (token.length <= 8) "•••" else "…${token.takeLast(6)}"
+
+/** AI PROVIDERS settings — any number of tokens per provider, encrypted at rest. */
 @Composable
 fun AiTokensScreen(vm: AiTokensViewModel = hiltViewModel(), onBack: () -> Unit = {}) {
     val saved by vm.saved.collectAsState()
@@ -75,22 +79,26 @@ fun AiTokensScreen(vm: AiTokensViewModel = hiltViewModel(), onBack: () -> Unit =
             Text("AI PROVIDERS", style = MaterialTheme.typography.headlineLarge, color = JarvisColors.CyanPrimary)
         }
         Text(
-            "Add a token for any provider. Vision routes every question to the best configured provider — local brain first, then cloud.",
+            "Add as many tokens per provider as you like — Vision rotates between them " +
+                "automatically on rate limits. Local brain answers first, then cloud.",
             style = MaterialTheme.typography.bodySmall, color = JarvisColors.TextDim,
         )
-        AiProvider.entries.forEachIndexed { i, p -> ProviderCard(p, saved[p] == true, i, vm::save, vm::clear) }
+        AiProvider.entries.forEachIndexed { i, p ->
+            ProviderCard(p, saved[p].orEmpty(), i, vm::add, vm::remove)
+        }
     }
 }
 
 @Composable
 private fun ProviderCard(
     p: AiProvider,
-    hasToken: Boolean,
+    tokens: List<String>,
     index: Int,
-    onSave: (AiProvider, String) -> Unit,
-    onClear: (AiProvider) -> Unit,
+    onAdd: (AiProvider, String) -> Unit,
+    onRemove: (AiProvider, String) -> Unit,
 ) {
-    var input by remember(p, hasToken) { mutableStateOf("") }
+    var input by remember(p) { mutableStateOf("") }
+    val hasToken = tokens.isNotEmpty()
     val accent = if (hasToken) VisionColors.NeonGreen else VisionColors.Border
     val glow = if (hasToken) VisionColors.NeonGreen.copy(alpha = 0.25f) else VisionColors.CyanGlow
     Column(
@@ -104,12 +112,25 @@ private fun ProviderCard(
             Text(p.displayName, style = MaterialTheme.typography.labelLarge, color = JarvisColors.TextPrimary)
             Spacer(Modifier.weight(1f))
             Text(
-                if (hasToken) "◉ CONFIGURED" else "○ NO TOKEN",
+                if (hasToken) "◉ ${tokens.size} KEY${if (tokens.size > 1) "S" else ""}" else "○ NO TOKEN",
                 style = MaterialTheme.typography.labelSmall,
                 color = if (hasToken) JarvisColors.NeonGreen else JarvisColors.TextDim,
             )
         }
         Text("model: ${p.defaultModel}", style = MaterialTheme.typography.labelSmall, color = JarvisColors.TextDim)
+        tokens.forEach { t ->
+            Row(
+                Modifier.fillMaxWidth()
+                    .border(1.dp, JarvisColors.Border, RoundedCornerShape(4.dp))
+                    .padding(horizontal = 10.dp, vertical = 6.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(mask(t), style = MaterialTheme.typography.bodySmall, color = JarvisColors.TextPrimary)
+                Spacer(Modifier.weight(1f))
+                Text("REMOVE", style = MaterialTheme.typography.labelSmall, color = JarvisColors.DangerRed,
+                    modifier = Modifier.clickable { onRemove(p, t) }.padding(4.dp))
+            }
+        }
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
             BasicTextField(
                 value = input, onValueChange = { input = it }, singleLine = true,
@@ -122,7 +143,7 @@ private fun ProviderCard(
                     ) {
                         if (input.isEmpty()) {
                             Text(
-                                if (hasToken) "token saved — paste to replace" else "paste API token",
+                                if (hasToken) "paste another token" else "paste API token",
                                 color = JarvisColors.TextDim, style = MaterialTheme.typography.bodySmall,
                             )
                         }
@@ -131,12 +152,8 @@ private fun ProviderCard(
                 },
                 modifier = Modifier.weight(1f),
             )
-            Text("SAVE", style = MaterialTheme.typography.labelLarge, color = JarvisColors.CyanPrimary,
-                modifier = Modifier.clickable(enabled = input.isNotBlank()) { onSave(p, input); input = "" }.padding(6.dp))
-            if (hasToken) {
-                Text("CLEAR", style = MaterialTheme.typography.labelLarge, color = JarvisColors.DangerRed,
-                    modifier = Modifier.clickable { onClear(p) }.padding(6.dp))
-            }
+            Text("ADD", style = MaterialTheme.typography.labelLarge, color = JarvisColors.CyanPrimary,
+                modifier = Modifier.clickable(enabled = input.isNotBlank()) { onAdd(p, input); input = "" }.padding(6.dp))
         }
     }
 }

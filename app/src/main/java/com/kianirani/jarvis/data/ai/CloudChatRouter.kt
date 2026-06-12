@@ -46,7 +46,13 @@ class CloudChatRouter @Inject constructor(private val store: AiProviderStore) : 
 
     data class CloudReply(val text: String, val provider: AiProvider)
 
-    /** Tries configured providers in order; failure of one falls through to the next. */
+    /** Round-robin start offset per provider — a 401/429 key is skipped on later calls. */
+    private val rotation = java.util.concurrent.ConcurrentHashMap<AiProvider, Int>()
+
+    /**
+     * Tries configured providers in order; within a provider rotates over ALL
+     * its tokens (user directive: e.g. 4 Grok keys). Failure falls through.
+     */
     suspend fun chat(message: String): Result<CloudReply> {
         val providers = store.configured()
         if (providers.isEmpty()) {
@@ -54,10 +60,19 @@ class CloudChatRouter @Inject constructor(private val store: AiProviderStore) : 
         }
         var last: Throwable = IllegalStateException("all providers failed")
         for (p in providers) {
-            val token = store.token(p) ?: continue
-            runCatching { ask(p, token, message) }
-                .onSuccess { return Result.success(CloudReply(it, p)) }
-                .onFailure { last = it }
+            val keys = store.tokens(p)
+            if (keys.isEmpty()) continue
+            val start = rotation.getOrDefault(p, 0) % keys.size
+            for (i in keys.indices) {
+                val idx = (start + i) % keys.size
+                runCatching { ask(p, keys[idx], message) }
+                    .onSuccess {
+                        rotation[p] = idx // stick with the key that worked
+                        return Result.success(CloudReply(it, p))
+                    }
+                    .onFailure { last = it }
+            }
+            rotation[p] = (start + 1) % keys.size
         }
         return Result.failure(last)
     }
@@ -93,8 +108,8 @@ class CloudChatRouter @Inject constructor(private val store: AiProviderStore) : 
                 .jsonObject["content"]!!.jsonObject["parts"]!!.jsonArray.first()
                 .jsonObject["text"]!!.jsonPrimitive.content
         }
-        // OpenAI-compatible chat/completions: OpenAI, Groq, OpenRouter
-        AiProvider.OPENAI, AiProvider.GROQ, AiProvider.OPENROUTER -> {
+        // OpenAI-compatible chat/completions: OpenAI, xAI Grok, Groq, OpenRouter
+        AiProvider.OPENAI, AiProvider.XAI, AiProvider.GROQ, AiProvider.OPENROUTER -> {
             val body = buildJsonObject {
                 put("model", p.defaultModel)
                 put("messages", buildJsonArray {
