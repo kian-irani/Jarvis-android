@@ -70,7 +70,7 @@ jobs:
           echo "build_date=$(date -u +%Y-%m-%d)" >> $GITHUB_OUTPUT
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: VISION-debug-${{ github.run_number }}
           path: app/build/outputs/apk/debug/*.apk
