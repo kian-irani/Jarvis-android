@@ -16,10 +16,14 @@ import javax.inject.Singleton
  * or cloud round-trip. Anything unrecognized returns null and flows to AI.
  */
 @Singleton
-class CommandInterpreter @Inject constructor(@ApplicationContext private val context: Context) {
+class CommandInterpreter @Inject constructor(
+    @ApplicationContext private val context: Context,
+    private val plugins: com.kianirani.jarvis.data.plugin.PluginRegistry,
+) {
 
     /** Returns a reply if the message was a device command, else null. */
     fun tryHandle(message: String): String? {
+        plugins.dispatch(message)?.let { return it }
         val m = message.trim().lowercase()
         openAppTarget(m)?.let { return launchApp(it) }
         if (m in setOf("time", "what time is it", "ساعت", "ساعت چنده", "ساعت چند است")) {

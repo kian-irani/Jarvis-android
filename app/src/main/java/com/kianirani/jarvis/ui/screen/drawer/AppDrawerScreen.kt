@@ -60,7 +60,13 @@ data class AppEntry(val label: String, val packageName: String, val icon: ImageB
 @HiltViewModel
 class AppDrawerViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
+    private val chatHistory: com.kianirani.jarvis.data.ai.ChatHistoryStore,
 ) : ViewModel() {
+    /** P6 AnySearch-lite: the same query also searches conversation memory. */
+    fun searchMemory(q: String): List<com.kianirani.jarvis.data.ai.ChatTurn> =
+        if (q.length < 3) emptyList()
+        else chatHistory.all().filter { it.text.contains(q, ignoreCase = true) }.takeLast(3)
+
     // P10 digital-twin-lite: launch counters drive the FREQUENT row.
     private val counts = context.getSharedPreferences("vision_app_usage", Context.MODE_PRIVATE)
     private val _apps = MutableStateFlow<List<AppEntry>>(emptyList())
@@ -145,6 +151,25 @@ fun AppDrawerScreen(vm: AppDrawerViewModel = hiltViewModel(), onBack: () -> Unit
             },
             modifier = Modifier.fillMaxWidth(),
         )
+        if (query.length >= 3) {
+            val memHits = vm.searchMemory(query)
+            if (memHits.isNotEmpty()) {
+                Text("MEMORY", style = MaterialTheme.typography.labelSmall, color = JarvisColors.CyanSecondary)
+                memHits.forEach { t ->
+                    Row(
+                        Modifier.fillMaxWidth()
+                            .border(1.dp, JarvisColors.Border, RoundedCornerShape(6.dp))
+                            .padding(horizontal = 10.dp, vertical = 6.dp),
+                    ) {
+                        Text(
+                            "${if (t.role == "user") "you" else "vision"}: ${t.text}",
+                            style = MaterialTheme.typography.bodySmall, color = JarvisColors.TextDim,
+                            maxLines = 2, overflow = TextOverflow.Ellipsis,
+                        )
+                    }
+                }
+            }
+        }
         if (frequent.isNotEmpty() && query.isBlank()) {
             Text("FREQUENT", style = MaterialTheme.typography.labelSmall, color = JarvisColors.CyanSecondary)
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
