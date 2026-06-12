@@ -102,7 +102,15 @@ class AppDrawerViewModel @Inject constructor(
     private fun loadApps(): List<AppEntry> {
         val pm = context.packageManager
         val intent = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER)
-        return pm.queryIntentActivities(intent, 0)
+        // MATCH_ALL + QUERY_ALL_PACKAGES: some OEM builds return an empty list
+        // for flag 0 once a third-party launcher holds HOME (user bug 2026-06-12).
+        @Suppress("DEPRECATION")
+        val resolved = if (android.os.Build.VERSION.SDK_INT >= 33) {
+            pm.queryIntentActivities(intent, android.content.pm.PackageManager.ResolveInfoFlags.of(android.content.pm.PackageManager.MATCH_ALL.toLong()))
+        } else {
+            pm.queryIntentActivities(intent, android.content.pm.PackageManager.MATCH_ALL)
+        }
+        return resolved
             .filter { it.activityInfo.packageName != context.packageName }
             .map {
                 AppEntry(
