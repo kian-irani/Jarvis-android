@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The Eye of Vision: arc-reactor iris. Safe zone = central 66dp circle. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp"
+    android:viewportWidth="108" android:viewportHeight="108">
+    <path android:pathData="M54,54m-26,0a26,26 0 1,1 52,0a26,26 0 1,1 -52,0"
+        android:strokeColor="#1FB6CD" android:strokeWidth="2.4"
+        android:fillColor="#00000000" android:strokeLineCap="round"
+        android:trimPathStart="0.02" android:trimPathEnd="0.23" />
+    <path android:pathData="M54,54m-26,0a26,26 0 1,1 52,0a26,26 0 1,1 -52,0"
+        android:strokeColor="#1FB6CD" android:strokeWidth="2.4"
+        android:fillColor="#00000000" android:strokeLineCap="round"
+        android:trimPathStart="0.27" android:trimPathEnd="0.48" />
+    <path android:pathData="M54,54m-26,0a26,26 0 1,1 52,0a26,26 0 1,1 -52,0"
+        android:strokeColor="#1FB6CD" android:strokeWidth="2.4"
+        android:fillColor="#00000000" android:strokeLineCap="round"
+        android:trimPathStart="0.52" android:trimPathEnd="0.73" />
+    <path android:pathData="M54,54m-26,0a26,26 0 1,1 52,0a26,26 0 1,1 -52,0"
+        android:strokeColor="#1FB6CD" android:strokeWidth="2.4"
+        android:fillColor="#00000000" android:strokeLineCap="round"
+        android:trimPathStart="0.77" android:trimPathEnd="0.98" />
+    <path android:pathData="M54,54m-20,0a20,20 0 1,1 40,0a20,20 0 1,1 -40,0"
+        android:strokeColor="#7C4DFF" android:strokeWidth="1.6"
+        android:fillColor="#00000000"
+        android:trimPathStart="0.05" android:trimPathEnd="0.95" />
+    <path android:pathData="M54,54m-15,0a15,15 0 1,1 30,0a15,15 0 1,1 -30,0" android:fillColor="#3A2C8F" />
+    <path android:pathData="M54,54m-12,0a12,12 0 1,1 24,0a12,12 0 1,1 -24,0" android:fillColor="#22D3EE" />
+    <path android:pathData="M54,54m-6.5,0a6.5,6.5 0 1,1 13,0a6.5,6.5 0 1,1 -13,0" android:fillColor="#070B14" />
+    <path android:pathData="M50.5,50.5m-1.6,0a1.6,1.6 0 1,1 3.2,0a1.6,1.6 0 1,1 -3.2,0" android:fillColor="#EAF8FF" />
+</vector>
