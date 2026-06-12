@@ -31,7 +31,7 @@ data class HudUiState(
     val currentTime: String = "", val eventLog: List<LogEvent> = emptyList()
 )
 
-@Composable fun HudScreen(viewModel: HudViewModel, onOpenElection: () -> Unit = {}) {
+@Composable fun HudScreen(viewModel: HudViewModel, onOpenElection: () -> Unit = {}, onOpenAiSettings: () -> Unit = {}) {
     val state by viewModel.uiState.collectAsState()
     val wide = LocalConfiguration.current.screenWidthDp > 600
     // Background art runs edge-to-edge under the system bars; interactive
@@ -39,7 +39,7 @@ data class HudUiState(
     Box(Modifier.fillMaxSize().background(JarvisColors.Background)) {
         HexGrid(Modifier.fillMaxSize()); ScanLine(Modifier.fillMaxSize())
         Box(Modifier.fillMaxSize().systemBarsPadding()) {
-            CompositionLocalProvider(LocalOpenElection provides onOpenElection) {
+            CompositionLocalProvider(LocalOpenElection provides onOpenElection, LocalOpenAiSettings provides onOpenAiSettings) {
                 if (wide) LandscapeLayout(state, viewModel) else PortraitLayout(state, viewModel)
             }
             CornerBrackets(Modifier.fillMaxSize())
@@ -49,6 +49,7 @@ data class HudUiState(
 
 /** Tap the JARVIS logo in the TopBar to open the Brain Election screen. */
 val LocalOpenElection = staticCompositionLocalOf<() -> Unit> { {} }
+val LocalOpenAiSettings = staticCompositionLocalOf<() -> Unit> { {} }
 
 @Composable fun PortraitLayout(s: HudUiState, vm: HudViewModel) {
     Column(Modifier.fillMaxSize()) {
@@ -98,6 +99,10 @@ val LocalOpenElection = staticCompositionLocalOf<() -> Unit> { {} }
             }
         }
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            val openAi = LocalOpenAiSettings.current
+            Box(Modifier.clip(RoundedCornerShape(3.dp)).border(1.dp, JarvisColors.Border, RoundedCornerShape(3.dp)).clickable(onClick = openAi).padding(horizontal = 10.dp, vertical = 4.dp)) {
+                Text("AI", style = MaterialTheme.typography.labelMedium, color = JarvisColors.TextDim)
+            }
             Box(Modifier.clip(RoundedCornerShape(3.dp)).background(if (s.isListening) JarvisColors.CyanFaint else Color.Transparent).border(1.dp, if (s.isListening) JarvisColors.CyanPrimary else JarvisColors.Border, RoundedCornerShape(3.dp)).clickable(onClick = vm::toggleListening).padding(horizontal = 10.dp, vertical = 4.dp)) {
                 Text(if (s.isListening) "MIC ON" else "MIC", style = MaterialTheme.typography.labelMedium, color = if (s.isListening) JarvisColors.CyanPrimary else JarvisColors.TextDim)
             }

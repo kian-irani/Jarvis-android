@@ -10,6 +10,8 @@ import com.kianirani.jarvis.brain.discovery.NsdDiscovery
 import com.kianirani.jarvis.brain.discovery.NsdDiscoveryScanner
 import com.kianirani.jarvis.brain.score.AndroidDeviceMetricsProvider
 import com.kianirani.jarvis.brain.score.LocalDeviceMetricsProvider
+import com.kianirani.jarvis.data.ai.AiProviderStore
+import com.kianirani.jarvis.data.ai.PrefsAiProviderStore
 import com.kianirani.jarvis.data.repository.BrainRepository
 import dagger.Module
 import dagger.Provides
@@ -38,4 +40,8 @@ object AppModule {
     @Provides @Singleton
     fun provideBrainSelectionStore(@ApplicationContext ctx: Context): BrainSelectionStore =
         PrefsBrainSelectionStore(ctx)
+
+    @Provides @Singleton
+    fun provideAiProviderStore(@ApplicationContext ctx: Context): AiProviderStore =
+        PrefsAiProviderStore(ctx)
 }
