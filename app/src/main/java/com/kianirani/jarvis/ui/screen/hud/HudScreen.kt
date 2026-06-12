@@ -54,7 +54,7 @@ val LocalOpenAiSettings = staticCompositionLocalOf<() -> Unit> { {} }
 
 @Composable fun PortraitLayout(s: HudUiState, vm: HudViewModel) {
     Column(Modifier.fillMaxSize()) {
-        TopBar(s, vm, Modifier.fillMaxWidth())
+        TopBar(s.brainOnline, s.nodesOnline, s.groqOnline, s.isListening, s.currentTime, vm::toggleListening, Modifier.fillMaxWidth())
         Row(Modifier.fillMaxWidth().weight(1f).padding(8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Column(Modifier.weight(0.42f).fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 s.nodes.forEachIndexed { i, n -> NodeCard(n, Modifier.fillMaxWidth().visionEnter(i)) }
@@ -72,7 +72,7 @@ val LocalOpenAiSettings = staticCompositionLocalOf<() -> Unit> { {} }
 
 @Composable fun LandscapeLayout(s: HudUiState, vm: HudViewModel) {
     Column(Modifier.fillMaxSize()) {
-        TopBar(s, vm, Modifier.fillMaxWidth())
+        TopBar(s.brainOnline, s.nodesOnline, s.groqOnline, s.isListening, s.currentTime, vm::toggleListening, Modifier.fillMaxWidth())
         Row(Modifier.fillMaxWidth().weight(1f).padding(12.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             Column(Modifier.width(200.dp).fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(8.dp)) { s.nodes.forEach { NodeCard(it, Modifier.fillMaxWidth()) }; MetricPanel(s, Modifier.fillMaxWidth().weight(1f)) }
             Column(Modifier.weight(1f).fillMaxHeight(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(10.dp)) { OrbPanel(s, Modifier.fillMaxWidth().weight(1f)); TypewriterPanel(s.jarvisOutput, Modifier.fillMaxWidth()); InputBar(s.inputText, vm::onInputChange, vm::sendChat, Modifier.fillMaxWidth()) }
@@ -82,7 +82,15 @@ val LocalOpenAiSettings = staticCompositionLocalOf<() -> Unit> { {} }
     }
 }
 
-@Composable fun TopBar(s: HudUiState, vm: HudViewModel, modifier: Modifier) {
+@Composable fun TopBar(
+    brainOnline: Boolean,
+    nodesOnline: Int,
+    groqOnline: Boolean,
+    isListening: Boolean,
+    currentTime: String,
+    onToggleListening: () -> Unit,
+    modifier: Modifier,
+) {
     Row(modifier.height(52.dp).background(Brush.horizontalGradient(listOf(JarvisColors.CyanFaint, Color.Transparent, JarvisColors.CyanFaint))).padding(horizontal = 14.dp),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -93,7 +101,7 @@ val LocalOpenAiSettings = staticCompositionLocalOf<() -> Unit> { {} }
             Column { Text("VISION", style = MaterialTheme.typography.headlineLarge, color = VisionColors.CyanPrimary); Text("v16.0.0", style = MaterialTheme.typography.labelSmall, color = VisionColors.TextDim) }
         }
         Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            listOf("BRAIN" to s.brainOnline, "NODES" to (s.nodesOnline > 0), "GROQ" to s.groqOnline).forEach { (lbl, ok) ->
+            listOf("BRAIN" to brainOnline, "NODES" to (nodesOnline > 0), "GROQ" to groqOnline).forEach { (lbl, ok) ->
                 val c = if (ok) JarvisColors.NeonGreen else JarvisColors.DangerRed
                 Column(Modifier.border(1.dp, c.copy(alpha = 0.3f), RoundedCornerShape(3.dp)).background(c.copy(alpha = 0.05f), RoundedCornerShape(3.dp)).padding(horizontal = 8.dp, vertical = 3.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(lbl, style = MaterialTheme.typography.labelSmall, color = JarvisColors.TextDim)
@@ -106,10 +114,10 @@ val LocalOpenAiSettings = staticCompositionLocalOf<() -> Unit> { {} }
             Box(Modifier.clip(RoundedCornerShape(3.dp)).border(1.dp, JarvisColors.Border, RoundedCornerShape(3.dp)).clickable(onClick = openAi).padding(horizontal = 10.dp, vertical = 4.dp)) {
                 Text("AI", style = MaterialTheme.typography.labelMedium, color = JarvisColors.TextDim)
             }
-            Box(Modifier.clip(RoundedCornerShape(3.dp)).background(if (s.isListening) JarvisColors.CyanFaint else Color.Transparent).border(1.dp, if (s.isListening) JarvisColors.CyanPrimary else JarvisColors.Border, RoundedCornerShape(3.dp)).clickable(onClick = vm::toggleListening).padding(horizontal = 10.dp, vertical = 4.dp)) {
-                Text(if (s.isListening) "MIC ON" else "MIC", style = MaterialTheme.typography.labelMedium, color = if (s.isListening) JarvisColors.CyanPrimary else JarvisColors.TextDim)
+            Box(Modifier.clip(RoundedCornerShape(3.dp)).background(if (isListening) JarvisColors.CyanFaint else Color.Transparent).border(1.dp, if (isListening) JarvisColors.CyanPrimary else JarvisColors.Border, RoundedCornerShape(3.dp)).clickable(onClick = onToggleListening).padding(horizontal = 10.dp, vertical = 4.dp)) {
+                Text(if (isListening) "MIC ON" else "MIC", style = MaterialTheme.typography.labelMedium, color = if (isListening) JarvisColors.CyanPrimary else JarvisColors.TextDim)
             }
-            Column(horizontalAlignment = Alignment.End) { Text(s.currentTime, style = MaterialTheme.typography.headlineMedium, color = JarvisColors.CyanPrimary); Text("UTC+3:30", style = MaterialTheme.typography.labelSmall, color = JarvisColors.TextDim) }
+            Column(horizontalAlignment = Alignment.End) { Text(currentTime, style = MaterialTheme.typography.headlineMedium, color = JarvisColors.CyanPrimary); Text("UTC+3:30", style = MaterialTheme.typography.labelSmall, color = JarvisColors.TextDim) }
         }
     }
 }
@@ -150,6 +158,10 @@ val LocalOpenAiSettings = staticCompositionLocalOf<() -> Unit> { {} }
     Box(modifier.glassPanel(radius = 8.dp)) { content() }
 }
 
+private val AuroraVioletColors = listOf(VisionColors.Violet.copy(alpha = 0.30f), Color.Transparent)
+private val AuroraCyanColors = listOf(VisionColors.CyanSecondary.copy(alpha = 0.22f), Color.Transparent)
+private val AuroraMagentaColors = listOf(VisionColors.Magenta.copy(alpha = 0.16f), Color.Transparent)
+
 /** Slow drifting plasma aurora behind the whole HUD — pure graphicsLayer, no recomposition. */
 @Composable fun PlasmaAurora(modifier: Modifier) {
     val inf = rememberInfiniteTransition(label = "aurora")
@@ -157,15 +169,15 @@ val LocalOpenAiSettings = staticCompositionLocalOf<() -> Unit> { {} }
     Canvas(modifier.alpha(0.5f)) {
         val w = size.width; val h = size.height
         drawCircle(
-            Brush.radialGradient(listOf(VisionColors.Violet.copy(alpha = 0.30f), Color.Transparent), Offset(w * (0.2f + 0.2f * t), h * 0.25f), w * 0.7f),
+            Brush.radialGradient(AuroraVioletColors, Offset(w * (0.2f + 0.2f * t), h * 0.25f), w * 0.7f),
             radius = w * 0.7f, center = Offset(w * (0.2f + 0.2f * t), h * 0.25f),
         )
         drawCircle(
-            Brush.radialGradient(listOf(VisionColors.CyanSecondary.copy(alpha = 0.22f), Color.Transparent), Offset(w * (0.85f - 0.2f * t), h * 0.8f), w * 0.6f),
+            Brush.radialGradient(AuroraCyanColors, Offset(w * (0.85f - 0.2f * t), h * 0.8f), w * 0.6f),
             radius = w * 0.6f, center = Offset(w * (0.85f - 0.2f * t), h * 0.8f),
         )
         drawCircle(
-            Brush.radialGradient(listOf(VisionColors.Magenta.copy(alpha = 0.16f), Color.Transparent), Offset(w * (0.6f + 0.15f * t), h * (0.55f - 0.1f * t)), w * 0.5f),
+            Brush.radialGradient(AuroraMagentaColors, Offset(w * (0.6f + 0.15f * t), h * (0.55f - 0.1f * t)), w * 0.5f),
             radius = w * 0.5f, center = Offset(w * (0.6f + 0.15f * t), h * (0.55f - 0.1f * t)),
         )
     }

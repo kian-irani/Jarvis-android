@@ -79,7 +79,8 @@ fun BrainElectionScreen(viewModel: BrainElectionViewModel = hiltViewModel()) {
 @Composable
 private fun NodeScoreCard(node: BrainNodeUi, maxScore: Int, index: Int, onTap: () -> Unit) {
     val inf = rememberInfiniteTransition(label = "elect")
-    val electGlow by inf.animateFloat(0.3f, 0.9f, infiniteRepeatable(tween(2000), RepeatMode.Reverse), label = "eg")
+    val electGlowAnimated by inf.animateFloat(0.3f, 0.9f, infiniteRepeatable(tween(2000), RepeatMode.Reverse), label = "eg")
+    val electGlow = if (node.isElected) electGlowAnimated else 0.3f
     val borderColor = when {
         node.isElected -> VisionColors.CyanPrimary.copy(alpha = electGlow)
         !node.online -> VisionColors.TextDim

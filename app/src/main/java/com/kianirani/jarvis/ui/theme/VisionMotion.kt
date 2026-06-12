@@ -7,6 +7,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -49,7 +50,7 @@ fun Modifier.visionEnter(index: Int = 0): Modifier {
         label = "visionEnter",
     )
     // Kick off on first composition; stagger by index.
-    remember(index) { shown = true; index }
+    LaunchedEffect(index) { shown = true }
     return this.graphicsLayer {
         alpha = p
         translationY = (1f - p) * 42f
