@@ -150,8 +150,11 @@ val LocalOpenQuickPanel = staticCompositionLocalOf<() -> Unit> { {} }
  * under it, conversation panel, command bar, then a launcher dock.
  */
 @Composable fun PortraitLayout(s: HudUiState, vm: HudViewModel) {
+    val appsVm: com.kianirani.jarvis.ui.screen.drawer.AppDrawerViewModel = androidx.hilt.navigation.compose.hiltViewModel()
+    val frequent by appsVm.frequent.collectAsState()
+    LaunchedEffect(Unit) { appsVm.refresh() }
     Column(Modifier.fillMaxSize()) {
-        TopBar(s.brainOnline, s.nodesOnline, s.groqOnline, s.isListening, s.currentTime, vm::toggleListening, Modifier.fillMaxWidth())
+        PortraitTopBar(s, Modifier.fillMaxWidth())
         Column(
             Modifier.fillMaxWidth().weight(1f).padding(horizontal = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -165,18 +168,88 @@ val LocalOpenQuickPanel = staticCompositionLocalOf<() -> Unit> { {} }
                 if (s.isListening) "● LISTENING — speak now" else "tap the eye to talk",
                 style = MaterialTheme.typography.labelMedium,
                 color = if (s.isListening) JarvisColors.NeonGreen else JarvisColors.TextDim,
-                modifier = Modifier.padding(bottom = 10.dp),
+                modifier = Modifier.padding(bottom = 8.dp),
             )
             StatusConstellation(s, Modifier.fillMaxWidth().visionEnter(1))
+            Spacer(Modifier.height(8.dp))
+            FrequentAppsRow(frequent, appsVm::launch, Modifier.fillMaxWidth().visionEnter(2))
+            Spacer(Modifier.height(8.dp))
+            TypewriterPanel(s.jarvisOutput, Modifier.fillMaxWidth().visionEnter(3))
+            Spacer(Modifier.height(8.dp))
+            InputBar(s.inputText, vm::onInputChange, vm::sendChat, Modifier.fillMaxWidth().visionEnter(4))
             Spacer(Modifier.height(10.dp))
-            TypewriterPanel(s.jarvisOutput, Modifier.fillMaxWidth().visionEnter(2))
-            Spacer(Modifier.height(10.dp))
-            InputBar(s.inputText, vm::onInputChange, vm::sendChat, Modifier.fillMaxWidth().visionEnter(3))
-            Spacer(Modifier.height(12.dp))
-            LauncherDock(s.isListening, vm::toggleListening, Modifier.fillMaxWidth().visionEnter(4))
+            LauncherDock(s.isListening, vm::toggleListening, Modifier.fillMaxWidth().visionEnter(5))
             Spacer(Modifier.height(8.dp))
         }
-        WaveformBar(s.waveformAmplitudes, s.isListening, Modifier.fillMaxWidth().height(48.dp))
+        WaveformBar(s.waveformAmplitudes, s.isListening, Modifier.fillMaxWidth().height(40.dp))
+    }
+}
+
+/**
+ * Slim portrait top bar (REDESIGN 2026-06-12, user feedback: the old bar crammed
+ * logo + 3 chips + buttons + clock into one row and the clock looked terrible).
+ * Now: VISION mark on the left, a large breathing clock on the right. Status
+ * lives in the constellation under the eye, so it isn't duplicated here.
+ */
+@Composable fun PortraitTopBar(s: HudUiState, modifier: Modifier) {
+    val openElection = LocalOpenElection.current
+    Row(
+        modifier.height(56.dp).padding(horizontal = 18.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween,
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Box(
+                Modifier.size(34.dp).clip(RoundedCornerShape(8.dp)).background(VisionColors.PlasmaSweep)
+                    .clickable(onClick = openElection),
+                Alignment.Center,
+            ) { Text("V", color = VisionColors.Background, style = MaterialTheme.typography.titleMedium) }
+            Text("VISION", style = MaterialTheme.typography.titleLarge, color = VisionColors.CyanPrimary)
+        }
+        Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            Text(s.currentTime, style = MaterialTheme.typography.displaySmall, color = JarvisColors.CyanPrimary)
+            Text("UTC+3:30", style = MaterialTheme.typography.labelSmall, color = JarvisColors.TextDim, modifier = Modifier.padding(bottom = 6.dp))
+        }
+    }
+}
+
+/**
+ * Frequently-used apps, right on the home screen (user feedback: needs real
+ * launcher features). A horizontal strip of live app icons + an ALL tile to the
+ * full drawer — so the most-used apps sit one tap from the eye.
+ */
+@Composable fun FrequentAppsRow(
+    apps: List<com.kianirani.jarvis.ui.screen.drawer.AppEntry>,
+    onLaunch: (String) -> Unit,
+    modifier: Modifier,
+) {
+    val openApps = LocalOpenApps.current
+    Row(
+        modifier.glassPanel(radius = 16.dp).padding(horizontal = 10.dp, vertical = 8.dp),
+        horizontalArrangement = Arrangement.SpaceEvenly,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        apps.take(4).forEach { app ->
+            Column(
+                Modifier.clip(RoundedCornerShape(12.dp)).clickable { onLaunch(app.packageName) }
+                    .padding(horizontal = 6.dp, vertical = 4.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Image(app.icon, contentDescription = app.label, Modifier.size(40.dp))
+                Text(app.label.take(8), style = MaterialTheme.typography.labelSmall, color = JarvisColors.TextDim, maxLines = 1)
+            }
+        }
+        Column(
+            Modifier.clip(RoundedCornerShape(12.dp)).clickable(onClick = openApps).padding(horizontal = 6.dp, vertical = 4.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Box(
+                Modifier.size(40.dp).clip(RoundedCornerShape(10.dp))
+                    .background(JarvisColors.CyanFaint).border(1.dp, JarvisColors.CyanSecondary.copy(alpha = 0.5f), RoundedCornerShape(10.dp)),
+                Alignment.Center,
+            ) { Text("▦", style = MaterialTheme.typography.titleMedium, color = JarvisColors.CyanPrimary) }
+            Text("ALL", style = MaterialTheme.typography.labelSmall, color = JarvisColors.TextDim)
+        }
     }
 }
 
