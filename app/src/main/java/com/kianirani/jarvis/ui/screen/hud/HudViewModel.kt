@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.kianirani.jarvis.data.repository.ApiNode
 import com.kianirani.jarvis.data.repository.BrainEvent
 import com.kianirani.jarvis.data.repository.BrainRepository
+import com.kianirani.jarvis.voice.VoiceController
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -24,7 +25,10 @@ import kotlin.math.sin
 private val IDLE = listOf("All systems operational.", "3 nodes online.", "Groq ready.", "Awaiting command.")
 
 @HiltViewModel
-class HudViewModel @Inject constructor(private val brain: BrainRepository) : ViewModel() {
+class HudViewModel @Inject constructor(
+    private val brain: BrainRepository,
+    private val voice: VoiceController,
+) : ViewModel() {
     private val _state = MutableStateFlow(HudUiState())
     val uiState: StateFlow<HudUiState> = _state.asStateFlow()
     private val timeFmt = SimpleDateFormat("HH:mm:ss", Locale.US)
@@ -86,15 +90,31 @@ class HudViewModel @Inject constructor(private val brain: BrainRepository) : Vie
     fun sendChat() {
         val msg = _state.value.inputText.trim(); if (msg.isEmpty()) return
         _state.update { it.copy(inputText = "", jarvisOutput = "") }; stopIdle(); addLog("You: $msg", "info")
-        viewModelScope.launch { typeText("Processing..."); brain.chat(msg).onSuccess { resp -> typeText(resp.response); addLog("AI: ${resp.duration_ms}ms", "ok") }.onFailure { e -> typeText("Error: ${e.message}"); addLog("Failed", "err") } }
+        viewModelScope.launch { typeText("Processing..."); brain.chat(msg).onSuccess { resp -> typeText(resp.response); voice.speak(resp.response); addLog("AI: ${resp.duration_ms}ms", "ok") }.onFailure { e -> typeText("Error: ${e.message}"); addLog("Failed", "err") } }
     }
 
-    fun toggleListening() { val now = !_state.value.isListening; _state.update { it.copy(isListening = now) }; if (now) { addLog("Voice on", "ok"); typeText("Listening...") } else addLog("Voice off", "info") }
+    fun toggleListening() {
+        val now = !_state.value.isListening
+        _state.update { it.copy(isListening = now) }
+        if (now) {
+            addLog("Voice on", "ok"); typeText("Listening...")
+            voice.startListening(
+                onResult = { heard ->
+                    _state.update { it.copy(inputText = heard) }
+                    addLog("Heard: $heard", "info")
+                    sendChat()
+                },
+                onEnd = { _state.update { it.copy(isListening = false) } },
+            )
+        } else {
+            voice.stopListening(); addLog("Voice off", "info")
+        }
+    }
 
     private fun typeText(text: String) { typeJob?.cancel(); typeJob = viewModelScope.launch { _state.update { it.copy(jarvisOutput = "") }; var cur = ""; for (ch in text) { cur += ch; _state.update { it.copy(jarvisOutput = cur) }; delay(28L + (0..18).random()) } } }
     private fun appendText(d: String) = _state.update { it.copy(jarvisOutput = it.jarvisOutput + d) }
     private fun startIdle() { if (idleJob?.isActive == true) return; idleJob = viewModelScope.launch { var i = 0; while (isActive) { typeText(IDLE[i++ % IDLE.size]); delay(4_500) } } }
     private fun stopIdle() { idleJob?.cancel(); idleJob = null }
     private fun addLog(msg: String, level: String) { val lv = when (level) { "ok" -> EventLevel.OK; "warn" -> EventLevel.WARN; "err" -> EventLevel.ERR; else -> EventLevel.INFO }; _state.update { it.copy(eventLog = (it.eventLog + LogEvent(logFmt.format(Date()), msg, lv)).takeLast(50)) } }
-    override fun onCleared() { super.onCleared(); brain.close() }
+    override fun onCleared() { super.onCleared(); voice.release(); brain.close() }
 }
