@@ -104,8 +104,9 @@ private fun MeshNodeScript(payload: JoinPayload) {
     val clipboard = LocalClipboardManager.current
     val script = remember(payload) {
         "curl -sL https://raw.githubusercontent.com/kian-irani/Jarvis-android/main/node-agent/agent.py " +
-            "-o vision-node.py && python3 vision-node.py " +
-            "--host ${payload.host} --port ${payload.port} --token ${payload.token}"
+            "-o vision-node.py && nohup python3 vision-node.py " +
+            "--host ${payload.host} --port ${payload.port} --token ${payload.token} " +
+            "> vision-node.log 2>&1 & sleep 2 && tail -2 vision-node.log"
     }
     Column(Modifier.fillMaxWidth()) {
         Text(

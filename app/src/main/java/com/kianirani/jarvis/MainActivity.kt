@@ -31,15 +31,25 @@ enum class VisionRoute { SETUP, HUD, ELECTION, AI_SETTINGS, APPS, SETTINGS }
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-    private val micPermission =
-        registerForActivityResult(ActivityResultContracts.RequestPermission()) { /* voice stays off if denied */ }
+    private val permissions =
+        registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { /* features degrade per-permission if denied */ }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
-            micPermission.launch(Manifest.permission.RECORD_AUDIO)
-        }
+        // Vision needs mic (voice), camera (QR pairing) and notifications (brain
+        // service) — ask for everything missing on first launch (user directive).
+        val wanted = buildList {
+            add(Manifest.permission.RECORD_AUDIO)
+            add(Manifest.permission.CAMERA)
+            if (android.os.Build.VERSION.SDK_INT >= 33) add(Manifest.permission.POST_NOTIFICATIONS)
+        }.filter { checkSelfPermission(it) != PackageManager.PERMISSION_GRANTED }
+        if (wanted.isNotEmpty()) permissions.launch(wanted.toTypedArray())
+        // Standalone brain: the on-device Brain-Lite server must be alive for
+        // BRAIN=ONLINE without any second device.
+        androidx.core.content.ContextCompat.startForegroundService(
+            this, android.content.Intent(this, com.kianirani.jarvis.brain.BrainLiteService::class.java),
+        )
         val prefs = getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         setContent {
             JarvisTheme {

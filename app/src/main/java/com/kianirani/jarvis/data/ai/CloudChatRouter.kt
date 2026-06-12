@@ -99,8 +99,9 @@ class CloudChatRouter @Inject constructor(
                 header("x-api-key", token); header("anthropic-version", "2023-06-01")
                 contentType(ContentType.Application.Json); setBody(body.toString())
             }
-            check(resp.status.isSuccess()) { "Anthropic ${resp.status}" }
-            parse(resp.bodyAsText())["content"]!!.jsonArray.first().jsonObject["text"]!!.jsonPrimitive.content
+            val raw = resp.bodyAsText()
+            check(resp.status.isSuccess()) { "Anthropic ${resp.status}: ${raw.take(160)}" }
+            parse(raw)["content"]!!.jsonArray.first().jsonObject["text"]!!.jsonPrimitive.content
         }
         AiProvider.GEMINI -> {
             val body = buildJsonObject {
@@ -121,8 +122,9 @@ class CloudChatRouter @Inject constructor(
                 header("x-goog-api-key", token)
                 contentType(ContentType.Application.Json); setBody(body.toString())
             }
-            check(resp.status.isSuccess()) { "Gemini ${resp.status}" }
-            parse(resp.bodyAsText())["candidates"]!!.jsonArray.first()
+            val raw = resp.bodyAsText()
+            check(resp.status.isSuccess()) { "Gemini ${resp.status}: ${raw.take(160)}" }
+            parse(raw)["candidates"]!!.jsonArray.first()
                 .jsonObject["content"]!!.jsonObject["parts"]!!.jsonArray.first()
                 .jsonObject["text"]!!.jsonPrimitive.content
         }
@@ -140,8 +142,9 @@ class CloudChatRouter @Inject constructor(
                 header("Authorization", "Bearer $token")
                 contentType(ContentType.Application.Json); setBody(body.toString())
             }
-            check(resp.status.isSuccess()) { "${p.name} ${resp.status}" }
-            parse(resp.bodyAsText())["choices"]!!.jsonArray.first()
+            val raw = resp.bodyAsText()
+            check(resp.status.isSuccess()) { "${p.name} ${resp.status}: ${raw.take(160)}" }
+            parse(raw)["choices"]!!.jsonArray.first()
                 .jsonObject["message"]!!.jsonObject["content"]!!.jsonPrimitive.content
         }
     }

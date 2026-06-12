@@ -38,14 +38,24 @@ class AndroidVoiceController(
     private var recognizer: SpeechRecognizer? = null
     private var tts: TextToSpeech? = null
     private var ttsReady = false
+    private var pendingSpeech: String? = null
 
     override val available: Boolean
         get() = SpeechRecognizer.isRecognitionAvailable(context)
 
     init {
         tts = TextToSpeech(context) { status ->
-            ttsReady = status == TextToSpeech.SUCCESS
-            if (ttsReady) tts?.language = Locale.US
+            main.post {
+                ttsReady = status == TextToSpeech.SUCCESS
+                if (ttsReady) {
+                    // Prefer the device locale; fall back to US English.
+                    if (tts?.setLanguage(Locale.getDefault()) ?: TextToSpeech.LANG_MISSING_DATA < TextToSpeech.LANG_AVAILABLE) {
+                        tts?.language = Locale.US
+                    }
+                    // Replies requested before the engine came up must not be lost.
+                    pendingSpeech?.let { speak(it) }; pendingSpeech = null
+                }
+            }
         }
     }
 
@@ -98,6 +108,8 @@ class AndroidVoiceController(
                 // P7 persona: user-tuned delivery style.
                 settings?.let { tts?.setSpeechRate(it.speechRate.value); tts?.setPitch(it.voicePitch.value) }
                 tts?.speak(text, TextToSpeech.QUEUE_FLUSH, null, "vision-reply")
+            } else {
+                pendingSpeech = text
             }
         }
     }

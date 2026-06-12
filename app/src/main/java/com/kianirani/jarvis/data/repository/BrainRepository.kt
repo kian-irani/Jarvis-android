@@ -71,7 +71,9 @@ class BrainRepository @Inject constructor(
     private val _connected = MutableStateFlow(false)
     val connected: StateFlow<Boolean> = _connected.asStateFlow()
 
-    private fun baseUrl(): String? = store.load()?.let { "http://${it.host}:${it.port}" }
+    /** Paired brain wins; otherwise the on-device Brain-Lite at localhost (standalone mode). */
+    private fun baseUrl(): String? =
+        store.load()?.let { "http://${it.host}:${it.port}" } ?: "http://127.0.0.1:7799"
 
     private fun noBrain() = IllegalStateException("No brain paired")
 
