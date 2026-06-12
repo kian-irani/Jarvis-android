@@ -137,6 +137,9 @@ fun SettingsHubScreen(
             NavRow("Device Control", "enable Home/Back/Recents by voice (Accessibility)") {
                 runCatching { ctx.startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
             }
+            NavRow("Notification Access", "let Vision read your notifications when asked") {
+                runCatching { ctx.startActivity(Intent("android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
+            }
         }
         Section("ABOUT", 8) {
             InfoRow("Version", "VISION v${com.kianirani.jarvis.BuildConfig.VERSION_NAME} — Sovereign Intelligence")

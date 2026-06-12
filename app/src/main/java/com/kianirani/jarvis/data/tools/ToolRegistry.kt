@@ -13,8 +13,9 @@ class ToolRegistry @Inject constructor(
     flashlight: FlashlightTool,
     deviceSettings: DeviceSettingsTool,
     navigation: NavigationTool,
+    notifications: NotificationTool,
 ) {
-    private val tools: List<Tool> = listOf(flashlight, deviceSettings, navigation)
+    private val tools: List<Tool> = listOf(flashlight, deviceSettings, navigation, notifications)
 
     /** Ids of registered tools — useful for diagnostics / future tool-calling. */
     val ids: List<String> get() = tools.map { it.id }
