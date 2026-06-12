@@ -14,6 +14,7 @@
 [![Local-First](https://img.shields.io/badge/AI-Local--First%20·%20Offline-9cf?style=for-the-badge)](ROADMAP.md)
 [![Activation](https://img.shields.io/badge/Activation-via%20kiancdn%20bot-0088cc?style=for-the-badge&logo=telegram)](docs/ACTIVATION.md)
 [![Contribute](https://img.shields.io/badge/Contributors-Welcome%20(CLA)-cyan?style=for-the-badge)](CONTRIBUTING.md)
+[![Download APK](https://img.shields.io/badge/Download-VISION%20v16%20APK-00E5FF?style=for-the-badge&logo=android&logoColor=black)](https://github.com/kian-irani/Jarvis-android/releases/latest)
 
 </div>
 

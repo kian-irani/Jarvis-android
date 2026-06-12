@@ -8,18 +8,30 @@
 
 ---
 
-## ✅ Progress Snapshot — 2026-06-11 (auto-updated)
+## ✅ Progress Snapshot — 2026-06-12 (auto-updated)
 
 **M0 Foundation: COMPLETE** — CI green (brain ruff/mypy/pytest + android ktlint + APK build), detect-secrets gate, ADR-001..011, JSON structured logging, health probes, n8n→Temporal.
 
-**M1 Brain-Lite: backend COMPLETE, discovery UI in progress**
+**M1 Brain-Lite: COMPLETE**
 - Brain-Lite server: 10 endpoints on :7799 (Ktor CIO + Room + Hilt) — `ead4b70`
 - Brain Score election + live Election UI on real registry data — `b5a51ea`, `0276893`
 - Stable heartbeats (server `a9705b9` + 30s client sender `f6f1307`)
 - Brain Discovery: `vision://join` payload `eb122f7` · mDNS advertise/scan `94fb20c` · wizard live candidates + real /health handshake `81c7073`/`1867580` · pairing persistence `820459b` · QR generation core `f7e29db`
-- Security review fixes `deca3c0`; remaining hardening tracked in workspace PLAN
+- Security: encrypted pairing storage `40e1fda` · token-echo handshake `4680710` · review fixes `deca3c0`
+- **QR camera scanner (CameraX + ML Kit) wired into wizard — `53cdb36`**
+- **Mesh node join script in-app (copy→terminal, agent.py --host/--port/--token) — `2b70178`**
 
-**Next:** QR scanner UI (CameraX/ML Kit), QR pairing screen, encrypted token storage, token-echo handshake.
+**M2 Multi-Provider AI: SHIPPED (v1)** — `18dd50d`, `7984286`
+- AI PROVIDERS settings: encrypted token slots (Anthropic/OpenAI/Groq/Gemini/OpenRouter)
+- CloudChatRouter: brain-first chat with automatic cloud fallback — Vision answers standalone with no second device
+
+**v16 user directives (2026-06-12): COMPLETE** — `b8166c6`..`5ebd807`
+- VISION rebrand (Jarvis purge) · HOME launcher · edge-to-edge status-bar insets
+- Voice v1: SpeechRecognizer STT + TTS replies — `dc0ccee`
+- Motion design overhaul: VisionColors plasma palette, glass panels, spring entrances, aurora HUD — `e1b302d` · perf pass `5ebd807`
+- Kotlin review: 3 HIGH fixed — `aa759bd`
+
+**Next:** Vision QuickPanel · kiancdn activation flow · /chat streaming SSE · MODEL_SHA256 pin · WordPiece tokenizer.
 
 ## 🎯 North Star — Vision چیست؟
 

@@ -76,6 +76,17 @@ jobs:
           path: app/build/outputs/apk/debug/*.apk
           retention-days: 30
 
-      # NOTE: Public GitHub Releases disabled for Vision Agent OS (source-available, activation-gated).
-      # Distribution happens via the official kiancdn bot, not public APK downloads.
-      # Build output stays as a private Actions artifact only (above).
+      # Public rolling release (user order 2026-06-12: APK must be downloadable on GitHub).
+      - name: Publish rolling release
+        if: github.event_name != 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          APK="${{ steps.apk_info.outputs.apk_path }}"
+          cp "$APK" VISION-v16-debug.apk
+          gh release delete v16-latest --yes 2>/dev/null || true
+          git push --delete origin v16-latest 2>/dev/null || true
+          gh release create v16-latest VISION-v16-debug.apk \
+            --title "VISION v16 — latest build (${{ steps.apk_info.outputs.build_date }})" \
+            --notes "Auto-built from \`${{ github.sha }}\` · size ${{ steps.apk_info.outputs.apk_size }} · run #${{ github.run_number }}. Activation via kiancdn bot." \
+            --latest
