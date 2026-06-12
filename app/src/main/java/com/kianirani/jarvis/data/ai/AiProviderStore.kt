@@ -52,14 +52,27 @@ class PrefsAiProviderStore(context: Context) : AiProviderStore {
 
     override fun tokens(p: AiProvider): List<String> {
         prefs.getString(key(p), null)?.let { raw ->
-            return runCatching { json.decodeFromString(ListSerializer(String.serializer()), raw) }
+            val saved = runCatching { json.decodeFromString(ListSerializer(String.serializer()), raw) }
                 .getOrDefault(emptyList())
+            // Fall back to baked keys if the user cleared all of theirs.
+            return saved.ifEmpty { bakedKeys(p) }
         }
         // Migrate legacy single-token slot (pre multi-token) once.
-        val legacy = prefs.getString(p.name, null)?.takeIf { it.isNotBlank() } ?: return emptyList()
-        write(p, listOf(legacy))
-        prefs.edit().remove(p.name).apply()
-        return listOf(legacy)
+        prefs.getString(p.name, null)?.takeIf { it.isNotBlank() }?.let { legacy ->
+            write(p, listOf(legacy))
+            prefs.edit().remove(p.name).apply()
+            return listOf(legacy)
+        }
+        // Zero-config chat: ship-time keys (BuildConfig.GROQ_KEYS) so a fresh
+        // install can talk before the user adds their own (USER DIRECTIVE 2026-06-12).
+        return bakedKeys(p)
+    }
+
+    /** Comma-separated keys compiled into the build for [p]; empty if none. */
+    private fun bakedKeys(p: AiProvider): List<String> = when (p) {
+        AiProvider.GROQ -> com.kianirani.jarvis.BuildConfig.GROQ_KEYS
+            .split(",").map { it.trim() }.filter { it.isNotEmpty() }
+        else -> emptyList()
     }
 
     override fun addToken(p: AiProvider, token: String) {

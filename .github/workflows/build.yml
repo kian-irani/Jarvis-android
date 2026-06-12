@@ -49,6 +49,10 @@ jobs:
             gradle-${{ runner.os }}-
 
       - name: Install Gradle and build
+        env:
+          # Bake a default Groq key so a fresh install can chat with zero setup.
+          # Set repo secret GROQ_KEYS (comma-separated) to enable; empty = users add their own.
+          GROQ_KEYS: ${{ secrets.GROQ_KEYS }}
         run: |
           if [ ! -d "/opt/gradle/gradle-8.11.1" ]; then
             wget -q https://services.gradle.org/distributions/gradle-8.11.1-bin.zip -O /tmp/gradle.zip

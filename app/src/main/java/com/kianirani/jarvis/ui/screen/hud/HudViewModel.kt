@@ -122,7 +122,17 @@ class HudViewModel @Inject constructor(
             // Standalone path: no brain paired/reachable -> cloud providers
             cloud.chat(msg)
                 .onSuccess { r -> typeText(r.text); speak(r.text); addLog("Cloud: ${r.provider.displayName}", "ok") }
-                .onFailure { e -> typeText("Error: ${e.message}"); addLog("Failed", "err") }
+                .onFailure { e ->
+                    // No key configured is the #1 "it won't talk" cause — make it actionable.
+                    val noProvider = e.message?.contains("provider", ignoreCase = true) == true
+                    val reply = if (noProvider) {
+                        "I need an AI key to chat. Open SYSTEM CONFIG → AI Providers and add a free key (Groq). " +
+                            "برای گفت‌وگو یک کلید هوش مصنوعی لازم است — در تنظیمات، AI Providers یک کلید رایگان اضافه کن."
+                    } else {
+                        "Couldn't reach an AI provider: ${e.message?.take(80)}"
+                    }
+                    typeText(reply); speak(reply); addLog(if (noProvider) "No AI key" else "Cloud failed", "err")
+                }
         }
     }
 

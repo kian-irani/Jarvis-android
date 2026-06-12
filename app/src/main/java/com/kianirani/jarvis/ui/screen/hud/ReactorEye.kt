@@ -20,6 +20,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.unit.dp
 import com.kianirani.jarvis.ui.theme.VisionColors
@@ -159,12 +160,16 @@ fun ReactorEye(listening: Boolean, modifier: Modifier = Modifier) {
         // specular glint
         drawCircle(Color.White.copy(alpha = 0.85f), pupilR * 0.18f, Offset(px - pupilR * 0.35f, py - pupilR * 0.35f))
 
-        // ── eyelid blink: two shutters sweep over the iris zone ──
+        // ── eyelid blink: shutters sweep over the iris, CLIPPED to the eye's
+        // circle so it reads as an eyelid — not a black rectangle (bug fix).
         if (blink > 0.01f) {
-            val lid = (irisR + 10.dp.toPx()) * blink
-            val zone = Rect(cx - maxR, cy - irisR - 12.dp.toPx(), cx + maxR, cy + irisR + 12.dp.toPx())
-            drawRect(VisionColors.Background.copy(alpha = 0.96f), Offset(zone.left, zone.top), Size(zone.width, lid))
-            drawRect(VisionColors.Background.copy(alpha = 0.96f), Offset(zone.left, zone.bottom - lid), Size(zone.width, lid))
+            val lidR = irisR + 8.dp.toPx()
+            val sweep = lidR * blink // each shutter covers up to half the circle at full blink
+            val eye = Path().apply { addOval(Rect(cx - lidR, cy - lidR, cx + lidR, cy + lidR)) }
+            clipPath(eye) {
+                drawRect(VisionColors.Background, Offset(cx - lidR, cy - lidR), Size(lidR * 2f, sweep))
+                drawRect(VisionColors.Background, Offset(cx - lidR, cy + lidR - sweep), Size(lidR * 2f, sweep))
+            }
         }
     }
 }
