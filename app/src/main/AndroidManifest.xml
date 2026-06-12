@@ -12,17 +12,26 @@
         android:name=".JarvisApp"
         android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"
-        android:label="JARVIS"
+        android:label="VISION"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:theme="@style/Theme.Jarvis"
         android:usesCleartextTraffic="true">
         <activity
             android:name=".MainActivity"
             android:exported="true"
+            android:launchMode="singleTask"
+            android:stateNotNeeded="true"
+            android:excludeFromRecents="true"
             android:windowSoftInputMode="adjustResize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <!-- Register Vision as a HOME launcher -->
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.HOME" />
+                <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
         <service

@@ -34,12 +34,16 @@ data class HudUiState(
 @Composable fun HudScreen(viewModel: HudViewModel, onOpenElection: () -> Unit = {}) {
     val state by viewModel.uiState.collectAsState()
     val wide = LocalConfiguration.current.screenWidthDp > 600
+    // Background art runs edge-to-edge under the system bars; interactive
+    // content is inset so it never collides with the status bar clock/icons.
     Box(Modifier.fillMaxSize().background(JarvisColors.Background)) {
         HexGrid(Modifier.fillMaxSize()); ScanLine(Modifier.fillMaxSize())
-        CompositionLocalProvider(LocalOpenElection provides onOpenElection) {
-            if (wide) LandscapeLayout(state, viewModel) else PortraitLayout(state, viewModel)
+        Box(Modifier.fillMaxSize().systemBarsPadding()) {
+            CompositionLocalProvider(LocalOpenElection provides onOpenElection) {
+                if (wide) LandscapeLayout(state, viewModel) else PortraitLayout(state, viewModel)
+            }
+            CornerBrackets(Modifier.fillMaxSize())
         }
-        CornerBrackets(Modifier.fillMaxSize())
     }
 }
 
@@ -81,8 +85,8 @@ val LocalOpenElection = staticCompositionLocalOf<() -> Unit> { {} }
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             val openElection = LocalOpenElection.current
-            Box(Modifier.size(44.dp).clip(RoundedCornerShape(4.dp)).background(Brush.linearGradient(listOf(JarvisColors.BlueAccent, JarvisColors.BlueDeep))).border(1.dp, JarvisColors.CyanSecondary, RoundedCornerShape(4.dp)).clickable(onClick = openElection), Alignment.Center) { Text("J", color = JarvisColors.CyanPrimary, style = MaterialTheme.typography.headlineMedium) }
-            Column { Text("JARVIS", style = MaterialTheme.typography.headlineLarge, color = JarvisColors.CyanPrimary); Text("v4.1.0", style = MaterialTheme.typography.labelSmall, color = JarvisColors.TextDim) }
+            Box(Modifier.size(44.dp).clip(RoundedCornerShape(4.dp)).background(Brush.linearGradient(listOf(JarvisColors.BlueAccent, JarvisColors.BlueDeep))).border(1.dp, JarvisColors.CyanSecondary, RoundedCornerShape(4.dp)).clickable(onClick = openElection), Alignment.Center) { Text("V", color = JarvisColors.CyanPrimary, style = MaterialTheme.typography.headlineMedium) }
+            Column { Text("VISION", style = MaterialTheme.typography.headlineLarge, color = JarvisColors.CyanPrimary); Text("v16.0.0", style = MaterialTheme.typography.labelSmall, color = JarvisColors.TextDim) }
         }
         Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             listOf("BRAIN" to s.brainOnline, "NODES" to (s.nodesOnline > 0), "GROQ" to s.groqOnline).forEach { (lbl, ok) ->
@@ -122,7 +126,7 @@ val LocalOpenElection = staticCompositionLocalOf<() -> Unit> { {} }
             drawCircle(Brush.radialGradient(listOf(JarvisColors.CyanSecondary, JarvisColors.BlueDeep, JarvisColors.BlueMid), Offset(cx - r * 0.2f, cy - r * 0.2f), r), r, Offset(cx, cy))
             drawCircle(JarvisColors.CyanPrimary.copy(alpha = glow), r + 14.dp.toPx(), Offset(cx, cy), style = Stroke(2.dp.toPx()))
         }
-        Column(Modifier.align(Alignment.TopCenter).padding(top = 10.dp), horizontalAlignment = Alignment.CenterHorizontally) { Text("JARVIS", style = MaterialTheme.typography.displayLarge, color = JarvisColors.CyanPrimary) }
+        Column(Modifier.align(Alignment.TopCenter).padding(top = 10.dp), horizontalAlignment = Alignment.CenterHorizontally) { Text("VISION", style = MaterialTheme.typography.displayLarge, color = JarvisColors.CyanPrimary) }
         Column(Modifier.align(Alignment.BottomCenter).padding(bottom = 12.dp), horizontalAlignment = Alignment.CenterHorizontally) { Text(if (s.isListening) "LISTENING" else "STANDBY", style = MaterialTheme.typography.labelMedium, color = if (s.isListening) JarvisColors.NeonGreen.copy(alpha = 0.5f + blink * 0.5f) else JarvisColors.CyanSecondary.copy(alpha = 0.7f)) }
     }
 }
@@ -140,7 +144,7 @@ val LocalOpenElection = staticCompositionLocalOf<() -> Unit> { {} }
 
 @Composable fun TypewriterPanel(text: String, modifier: Modifier) {
     val cur by rememberInfiniteTransition(label="cur").animateFloat(0f,1f,infiniteRepeatable(tween(800),RepeatMode.Reverse),label="c")
-    HudCard(modifier) { Column(Modifier.padding(12.dp)) { Text("JARVIS OUTPUT", style=MaterialTheme.typography.labelSmall, color=JarvisColors.TextDim, modifier=Modifier.padding(bottom=6.dp)); Row { Text(">> ", style=MaterialTheme.typography.bodyMedium, color=JarvisColors.CyanPrimary); Text(text, style=MaterialTheme.typography.bodyMedium, color=JarvisColors.TextPrimary, maxLines=3, overflow=TextOverflow.Ellipsis); Text("|", style=MaterialTheme.typography.bodyMedium, color=JarvisColors.CyanPrimary.copy(alpha=cur)) } } }
+    HudCard(modifier) { Column(Modifier.padding(12.dp)) { Text("VISION OUTPUT", style=MaterialTheme.typography.labelSmall, color=JarvisColors.TextDim, modifier=Modifier.padding(bottom=6.dp)); Row { Text(">> ", style=MaterialTheme.typography.bodyMedium, color=JarvisColors.CyanPrimary); Text(text, style=MaterialTheme.typography.bodyMedium, color=JarvisColors.TextPrimary, maxLines=3, overflow=TextOverflow.Ellipsis); Text("|", style=MaterialTheme.typography.bodyMedium, color=JarvisColors.CyanPrimary.copy(alpha=cur)) } } }
 }
 
 @Composable fun NodeCard(n: NodeInfo, modifier: Modifier) {

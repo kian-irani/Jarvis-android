@@ -51,7 +51,7 @@ class HudViewModel @Inject constructor(private val brain: BrainRepository) : Vie
     }
 
     private fun connectBrain() {
-        brain.connectWebSocket(viewModelScope)
+        brain.connect(viewModelScope)
         brain.startPolling(viewModelScope, 5_000L)
         viewModelScope.launch {
             brain.events.collect { e -> when (e) {

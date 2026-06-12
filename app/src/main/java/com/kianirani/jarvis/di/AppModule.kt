@@ -22,7 +22,7 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 object AppModule {
     @Provides @Singleton
-    fun provideBrainRepository(): BrainRepository = BrainRepository()
+    fun provideBrainRepository(store: BrainSelectionStore): BrainRepository = BrainRepository(store)
 
     @Provides @Singleton
     fun provideLocalDeviceMetrics(@ApplicationContext ctx: Context): LocalDeviceMetricsProvider =

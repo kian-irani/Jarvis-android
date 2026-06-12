@@ -1,14 +1,12 @@
 package com.kianirani.jarvis.data.repository
 
-import android.util.Log
+import com.kianirani.jarvis.brain.discovery.BrainSelectionStore
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.okhttp.OkHttp
 import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.logging.LogLevel
 import io.ktor.client.plugins.logging.Logging
-import io.ktor.client.plugins.websocket.WebSockets
-import io.ktor.client.plugins.websocket.webSocket
 import io.ktor.client.request.get
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
@@ -16,9 +14,6 @@ import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import io.ktor.serialization.kotlinx.json.json
-import io.ktor.websocket.Frame
-import io.ktor.websocket.readText
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -35,8 +30,6 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.jsonArray
-import kotlinx.serialization.json.jsonObject
-import kotlinx.serialization.json.jsonPrimitive
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -55,21 +48,20 @@ sealed class BrainEvent {
     data class LogEntry(val message: String, val level: String = "info") : BrainEvent()
 }
 
+/**
+ * HTTP client for the elected brain. The target comes from the pairing flow
+ * ([BrainSelectionStore]) — never hardcoded. Brain-Lite is HTTP-only, so the
+ * legacy WebSocket channel is gone. With no pairing saved, Vision keeps
+ * working standalone and this repository just reports Disconnected.
+ */
 @Singleton
-class BrainRepository @Inject constructor() {
-    companion object {
-        private const val TAG = "BrainRepo"
-        private const val BASE_URL = "http://212.87.199.62:8000"
-        private const val WS_URL = "ws://212.87.199.62:8000/ws/mobile"
-        private const val REG_MSG = "{\"type\":\"mobile_register\",\"client\":\"JARVIS-Android\"}"
-    }
-
+class BrainRepository @Inject constructor(
+    private val store: BrainSelectionStore,
+) {
     private val jsonParser = Json { ignoreUnknownKeys = true; isLenient = true; coerceInputValues = true }
-    private fun parseObj(text: String): JsonObject = jsonParser.decodeFromString(JsonObject.serializer(), text)
 
     private val http = HttpClient(OkHttp) {
         install(ContentNegotiation) { json(jsonParser) }
-        install(WebSockets)
         install(Logging) { level = LogLevel.INFO }
         install(HttpTimeout) { requestTimeoutMillis = 15_000; connectTimeoutMillis = 8_000 }
     }
@@ -79,69 +71,59 @@ class BrainRepository @Inject constructor() {
     private val _connected = MutableStateFlow(false)
     val connected: StateFlow<Boolean> = _connected.asStateFlow()
 
+    private fun baseUrl(): String? = store.load()?.let { "http://${it.host}:${it.port}" }
+
+    private fun noBrain() = IllegalStateException("No brain paired")
+
     suspend fun health(): Result<HealthResponse> = runCatching {
-        jsonParser.decodeFromString(HealthResponse.serializer(), http.get(BASE_URL + "/health").bodyAsText())
+        val base = baseUrl() ?: throw noBrain()
+        jsonParser.decodeFromString(HealthResponse.serializer(), http.get("$base/health").bodyAsText())
     }
 
     suspend fun getNodes(): Result<List<ApiNode>> = runCatching {
-        val obj = parseObj(http.get(BASE_URL + "/nodes").bodyAsText())
+        val base = baseUrl() ?: throw noBrain()
+        val obj = jsonParser.decodeFromString(JsonObject.serializer(), http.get("$base/nodes").bodyAsText())
         obj["nodes"]?.jsonArray?.map { jsonParser.decodeFromJsonElement(ApiNode.serializer(), it) } ?: emptyList()
     }
 
     suspend fun chat(msg: String, nodeId: String? = null): Result<ChatResponse> = runCatching {
-        val text = http.post(BASE_URL + "/chat") {
+        val base = baseUrl() ?: throw noBrain()
+        val text = http.post("$base/chat") {
             contentType(ContentType.Application.Json)
             setBody(jsonParser.encodeToString(ChatRequest.serializer(), ChatRequest(msg, nodeId)))
         }.bodyAsText()
         jsonParser.decodeFromString(ChatResponse.serializer(), text)
     }
 
-    fun connectWebSocket(scope: CoroutineScope) {
+    /** Health-poll loop that maintains [connected] and emits connection events. */
+    fun connect(scope: CoroutineScope, intervalMs: Long = 10_000L) {
         scope.launch(Dispatchers.IO) {
-            var delayMs = 3_000L
+            var wasConnected = false
+            var announcedStandalone = false
             while (isActive) {
-                try {
-                    http.webSocket(WS_URL) {
-                        _connected.value = true; delayMs = 3_000L
-                        _events.emit(BrainEvent.Connected("Brain connected"))
-                        send(Frame.Text(REG_MSG))
-                        for (frame in incoming) {
-                            if (frame is Frame.Text) handleWs(frame.readText())
-                        }
+                if (baseUrl() == null) {
+                    if (wasConnected) { wasConnected = false; _connected.value = false; _events.emit(BrainEvent.Disconnected) }
+                    if (!announcedStandalone) {
+                        announcedStandalone = true
+                        _events.emit(BrainEvent.LogEntry("Standalone — no brain paired", "info"))
                     }
-                } catch (e: CancellationException) { throw e
-                } catch (e: Exception) {
-                    _connected.value = false
-                    _events.emit(BrainEvent.Disconnected)
-                    _events.emit(BrainEvent.LogEntry("Reconnecting...", "warn"))
+                } else {
+                    announcedStandalone = false
+                    val ok = health().isSuccess
+                    if (ok && !wasConnected) { _connected.value = true; _events.emit(BrainEvent.Connected("Brain connected")) }
+                    if (!ok && wasConnected) { _connected.value = false; _events.emit(BrainEvent.Disconnected) }
+                    wasConnected = ok
                 }
-                delay(delayMs); delayMs = (delayMs * 1.5).toLong().coerceAtMost(30_000)
+                delay(intervalMs)
             }
         }
-    }
-
-    private suspend fun handleWs(raw: String) {
-        try {
-            val obj = parseObj(raw)
-            when (obj["type"]?.jsonPrimitive?.content) {
-                "heartbeat" -> {
-                    val nid = obj["node_id"]?.jsonPrimitive?.content ?: return
-                    val m = obj["metrics"]?.let { jsonParser.decodeFromJsonElement(NodeMetrics.serializer(), it) }
-                    _events.emit(BrainEvent.NodeUpdated(ApiNode(nid, nid, metrics = m)))
-                }
-                "chat_stream" -> _events.emit(BrainEvent.ChatReply(obj["delta"]?.jsonPrimitive?.content ?: ""))
-                "log" -> _events.emit(BrainEvent.LogEntry(obj["message"]?.jsonPrimitive?.content ?: "", obj["level"]?.jsonPrimitive?.content ?: "info"))
-                "connected" -> obj["nodes"]?.jsonArray?.forEach { n ->
-                    _events.emit(BrainEvent.NodeUpdated(jsonParser.decodeFromJsonElement(ApiNode.serializer(), n)))
-                }
-            }
-        } catch (e: Exception) { Log.e(TAG, "WS: $e") }
     }
 
     fun startPolling(scope: CoroutineScope, ms: Long = 5_000L) {
         scope.launch(Dispatchers.IO) {
             while (isActive) {
                 delay(ms)
+                if (baseUrl() == null) continue
                 getNodes()
                     .onSuccess { nodes -> nodes.forEach { _events.emit(BrainEvent.NodeUpdated(it)) } }
                     .onFailure { _events.emit(BrainEvent.Error(it)) }
