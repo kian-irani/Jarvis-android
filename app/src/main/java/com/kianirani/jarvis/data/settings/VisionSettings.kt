@@ -58,6 +58,15 @@ class VisionSettings @Inject constructor(@ApplicationContext context: Context) {
         val n = v.take(24)
         prefs.edit().putString(KEY_PERSONA, n).apply(); _personaName.value = n
     }
+    // Language: "auto" follows the device + the language the user types/speaks;
+    // "fa"/"en" pin replies. Read by CloudChatRouter (prompt) and VoiceController (TTS/STT).
+    private val _language = MutableStateFlow(prefs.getString(KEY_LANG, LANG_AUTO) ?: LANG_AUTO)
+    val language: StateFlow<String> = _language
+    fun setLanguage(v: String) {
+        val l = if (v in setOf(LANG_AUTO, LANG_FA, LANG_EN)) v else LANG_AUTO
+        prefs.edit().putString(KEY_LANG, l).apply(); _language.value = l
+    }
+
     fun setHumorLevel(v: Float) { val r = v.coerceIn(0f, 10f); prefs.edit().putFloat(KEY_HUMOR, r).apply(); _humor.value = r }
     fun setFormalityLevel(v: Float) { val r = v.coerceIn(0f, 10f); prefs.edit().putFloat(KEY_FORMALITY, r).apply(); _formality.value = r }
     fun setResponseLength(v: Float) { val r = v.coerceIn(0f, 10f); prefs.edit().putFloat(KEY_RESP_LEN, r).apply(); _responseLength.value = r }
@@ -94,5 +103,9 @@ class VisionSettings @Inject constructor(@ApplicationContext context: Context) {
         const val KEY_HUMOR = "persona_humor"
         const val KEY_FORMALITY = "persona_formality"
         const val KEY_RESP_LEN = "persona_resp_len"
+        const val KEY_LANG = "reply_language"
+        const val LANG_AUTO = "auto"
+        const val LANG_FA = "fa"
+        const val LANG_EN = "en"
     }
 }

@@ -18,6 +18,7 @@ import com.kianirani.jarvis.ui.screen.election.BrainElectionScreen
 import com.kianirani.jarvis.ui.screen.hud.HudScreen
 import com.kianirani.jarvis.ui.screen.hud.HudViewModel
 import com.kianirani.jarvis.ui.screen.drawer.AppDrawerScreen
+import com.kianirani.jarvis.ui.screen.onboarding.OnboardingScreen
 import com.kianirani.jarvis.ui.screen.settings.AiTokensScreen
 import com.kianirani.jarvis.ui.screen.settings.SettingsHubScreen
 import com.kianirani.jarvis.ui.screen.setup.SetupWizardScreen
@@ -26,8 +27,9 @@ import dagger.hilt.android.AndroidEntryPoint
 
 private const val PREFS = "vision_prefs"
 private const val KEY_SETUP_COMPLETE = "setup_complete"
+private const val KEY_ONBOARDED = "persona_onboarded"
 
-enum class VisionRoute { SETUP, HUD, ELECTION, AI_SETTINGS, APPS, SETTINGS }
+enum class VisionRoute { ONBOARDING, SETUP, HUD, ELECTION, AI_SETTINGS, APPS, SETTINGS }
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -55,11 +57,19 @@ class MainActivity : ComponentActivity() {
             JarvisTheme {
                 var route by rememberSaveable {
                     mutableStateOf(
-                        if (prefs.getBoolean(KEY_SETUP_COMPLETE, false)) VisionRoute.HUD else VisionRoute.SETUP
+                        when {
+                            !prefs.getBoolean(KEY_ONBOARDED, false) -> VisionRoute.ONBOARDING
+                            !prefs.getBoolean(KEY_SETUP_COMPLETE, false) -> VisionRoute.HUD
+                            else -> VisionRoute.HUD
+                        }
                     )
                 }
-                BackHandler(enabled = route != VisionRoute.HUD && route != VisionRoute.SETUP) { route = VisionRoute.HUD }
+                BackHandler(enabled = route != VisionRoute.HUD && route != VisionRoute.SETUP && route != VisionRoute.ONBOARDING) { route = VisionRoute.HUD }
                 when (route) {
+                    VisionRoute.ONBOARDING -> OnboardingScreen(onFinished = {
+                        prefs.edit().putBoolean(KEY_ONBOARDED, true).putBoolean(KEY_SETUP_COMPLETE, true).apply()
+                        route = VisionRoute.HUD
+                    })
                     VisionRoute.SETUP -> SetupWizardScreen(onFinished = {
                         prefs.edit().putBoolean(KEY_SETUP_COMPLETE, true).apply()
                         route = VisionRoute.HUD

@@ -87,6 +87,11 @@ class AndroidVoiceController(
                 Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
                     putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
                     putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, false)
+                    // Pin STT language when the user chose one; AUTO uses the device default.
+                    when (settings?.language?.value) {
+                        "fa" -> putExtra(RecognizerIntent.EXTRA_LANGUAGE, "fa-IR")
+                        "en" -> putExtra(RecognizerIntent.EXTRA_LANGUAGE, "en-US")
+                    }
                 },
             )
         }
@@ -107,10 +112,23 @@ class AndroidVoiceController(
             if (ttsReady) {
                 // P7 persona: user-tuned delivery style.
                 settings?.let { tts?.setSpeechRate(it.speechRate.value); tts?.setPitch(it.voicePitch.value) }
+                // Multilingual: speak Persian replies with a Persian voice so
+                // "فارسی in → فارسی out" actually sounds right (USER DIRECTIVE 2026-06-12).
+                tts?.language = ttsLocaleFor(text)
                 tts?.speak(text, TextToSpeech.QUEUE_FLUSH, null, "vision-reply")
             } else {
                 pendingSpeech = text
             }
+        }
+    }
+
+    /** Persian script anywhere -> Persian voice; otherwise honor the language pref / device. */
+    private fun ttsLocaleFor(text: String): Locale {
+        if (text.any { it in '؀'..'ۿ' }) return Locale("fa")
+        return when (settings?.language?.value) {
+            "fa" -> Locale("fa")
+            "en" -> Locale.US
+            else -> Locale.getDefault()
         }
     }
 

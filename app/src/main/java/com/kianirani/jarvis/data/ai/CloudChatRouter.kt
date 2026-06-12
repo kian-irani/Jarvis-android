@@ -66,10 +66,20 @@ class CloudChatRouter @Inject constructor(
             length < 3 -> "keep answers very brief (1-2 sentences)"
             else -> "keep answers concise"
         }
+        val lang = when (settings.language.value) {
+            com.kianirani.jarvis.data.settings.VisionSettings.LANG_FA ->
+                "Always reply in Persian (فارسی), regardless of the language of the question."
+            com.kianirani.jarvis.data.settings.VisionSettings.LANG_EN ->
+                "Always reply in English, regardless of the language of the question."
+            else ->
+                "Reply in the SAME language the user wrote in — Persian to Persian, English to English. " +
+                "You are fluent in both and may answer in any language the user uses."
+        }
         return "You are $name, a sovereign personal AI operating system on the user's own device. " +
+            "The user may address you by your name, \"$name\". " +
             "Answer every question helpfully and directly; $len. Tone: $tone — $wit. " +
-            "Use the user's language (Persian or English). If you are unsure, say so briefly and give " +
-            "your best reasoning. Never refuse merely because a question is outside a narrow domain."
+            "$lang If you are unsure, say so briefly and give your best reasoning. " +
+            "Never refuse merely because a question is outside a narrow domain."
     }
 
     private val json = Json { ignoreUnknownKeys = true; isLenient = true }

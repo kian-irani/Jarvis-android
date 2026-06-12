@@ -93,8 +93,11 @@ class HudViewModel @Inject constructor(
     fun onInputChange(text: String) = _state.update { it.copy(inputText = text) }
 
     fun sendChat() {
-        val msg = _state.value.inputText.trim(); if (msg.isEmpty()) return
-        _state.update { it.copy(inputText = "", jarvisOutput = "") }; stopIdle(); addLog("You: $msg", "info")
+        val raw = _state.value.inputText.trim(); if (raw.isEmpty()) return
+        // Respond to its name: "Vision, what's the time" / "ویژن ساعت چنده" — strip the
+        // leading wake-name (user-configurable) so the rest is handled normally.
+        val msg = stripWakeName(raw)
+        _state.update { it.copy(inputText = "", jarvisOutput = "") }; stopIdle(); addLog("You: $raw", "info")
         viewModelScope.launch {
             // P5 agentic v1: device commands ("open camera", "battery", …) run
             // locally with zero latency and zero data leaving the phone.
@@ -121,6 +124,21 @@ class HudViewModel @Inject constructor(
                 .onSuccess { r -> typeText(r.text); speak(r.text); addLog("Cloud: ${r.provider.displayName}", "ok") }
                 .onFailure { e -> typeText("Error: ${e.message}"); addLog("Failed", "err") }
         }
+    }
+
+    /** Drops a leading "<name>[,/ ]" so addressing Vision by its (configurable) name works. */
+    private fun stripWakeName(text: String): String {
+        val name = settings.personaName.value.trim()
+        if (name.isEmpty()) return text
+        val candidates = listOf(name, "ویژن", "vision")
+        var out = text
+        for (n in candidates) {
+            if (out.startsWith(n, ignoreCase = true)) {
+                out = out.substring(n.length).trimStart(' ', ',', '،', '.', '!', '?', ':')
+                break
+            }
+        }
+        return out.ifBlank { text }
     }
 
     fun toggleListening() {

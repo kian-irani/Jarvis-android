@@ -103,7 +103,9 @@ fun SettingsHubScreen(
             val humor by s.humorLevel.collectAsState()
             val formality by s.formalityLevel.collectAsState()
             val respLen by s.responseLength.collectAsState()
+            val lang by s.language.collectAsState()
             PersonaNameRow(personaName) { s.setPersonaName(it) }
+            LanguageRow(lang) { s.setLanguage(it) }
             SliderRow("Humor", humor) { s.setHumorLevel(it) }
             SliderRow("Formality", formality) { s.setFormalityLevel(it) }
             SliderRow("Response length", respLen) { s.setResponseLength(it) }
@@ -287,6 +289,24 @@ private fun PersonaNameRow(name: String, onChange: (String) -> Unit) {
                 }
             },
         )
+    }
+}
+
+@Composable
+private fun LanguageRow(lang: String, onChange: (String) -> Unit) {
+    Row(Modifier.fillMaxWidth().padding(vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+        Text("Language", style = MaterialTheme.typography.bodyMedium, color = JarvisColors.TextPrimary, modifier = Modifier.weight(1f))
+        listOf(VisionSettings.LANG_AUTO to "Auto", VisionSettings.LANG_FA to "فا", VisionSettings.LANG_EN to "EN").forEach { (code, label) ->
+            val sel = lang == code
+            Text(
+                label,
+                style = MaterialTheme.typography.labelMedium,
+                color = if (sel) JarvisColors.CyanPrimary else JarvisColors.TextDim,
+                modifier = Modifier.clickable { onChange(code) }
+                    .border(1.dp, if (sel) JarvisColors.CyanPrimary else JarvisColors.Border, RoundedCornerShape(4.dp))
+                    .padding(horizontal = 10.dp, vertical = 5.dp),
+            )
+        }
     }
 }
 
