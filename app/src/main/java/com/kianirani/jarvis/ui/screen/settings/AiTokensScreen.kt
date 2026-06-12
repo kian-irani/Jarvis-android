@@ -33,6 +33,9 @@ import androidx.lifecycle.ViewModel
 import com.kianirani.jarvis.data.ai.AiProvider
 import com.kianirani.jarvis.data.ai.AiProviderStore
 import com.kianirani.jarvis.ui.theme.JarvisColors
+import com.kianirani.jarvis.ui.theme.VisionColors
+import com.kianirani.jarvis.ui.theme.glassPanel
+import com.kianirani.jarvis.ui.theme.visionEnter
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -62,7 +65,7 @@ class AiTokensViewModel @Inject constructor(private val store: AiProviderStore) 
 fun AiTokensScreen(vm: AiTokensViewModel = hiltViewModel(), onBack: () -> Unit = {}) {
     val saved by vm.saved.collectAsState()
     Column(
-        Modifier.fillMaxSize().background(JarvisColors.Background).systemBarsPadding()
+        Modifier.fillMaxSize().background(VisionColors.ScreenBackdrop).systemBarsPadding()
             .verticalScroll(rememberScrollState()).padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
@@ -75,7 +78,7 @@ fun AiTokensScreen(vm: AiTokensViewModel = hiltViewModel(), onBack: () -> Unit =
             "Add a token for any provider. Vision routes every question to the best configured provider — local brain first, then cloud.",
             style = MaterialTheme.typography.bodySmall, color = JarvisColors.TextDim,
         )
-        AiProvider.entries.forEach { p -> ProviderCard(p, saved[p] == true, vm::save, vm::clear) }
+        AiProvider.entries.forEachIndexed { i, p -> ProviderCard(p, saved[p] == true, i, vm::save, vm::clear) }
     }
 }
 
@@ -83,15 +86,18 @@ fun AiTokensScreen(vm: AiTokensViewModel = hiltViewModel(), onBack: () -> Unit =
 private fun ProviderCard(
     p: AiProvider,
     hasToken: Boolean,
+    index: Int,
     onSave: (AiProvider, String) -> Unit,
     onClear: (AiProvider) -> Unit,
 ) {
     var input by remember(p, hasToken) { mutableStateOf("") }
-    val accent = if (hasToken) JarvisColors.NeonGreen else JarvisColors.Border
+    val accent = if (hasToken) VisionColors.NeonGreen else VisionColors.Border
+    val glow = if (hasToken) VisionColors.NeonGreen.copy(alpha = 0.25f) else VisionColors.CyanGlow
     Column(
         Modifier.fillMaxWidth()
-            .border(1.dp, accent.copy(alpha = 0.5f), RoundedCornerShape(6.dp))
-            .background(JarvisColors.Surface, RoundedCornerShape(6.dp)).padding(12.dp),
+            .visionEnter(index)
+            .glassPanel(radius = 10.dp, glow = glow, border = accent.copy(alpha = 0.55f))
+            .padding(12.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {

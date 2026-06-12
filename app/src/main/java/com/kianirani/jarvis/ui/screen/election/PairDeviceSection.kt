@@ -30,6 +30,8 @@ import androidx.compose.ui.unit.dp
 import com.kianirani.jarvis.brain.discovery.LocalPairingInfoProvider
 import com.kianirani.jarvis.brain.discovery.QrPairing
 import com.kianirani.jarvis.ui.theme.JarvisColors
+import com.kianirani.jarvis.ui.theme.VisionColors
+import com.kianirani.jarvis.ui.theme.glassPanel
 
 /**
  * "PAIR NEW DEVICE" — renders this brain's vision://join QR (spec §5) so other
@@ -45,16 +47,14 @@ fun PairDeviceSection(modifier: Modifier = Modifier) {
     Column(
         modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(6.dp))
-            .border(1.dp, JarvisColors.Border, RoundedCornerShape(6.dp))
-            .background(JarvisColors.Surface)
+            .glassPanel(radius = 10.dp, glow = VisionColors.MagentaGlow, border = VisionColors.BorderViolet)
             .clickable { open = !open }
             .padding(14.dp),
     ) {
         Text(
             if (open) "▼ PAIR NEW DEVICE" else "▶ PAIR NEW DEVICE",
             style = MaterialTheme.typography.labelLarge,
-            color = JarvisColors.CyanSecondary,
+            color = VisionColors.Magenta,
         )
         if (open) {
             Spacer(Modifier.height(12.dp))

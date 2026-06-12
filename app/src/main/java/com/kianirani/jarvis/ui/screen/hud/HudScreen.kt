@@ -36,7 +36,8 @@ data class HudUiState(
     val wide = LocalConfiguration.current.screenWidthDp > 600
     // Background art runs edge-to-edge under the system bars; interactive
     // content is inset so it never collides with the status bar clock/icons.
-    Box(Modifier.fillMaxSize().background(JarvisColors.Background)) {
+    Box(Modifier.fillMaxSize().background(VisionColors.ScreenBackdrop)) {
+        PlasmaAurora(Modifier.fillMaxSize())
         HexGrid(Modifier.fillMaxSize()); ScanLine(Modifier.fillMaxSize())
         Box(Modifier.fillMaxSize().systemBarsPadding()) {
             CompositionLocalProvider(LocalOpenElection provides onOpenElection, LocalOpenAiSettings provides onOpenAiSettings) {
@@ -56,13 +57,13 @@ val LocalOpenAiSettings = staticCompositionLocalOf<() -> Unit> { {} }
         TopBar(s, vm, Modifier.fillMaxWidth())
         Row(Modifier.fillMaxWidth().weight(1f).padding(8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Column(Modifier.weight(0.42f).fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                s.nodes.forEach { NodeCard(it, Modifier.fillMaxWidth()) }
-                MetricPanel(s, Modifier.fillMaxWidth().weight(1f))
+                s.nodes.forEachIndexed { i, n -> NodeCard(n, Modifier.fillMaxWidth().visionEnter(i)) }
+                MetricPanel(s, Modifier.fillMaxWidth().weight(1f).visionEnter(2))
             }
             Column(Modifier.weight(0.58f).fillMaxHeight(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                OrbPanel(s, Modifier.fillMaxWidth().weight(1f))
-                TypewriterPanel(s.jarvisOutput, Modifier.fillMaxWidth())
-                InputBar(s.inputText, vm::onInputChange, vm::sendChat, Modifier.fillMaxWidth())
+                OrbPanel(s, Modifier.fillMaxWidth().weight(1f).visionEnter(1))
+                TypewriterPanel(s.jarvisOutput, Modifier.fillMaxWidth().visionEnter(2))
+                InputBar(s.inputText, vm::onInputChange, vm::sendChat, Modifier.fillMaxWidth().visionEnter(3))
             }
         }
         WaveformBar(s.waveformAmplitudes, s.isListening, Modifier.fillMaxWidth().height(60.dp))
@@ -86,8 +87,10 @@ val LocalOpenAiSettings = staticCompositionLocalOf<() -> Unit> { {} }
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             val openElection = LocalOpenElection.current
-            Box(Modifier.size(44.dp).clip(RoundedCornerShape(4.dp)).background(Brush.linearGradient(listOf(JarvisColors.BlueAccent, JarvisColors.BlueDeep))).border(1.dp, JarvisColors.CyanSecondary, RoundedCornerShape(4.dp)).clickable(onClick = openElection), Alignment.Center) { Text("V", color = JarvisColors.CyanPrimary, style = MaterialTheme.typography.headlineMedium) }
-            Column { Text("VISION", style = MaterialTheme.typography.headlineLarge, color = JarvisColors.CyanPrimary); Text("v16.0.0", style = MaterialTheme.typography.labelSmall, color = JarvisColors.TextDim) }
+            val logoInf = rememberInfiniteTransition(label = "logo")
+            val logoGlow by logoInf.animateFloat(0.4f, 1f, infiniteRepeatable(tween(2200, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "lg")
+            Box(Modifier.size(44.dp).clip(RoundedCornerShape(6.dp)).background(VisionColors.PlasmaSweep).border(1.dp, VisionColors.CyanPrimary.copy(alpha = logoGlow), RoundedCornerShape(6.dp)).clickable(onClick = openElection), Alignment.Center) { Text("V", color = VisionColors.Background, style = MaterialTheme.typography.headlineLarge) }
+            Column { Text("VISION", style = MaterialTheme.typography.headlineLarge, color = VisionColors.CyanPrimary); Text("v16.0.0", style = MaterialTheme.typography.labelSmall, color = VisionColors.TextDim) }
         }
         Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             listOf("BRAIN" to s.brainOnline, "NODES" to (s.nodesOnline > 0), "GROQ" to s.groqOnline).forEach { (lbl, ok) ->
@@ -121,15 +124,22 @@ val LocalOpenAiSettings = staticCompositionLocalOf<() -> Unit> { {} }
     HudCard(modifier) {
         Canvas(Modifier.fillMaxSize().padding(28.dp)) {
             val cx = size.width / 2; val cy = size.height / 2; val maxR = minOf(cx, cy)
-            repeat(4) { i -> drawCircle(JarvisColors.GridLine, maxR * (0.28f + i * 0.18f), Offset(cx, cy), style = Stroke(0.8.dp.toPx())) }
-            rotate(ring, Offset(cx, cy)) { drawCircle(JarvisColors.CyanSecondary.copy(alpha = 0.4f), maxR * 0.88f, Offset(cx, cy), style = Stroke(1.dp.toPx())); drawCircle(JarvisColors.CyanPrimary, 4.dp.toPx(), Offset(cx + maxR * 0.88f, cy)) }
+            // ambient plasma halo behind the orb
+            drawCircle(Brush.radialGradient(listOf(VisionColors.Violet.copy(alpha = 0.18f * glow * 2f), Color.Transparent), Offset(cx, cy), maxR), maxR, Offset(cx, cy))
+            repeat(4) { i -> drawCircle(VisionColors.GridLine, maxR * (0.28f + i * 0.18f), Offset(cx, cy), style = Stroke(0.8.dp.toPx())) }
+            // outer cyan ring with orbiting node
+            rotate(ring, Offset(cx, cy)) { drawCircle(VisionColors.CyanSecondary.copy(alpha = 0.4f), maxR * 0.88f, Offset(cx, cy), style = Stroke(1.dp.toPx())); drawCircle(VisionColors.CyanPrimary, 4.dp.toPx(), Offset(cx + maxR * 0.88f, cy)) }
+            // violet counter-rotating dashed ring
             rotate(ring2, Offset(cx, cy)) {
-                drawCircle(JarvisColors.Border.copy(alpha = 0.5f), maxR * 0.65f, Offset(cx, cy), style = Stroke(1.dp.toPx(), pathEffect = PathEffect.dashPathEffect(floatArrayOf(10f, 8f), 0f)))
-                repeat(3) { i -> val a = (i * 120f) * (PI / 180f).toFloat(); drawCircle(JarvisColors.BlueDeep, 3.dp.toPx(), Offset(cx + maxR * 0.65f * cos(a), cy + maxR * 0.65f * sin(a))) }
+                drawCircle(VisionColors.BorderViolet.copy(alpha = 0.7f), maxR * 0.65f, Offset(cx, cy), style = Stroke(1.dp.toPx(), pathEffect = PathEffect.dashPathEffect(floatArrayOf(10f, 8f), 0f)))
+                repeat(3) { i -> val a = (i * 120f) * (PI / 180f).toFloat(); drawCircle(VisionColors.Magenta, 3.dp.toPx(), Offset(cx + maxR * 0.65f * cos(a), cy + maxR * 0.65f * sin(a))) }
             }
-            val r = maxR * 0.26f * pulse
-            drawCircle(Brush.radialGradient(listOf(JarvisColors.CyanSecondary, JarvisColors.BlueDeep, JarvisColors.BlueMid), Offset(cx - r * 0.2f, cy - r * 0.2f), r), r, Offset(cx, cy))
-            drawCircle(JarvisColors.CyanPrimary.copy(alpha = glow), r + 14.dp.toPx(), Offset(cx, cy), style = Stroke(2.dp.toPx()))
+            // breathing plasma core: cyan rim → violet → deep void
+            val r = maxR * 0.27f * pulse
+            drawCircle(Brush.radialGradient(listOf(VisionColors.CyanPrimary, VisionColors.Violet, VisionColors.VioletDeep, VisionColors.BlueMid), Offset(cx - r * 0.25f, cy - r * 0.25f), r * 1.15f), r, Offset(cx, cy))
+            // twin glow rings
+            drawCircle(VisionColors.CyanPrimary.copy(alpha = glow), r + 12.dp.toPx(), Offset(cx, cy), style = Stroke(2.dp.toPx()))
+            drawCircle(VisionColors.Magenta.copy(alpha = glow * 0.6f), r + 22.dp.toPx(), Offset(cx, cy), style = Stroke(1.dp.toPx()))
         }
         Column(Modifier.align(Alignment.TopCenter).padding(top = 10.dp), horizontalAlignment = Alignment.CenterHorizontally) { Text("VISION", style = MaterialTheme.typography.displayLarge, color = JarvisColors.CyanPrimary) }
         Column(Modifier.align(Alignment.BottomCenter).padding(bottom = 12.dp), horizontalAlignment = Alignment.CenterHorizontally) { Text(if (s.isListening) "LISTENING" else "STANDBY", style = MaterialTheme.typography.labelMedium, color = if (s.isListening) JarvisColors.NeonGreen.copy(alpha = 0.5f + blink * 0.5f) else JarvisColors.CyanSecondary.copy(alpha = 0.7f)) }
@@ -137,7 +147,28 @@ val LocalOpenAiSettings = staticCompositionLocalOf<() -> Unit> { {} }
 }
 
 @Composable fun HudCard(modifier: Modifier = Modifier, content: @Composable BoxScope.() -> Unit) {
-    Box(modifier.clip(RoundedCornerShape(4.dp)).background(Brush.linearGradient(listOf(Color(0xF5061525.toInt()), Color(0xFB020B18.toInt())))).border(1.dp, JarvisColors.Border, RoundedCornerShape(4.dp))) { BracketDeco(); content() }
+    Box(modifier.glassPanel(radius = 8.dp)) { content() }
+}
+
+/** Slow drifting plasma aurora behind the whole HUD — pure graphicsLayer, no recomposition. */
+@Composable fun PlasmaAurora(modifier: Modifier) {
+    val inf = rememberInfiniteTransition(label = "aurora")
+    val t by inf.animateFloat(0f, 1f, infiniteRepeatable(tween(18000, easing = LinearEasing), RepeatMode.Reverse), label = "t")
+    Canvas(modifier.alpha(0.5f)) {
+        val w = size.width; val h = size.height
+        drawCircle(
+            Brush.radialGradient(listOf(VisionColors.Violet.copy(alpha = 0.30f), Color.Transparent), Offset(w * (0.2f + 0.2f * t), h * 0.25f), w * 0.7f),
+            radius = w * 0.7f, center = Offset(w * (0.2f + 0.2f * t), h * 0.25f),
+        )
+        drawCircle(
+            Brush.radialGradient(listOf(VisionColors.CyanSecondary.copy(alpha = 0.22f), Color.Transparent), Offset(w * (0.85f - 0.2f * t), h * 0.8f), w * 0.6f),
+            radius = w * 0.6f, center = Offset(w * (0.85f - 0.2f * t), h * 0.8f),
+        )
+        drawCircle(
+            Brush.radialGradient(listOf(VisionColors.Magenta.copy(alpha = 0.16f), Color.Transparent), Offset(w * (0.6f + 0.15f * t), h * (0.55f - 0.1f * t)), w * 0.5f),
+            radius = w * 0.5f, center = Offset(w * (0.6f + 0.15f * t), h * (0.55f - 0.1f * t)),
+        )
+    }
 }
 
 @Composable fun BracketDeco() {

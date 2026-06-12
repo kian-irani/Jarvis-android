@@ -29,7 +29,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.graphics.Brush
 import com.kianirani.jarvis.ui.theme.JarvisColors
+import com.kianirani.jarvis.ui.theme.VisionColors
+import com.kianirani.jarvis.ui.theme.glassPanel
+import com.kianirani.jarvis.ui.theme.visionEnter
 
 /**
  * Setup Wizard — 4 steps: 1 Welcome/name · 2 Brain discovery (mDNS/QR/Token)
@@ -44,7 +49,7 @@ fun SetupWizardScreen(
     Column(
         Modifier
             .fillMaxSize()
-            .background(JarvisColors.Background)
+            .background(VisionColors.ScreenBackdrop)
             .systemBarsPadding()
             .padding(24.dp)
     ) {
@@ -91,22 +96,23 @@ fun SetupWizardScreen(
 private fun StepIndicator(current: Int) {
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
         repeat(4) { i ->
+            val done = i <= current
             Box(
                 Modifier
                     .weight(1f)
-                    .height(3.dp)
+                    .height(4.dp)
                     .clip(RoundedCornerShape(2.dp))
-                    .background(if (i <= current) JarvisColors.CyanPrimary else JarvisColors.GridLine)
+                    .background(if (done) Brush.horizontalGradient(listOf(VisionColors.CyanPrimary, VisionColors.Violet)) else androidx.compose.ui.graphics.SolidColor(VisionColors.GridLine))
             )
         }
         Spacer(Modifier.width(10.dp))
-        Text("STEP ${current + 1}/4", style = MaterialTheme.typography.labelSmall)
+        Text("STEP ${current + 1}/4", style = MaterialTheme.typography.labelSmall, color = VisionColors.CyanSecondary)
     }
 }
 
 @Composable
 private fun StepWelcome(name: String, onName: (String) -> Unit) {
-    Column {
+    Column(Modifier.visionEnter()) {
         Text("VISION OS", style = MaterialTheme.typography.displayLarge)
         Text("SOVEREIGN INTELLIGENCE", style = MaterialTheme.typography.labelLarge)
         Spacer(Modifier.height(28.dp))
@@ -232,9 +238,15 @@ private fun StepConnect(status: ConnectStatus) {
 
 @Composable
 private fun StepDone(name: String) {
-    Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+    val inf = rememberInfiniteTransition(label = "done")
+    val pulse by inf.animateFloat(0.85f, 1.15f, infiniteRepeatable(tween(1600), RepeatMode.Reverse), label = "p")
+    Column(Modifier.fillMaxWidth().visionEnter(), horizontalAlignment = Alignment.CenterHorizontally) {
         Spacer(Modifier.height(40.dp))
-        Text("◉", style = MaterialTheme.typography.displayLarge, color = JarvisColors.NeonGreen)
+        Box(
+            Modifier.size(96.dp).clip(CircleShape)
+                .background(Brush.radialGradient(listOf(VisionColors.NeonGreen.copy(alpha = pulse * 0.6f), VisionColors.Violet.copy(alpha = 0.3f), androidx.compose.ui.graphics.Color.Transparent))),
+            contentAlignment = Alignment.Center,
+        ) { Text("◉", style = MaterialTheme.typography.displayLarge, color = VisionColors.NeonGreen) }
         Spacer(Modifier.height(16.dp))
         Text("$name IS PART OF THE MESH", style = MaterialTheme.typography.headlineLarge)
         Text("Brain election runs automatically.", style = MaterialTheme.typography.bodyMedium)
@@ -266,14 +278,14 @@ private fun WizardButton(label: String, primary: Boolean, modifier: Modifier = M
         modifier
             .heightIn(min = 48.dp)
             .clip(RoundedCornerShape(6.dp))
-            .background(
+            .then(
                 when {
-                    !enabled -> JarvisColors.Surface
-                    primary -> JarvisColors.CyanPrimary
-                    else -> JarvisColors.Surface
+                    !enabled -> Modifier.background(VisionColors.Surface)
+                    primary -> Modifier.background(VisionColors.PlasmaSweep)
+                    else -> Modifier.background(VisionColors.Surface)
                 }
             )
-            .border(1.dp, if (primary && enabled) JarvisColors.CyanPrimary else JarvisColors.Border, RoundedCornerShape(6.dp))
+            .border(1.dp, if (primary && enabled) VisionColors.CyanPrimary else VisionColors.Border, RoundedCornerShape(6.dp))
             .clickable(enabled = enabled, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
