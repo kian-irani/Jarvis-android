@@ -134,6 +134,9 @@ fun SettingsHubScreen(
             NavRow("Set as default home", "open Android home settings") {
                 runCatching { ctx.startActivity(Intent(Settings.ACTION_HOME_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
             }
+            NavRow("Device Control", "enable Home/Back/Recents by voice (Accessibility)") {
+                runCatching { ctx.startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
+            }
         }
         Section("ABOUT", 8) {
             InfoRow("Version", "VISION v${com.kianirani.jarvis.BuildConfig.VERSION_NAME} — Sovereign Intelligence")

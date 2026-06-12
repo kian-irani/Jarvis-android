@@ -12,8 +12,9 @@ import javax.inject.Singleton
 class ToolRegistry @Inject constructor(
     flashlight: FlashlightTool,
     deviceSettings: DeviceSettingsTool,
+    navigation: NavigationTool,
 ) {
-    private val tools: List<Tool> = listOf(flashlight, deviceSettings)
+    private val tools: List<Tool> = listOf(flashlight, deviceSettings, navigation)
 
     /** Ids of registered tools — useful for diagnostics / future tool-calling. */
     val ids: List<String> get() = tools.map { it.id }

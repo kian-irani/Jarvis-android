@@ -57,5 +57,18 @@
             android:name=".brain.BrainLiteService"
             android:exported="false"
             android:foregroundServiceType="dataSync" />
+        <!-- Phase 7.5: real device control (Home/Back/Recents). User enables once. -->
+        <service
+            android:name=".service.VisionAccessibilityService"
+            android:exported="false"
+            android:label="Vision Device Control"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/accessibility_service_config" />
+        </service>
     </application>
 </manifest>
