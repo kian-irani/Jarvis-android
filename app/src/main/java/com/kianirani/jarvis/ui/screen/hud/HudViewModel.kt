@@ -2,6 +2,7 @@ package com.kianirani.jarvis.ui.screen.hud
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.kianirani.jarvis.data.ai.CloudChatRouter
 import com.kianirani.jarvis.data.repository.ApiNode
 import com.kianirani.jarvis.data.repository.BrainEvent
 import com.kianirani.jarvis.data.repository.BrainRepository
@@ -28,6 +29,7 @@ private val IDLE = listOf("All systems operational.", "3 nodes online.", "Groq r
 class HudViewModel @Inject constructor(
     private val brain: BrainRepository,
     private val voice: VoiceController,
+    private val cloud: CloudChatRouter,
 ) : ViewModel() {
     private val _state = MutableStateFlow(HudUiState())
     val uiState: StateFlow<HudUiState> = _state.asStateFlow()
@@ -90,7 +92,17 @@ class HudViewModel @Inject constructor(
     fun sendChat() {
         val msg = _state.value.inputText.trim(); if (msg.isEmpty()) return
         _state.update { it.copy(inputText = "", jarvisOutput = "") }; stopIdle(); addLog("You: $msg", "info")
-        viewModelScope.launch { typeText("Processing..."); brain.chat(msg).onSuccess { resp -> typeText(resp.response); voice.speak(resp.response); addLog("AI: ${resp.duration_ms}ms", "ok") }.onFailure { e -> typeText("Error: ${e.message}"); addLog("Failed", "err") } }
+        viewModelScope.launch {
+            typeText("Processing...")
+            brain.chat(msg)
+                .onSuccess { resp -> typeText(resp.response); voice.speak(resp.response); addLog("Brain: ${resp.duration_ms}ms", "ok") }
+                .onFailure {
+                    // Standalone path: no brain paired/reachable -> cloud providers
+                    cloud.chat(msg)
+                        .onSuccess { r -> typeText(r.text); voice.speak(r.text); addLog("Cloud: ${r.provider.displayName}", "ok") }
+                        .onFailure { e -> typeText("Error: ${e.message}"); addLog("Failed", "err") }
+                }
+        }
     }
 
     fun toggleListening() {
