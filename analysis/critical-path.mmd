@@ -1,0 +1,9 @@
+flowchart TD
+    %% Primary persona flow: a phone joins the brain network
+    A["1. Device owner opens setup wizard\n(MainActivity → SetupWizardScreen/ViewModel)"]
+    B["2. Scan Wi-Fi for brains over mDNS\n(NsdDiscovery)"]
+    C["3. Health handshake verifies the brain\n(BrainHandshake → HealthRoutes, token-echo SHA256)"]
+    D["4. Pairing saved encrypted\n(BrainSelectionStore → EncryptedSharedPreferences)"]
+    E["5. Heartbeats flow to elected brain\n(HeartbeatSender → NodeRoutes → Room vision.db)"]
+    A --> B --> C --> D --> E
+    %% No telemetry available yet — p50/p99 to be added after first test launch

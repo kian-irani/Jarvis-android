@@ -1,0 +1,18 @@
+graph LR
+    %% Vision OS — data lineage (R = read, W = write)
+    VisionDatabase -- W --> Room[(Room vision.db)]
+    NodeRepository -- R/W --> Room
+    MemoryRepository -- R/W --> Room
+    TaskRepository -- R/W --> Room
+    ChatRepository -- R/W --> Room
+    EmbeddingRepository -- R/W --> Room
+    NodeRoutes -- W via repo --> Room
+    BrainElectionViewModel -- R --> Room
+
+    BrainSelectionStore -- R/W --> Prefs[(EncryptedSharedPreferences: pairing)]
+    SetupWizardViewModel -- W via store --> Prefs
+    HeartbeatSender -- R via store --> Prefs
+
+    brain_main[brain/main.py] -- W --> Redis[(redis)]
+    brain_main -- W --> Postgres[(postgres)]
+    brain_main -- W --> Temporal[(temporal)]

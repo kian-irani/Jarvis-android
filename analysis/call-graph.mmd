@@ -1,0 +1,42 @@
+graph TD
+    %% Vision OS — domain-level call graph (entry points highlighted)
+    MainActivity[["MainActivity (entry)"]]
+    JarvisApp[["JarvisApp (entry)"]]
+    BrainLiteService[["BrainLiteService (entry)"]]
+    brain_main[["brain/main.py (entry)"]]
+    agent[["node-agent/agent.py (entry)"]]
+
+    subgraph AndroidUI["Android UI"]
+        Setup[Setup Wizard]
+        Election[Brain Election]
+        HUD[HUD]
+    end
+    subgraph BrainLite["Android Brain-Lite"]
+        Ktor[KtorServer + 8 route files]
+        Discovery[Discovery: NSD/QR/Handshake]
+        Score[Score: metrics + calculator]
+        Repos[Repositories + Room]
+        Heartbeat[HeartbeatSender]
+    end
+    subgraph Core["Android Core"]
+        BrainRepo[BrainRepository ⚠ dead host]
+        DI[Hilt AppModule/BrainModule]
+    end
+
+    MainActivity --> Setup
+    MainActivity --> Election
+    MainActivity --> HUD
+    JarvisApp -. DI .-> DI
+    DI -. provides .-> Repos
+    DI -. provides .-> Discovery
+    Setup --> Discovery
+    Election --> Score
+    Election --> Repos
+    Election --> Discovery
+    BrainLiteService --> Ktor
+    BrainLiteService --> Discovery
+    BrainLiteService --> Heartbeat
+    Ktor -. dispatch .-> Repos
+    Heartbeat --> Ktor
+    BrainRepo -. HTTP .-> brain_main
+    agent -. WS/HTTP .-> brain_main

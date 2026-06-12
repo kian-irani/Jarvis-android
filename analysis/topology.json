@@ -1,0 +1,1133 @@
+{
+  "system": "Vision OS",
+  "root": {
+    "id": "sys",
+    "name": "Vision OS",
+    "kind": "system",
+    "children": [
+      {
+        "id": "dom:android-brain-lite",
+        "name": "Android Brain-Lite",
+        "kind": "domain",
+        "children": [
+          {
+            "id": "ApiEnvelope",
+            "name": "ApiEnvelope",
+            "kind": "module",
+            "language": "kotlin",
+            "loc": 49,
+            "file": "app/src/main/java/com/kianirani/jarvis/brain/server/ApiEnvelope.kt"
+          },
+          {
+            "id": "BrainHandshake",
+            "name": "BrainHandshake",
+            "kind": "module",
+            "language": "kotlin",
+            "loc": 55,
+            "file": "app/src/main/java/com/kianirani/jarvis/brain/discovery/BrainHandshake.kt"
+          },
+          {
+            "id": "BrainLiteService",
+            "name": "BrainLiteService",
+            "kind": "module",
+            "language": "kotlin",
+            "loc": 105,
+            "file": "app/src/main/java/com/kianirani/jarvis/brain/BrainLiteService.kt"
+          },
+          {
+            "id": "BrainModule",
+            "name": "BrainModule",
+            "kind": "module",
+            "language": "kotlin",
+            "loc": 66,
+            "file": "app/src/main/java/com/kianirani/jarvis/brain/di/BrainModule.kt"
+          },
+          {
+            "id": "BrainScoreCalculator",
+            "name": "BrainScoreCalculator",
+            "kind": "module",
+            "language": "kotlin",
+            "loc": 53,
+            "file": "app/src/main/java/com/kianirani/jarvis/brain/score/BrainScoreCalculator.kt"
+          },
+          {
+            "id": "BrainSelectionStore",
+            "name": "BrainSelectionStore",
+            "kind": "module",
+            "language": "kotlin",
+            "loc": 47,
+            "file": "app/src/main/java/com/kianirani/jarvis/brain/discovery/BrainSelectionStore.kt"
+          },
+          {
+            "id": "ChatRepository",
+            "name": "ChatRepository",
+            "kind": "module",
+            "language": "kotlin",
+            "loc": 55,
+            "file": "app/src/main/java/com/kianirani/jarvis/brain/data/ChatRepository.kt"
+          },
+          {
+            "id": "ChatRoutes",
+            "name": "ChatRoutes",
+            "kind": "module",
+            "language": "kotlin",
+            "loc": 24,
+            "file": "app/src/main/java/com/kianirani/jarvis/brain/server/routes/ChatRoutes.kt"
+          },
+          {
+            "id": "EmbedRoutes",
+            "name": "EmbedRoutes",
+            "kind": "module",
+            "language": "kotlin",
+            "loc": 29,
+            "file": "app/src/main/java/com/kianirani/jarvis/brain/server/routes/EmbedRoutes.kt"
+          },
+          {
+            "id": "EmbeddingRepository",
+            "name": "EmbeddingRepository",
+            "kind": "module",
+            "language": "kotlin",
+            "loc": 68,
+            "file": "app/src/main/java/com/kianirani/jarvis/brain/data/EmbeddingRepository.kt"
+          },
+          {
+            "id": "EventBus",
+            "name": "EventBus",
+            "kind": "module",
+            "language": "kotlin",
+            "loc": 14,
+            "file": "app/src/main/java/com/kianirani/jarvis/brain/data/EventBus.kt"
+          },
+          {
+            "id": "EventRoutes",
+            "name": "EventRoutes",
+            "kind": "module",
+            "language": "kotlin",
+            "loc": 25,
+            "file": "app/src/main/java/com/kianirani/jarvis/brain/server/routes/EventRoutes.kt"
+          },
+          {
+            "id": "FileRepository",
+            "name": "FileRepository",
+            "kind": "module",
+            "language": "kotlin",
+            "loc": 26,
+            "file": "app/src/main/java/com/kianirani/jarvis/brain/data/FileRepository.kt"
+          },
+          {
+            "id": "FileRoutes",
+            "name": "FileRoutes",
+            "kind": "module",
+            "language": "kotlin",
+            "loc": 31,
+            "file": "app/src/main/java/com/kianirani/jarvis/brain/server/routes/FileRoutes.kt"
+          },
+          {
+            "id": "HealthRoutes",
+            "name": "HealthRoutes",
+            "kind": "module",
+            "language": "kotlin",
+            "loc": 50,
+            "file": "app/src/main/java/com/kianirani/jarvis/brain/server/routes/HealthRoutes.kt"
+          },
+          {
+            "id": "HeartbeatSender",
+            "name": "HeartbeatSender",
+            "kind": "module",
+            "language": "kotlin",
+            "loc": 66,
+            "file": "app/src/main/java/com/kianirani/jarvis/brain/data/HeartbeatSender.kt"
+          },
+          {
+            "id": "JoinPayload",
+            "name": "JoinPayload",
+            "kind": "module",
+            "language": "kotlin",
+            "loc": 40,
+            "file": "app/src/main/java/com/kianirani/jarvis/brain/discovery/JoinPayload.kt"
+          },
+          {
+            "id": "KtorServer",
+            "name": "KtorServer",
+            "kind": "module",
+            "language": "kotlin",
+            "loc": 60,
+            "file": "app/src/main/java/com/kianirani/jarvis/brain/server/KtorServer.kt"
+          },
+          {
+            "id": "LocalDeviceMetricsProvider",
+            "name": "LocalDeviceMetricsProvider",
+            "kind": "module",
+            "language": "kotlin",
+            "loc": 37,
+            "file": "app/src/main/java/com/kianirani/jarvis/brain/score/LocalDeviceMetricsProvider.kt"
+          },
+          {
+            "id": "LocalPairingInfo",
+            "name": "LocalPairingInfo",
+            "kind": "module",
+            "language": "kotlin",
+            "loc": 32,
+            "file": "app/src/main/java/com/kianirani/jarvis/brain/discovery/LocalPairingInfo.kt"
+          },
+          {
+            "id": "MemoryRepository",
+            "name": "MemoryRepository",
+            "kind": "module",
+            "language": "kotlin",
+            "loc": 52,
+            "file": "app/src/main/java/com/kianirani/jarvis/brain/data/MemoryRepository.kt"
+          },
+          {
+            "id": "MemoryRoutes",
+            "name": "MemoryRoutes",
+            "kind": "module",
+            "language": "kotlin",
+            "loc": 33,
+            "file": "app/src/main/java/com/kianirani/jarvis/brain/server/routes/MemoryRoutes.kt"
+          },
+          {
+            "id": "NodeMetricsCodec",
+            "name": "NodeMetricsCodec",
+            "kind": "module",
+            "language": "kotlin",
+            "loc": 44,
+            "file": "app/src/main/java/com/kianirani/jarvis/brain/score/NodeMetricsCodec.kt"
+          },
+          {
+            "id": "NodeRepository",
+            "name": "NodeRepository",
+            "kind": "module",
+            "language": "kotlin",
+            "loc": 26,
+            "file": "app/src/main/java/com/kianirani/jarvis/brain/data/NodeRepository.kt"
+          },
+          {
+            "id": "NodeRoutes",
+            "name": "NodeRoutes",
+            "kind": "module",
+            "language": "kotlin",
+            "loc": 33,
+            "file": "app/src/main/java/com/kianirani/jarvis/brain/server/routes/NodeRoutes.kt"
+          },
+          {
+            "id": "NsdDiscovery",
+            "name": "NsdDiscovery",
+            "kind": "module",
+            "language": "kotlin",
+            "loc": 90,
+            "file": "app/src/main/java/com/kianirani/jarvis/brain/discovery/NsdDiscovery.kt"
+          },
+          {
+            "id": "QrPairing",
+            "name": "QrPairing",
+            "kind": "module",
+            "language": "kotlin",
+            "loc": 17,
+            "file": "app/src/main/java/com/kianirani/jarvis/brain/discovery/QrPairing.kt"
+          },
+          {
+            "id": "TaskRepository",
+            "name": "TaskRepository",
+            "kind": "module",
+            "language": "kotlin",
+            "loc": 46,
+            "file": "app/src/main/java/com/kianirani/jarvis/brain/data/TaskRepository.kt"
+          },
+          {
+            "id": "TaskRoutes",
+            "name": "TaskRoutes",
+            "kind": "module",
+            "language": "kotlin",
+            "loc": 30,
+            "file": "app/src/main/java/com/kianirani/jarvis/brain/server/routes/TaskRoutes.kt"
+          },
+          {
+            "id": "VisionDatabase",
+            "name": "VisionDatabase",
+            "kind": "module",
+            "language": "kotlin",
+            "loc": 73,
+            "file": "app/src/main/java/com/kianirani/jarvis/brain/data/db/VisionDatabase.kt"
+          }
+        ]
+      },
+      {
+        "id": "dom:android-core",
+        "name": "Android Core",
+        "kind": "domain",
+        "children": [
+          {
+            "id": "AppModule",
+            "name": "AppModule",
+            "kind": "module",
+            "language": "kotlin",
+            "loc": 41,
+            "file": "app/src/main/java/com/kianirani/jarvis/di/AppModule.kt"
+          },
+          {
+            "id": "BrainRepository",
+            "name": "BrainRepository",
+            "kind": "module",
+            "language": "kotlin",
+            "loc": 153,
+            "file": "app/src/main/java/com/kianirani/jarvis/data/repository/BrainRepository.kt"
+          },
+          {
+            "id": "JarvisApp",
+            "name": "JarvisApp",
+            "kind": "module",
+            "language": "kotlin",
+            "loc": 7,
+            "file": "app/src/main/java/com/kianirani/jarvis/JarvisApp.kt"
+          },
+          {
+            "id": "MainActivity",
+            "name": "MainActivity",
+            "kind": "module",
+            "language": "kotlin",
+            "loc": 54,
+            "file": "app/src/main/java/com/kianirani/jarvis/MainActivity.kt"
+          }
+        ]
+      },
+      {
+        "id": "dom:android-ui",
+        "name": "Android UI",
+        "kind": "domain",
+        "children": [
+          {
+            "id": "BrainElectionScreen",
+            "name": "BrainElectionScreen",
+            "kind": "module",
+            "language": "kotlin",
+            "loc": 117,
+            "file": "app/src/main/java/com/kianirani/jarvis/ui/screen/election/BrainElectionScreen.kt"
+          },
+          {
+            "id": "BrainElectionViewModel",
+            "name": "BrainElectionViewModel",
+            "kind": "module",
+            "language": "kotlin",
+            "loc": 118,
+            "file": "app/src/main/java/com/kianirani/jarvis/ui/screen/election/BrainElectionViewModel.kt"
+          },
+          {
+            "id": "HudScreen",
+            "name": "HudScreen",
+            "kind": "module",
+            "language": "kotlin",
+            "loc": 211,
+            "file": "app/src/main/java/com/kianirani/jarvis/ui/screen/hud/HudScreen.kt"
+          },
+          {
+            "id": "HudViewModel",
+            "name": "HudViewModel",
+            "kind": "module",
+            "language": "kotlin",
+            "loc": 100,
+            "file": "app/src/main/java/com/kianirani/jarvis/ui/screen/hud/HudViewModel.kt"
+          },
+          {
+            "id": "JarvisTheme",
+            "name": "JarvisTheme",
+            "kind": "module",
+            "language": "kotlin",
+            "loc": 58,
+            "file": "app/src/main/java/com/kianirani/jarvis/ui/theme/JarvisTheme.kt"
+          },
+          {
+            "id": "PairDeviceSection",
+            "name": "PairDeviceSection",
+            "kind": "module",
+            "language": "kotlin",
+            "loc": 89,
+            "file": "app/src/main/java/com/kianirani/jarvis/ui/screen/election/PairDeviceSection.kt"
+          },
+          {
+            "id": "SetupWizardScreen",
+            "name": "SetupWizardScreen",
+            "kind": "module",
+            "language": "kotlin",
+            "loc": 290,
+            "file": "app/src/main/java/com/kianirani/jarvis/ui/screen/setup/SetupWizardScreen.kt"
+          },
+          {
+            "id": "SetupWizardViewModel",
+            "name": "SetupWizardViewModel",
+            "kind": "module",
+            "language": "kotlin",
+            "loc": 138,
+            "file": "app/src/main/java/com/kianirani/jarvis/ui/screen/setup/SetupWizardViewModel.kt"
+          }
+        ]
+      },
+      {
+        "id": "dom:brain-server-python-",
+        "name": "Brain Server (Python)",
+        "kind": "domain",
+        "children": [
+          {
+            "id": "brain_logging_config",
+            "name": "brain_logging_config",
+            "kind": "module",
+            "language": "python",
+            "loc": 42,
+            "file": "brain/logging_config.py"
+          },
+          {
+            "id": "brain_main",
+            "name": "brain_main",
+            "kind": "module",
+            "language": "python",
+            "loc": 151,
+            "file": "brain/main.py"
+          }
+        ]
+      },
+      {
+        "id": "dom:node-agent-python-",
+        "name": "Node Agent (Python)",
+        "kind": "domain",
+        "children": [
+          {
+            "id": "agent_agent",
+            "name": "agent_agent",
+            "kind": "module",
+            "language": "python",
+            "loc": 89,
+            "file": "node-agent/agent.py"
+          }
+        ]
+      },
+      {
+        "id": "dom:data",
+        "name": "Data stores",
+        "kind": "domain",
+        "children": [
+          {
+            "id": "ds:pairing-prefs",
+            "name": "EncryptedSharedPreferences: brain pairing",
+            "kind": "datastore"
+          },
+          {
+            "id": "ds:postgres",
+            "name": "postgres",
+            "kind": "datastore"
+          },
+          {
+            "id": "ds:redis",
+            "name": "redis",
+            "kind": "datastore"
+          },
+          {
+            "id": "ds:room-vision-db",
+            "name": "Room: vision.db (node registry, memory, tasks)",
+            "kind": "datastore"
+          },
+          {
+            "id": "ds:temporal",
+            "name": "temporal",
+            "kind": "datastore"
+          }
+        ]
+      }
+    ]
+  },
+  "edges": [
+    {
+      "source": "AppModule",
+      "target": "BrainHandshake",
+      "kind": "call"
+    },
+    {
+      "source": "AppModule",
+      "target": "BrainHandshake",
+      "kind": "dispatch"
+    },
+    {
+      "source": "AppModule",
+      "target": "BrainRepository",
+      "kind": "dispatch"
+    },
+    {
+      "source": "AppModule",
+      "target": "BrainSelectionStore",
+      "kind": "call"
+    },
+    {
+      "source": "AppModule",
+      "target": "LocalDeviceMetricsProvider",
+      "kind": "call"
+    },
+    {
+      "source": "AppModule",
+      "target": "NsdDiscovery",
+      "kind": "call"
+    },
+    {
+      "source": "BrainElectionScreen",
+      "target": "BrainElectionViewModel",
+      "kind": "call"
+    },
+    {
+      "source": "BrainElectionScreen",
+      "target": "JarvisTheme",
+      "kind": "call"
+    },
+    {
+      "source": "BrainElectionScreen",
+      "target": "PairDeviceSection",
+      "kind": "call"
+    },
+    {
+      "source": "BrainElectionViewModel",
+      "target": "BrainScoreCalculator",
+      "kind": "call"
+    },
+    {
+      "source": "BrainElectionViewModel",
+      "target": "LocalDeviceMetricsProvider",
+      "kind": "dispatch"
+    },
+    {
+      "source": "BrainElectionViewModel",
+      "target": "NodeMetricsCodec",
+      "kind": "call"
+    },
+    {
+      "source": "BrainElectionViewModel",
+      "target": "NodeRepository",
+      "kind": "dispatch"
+    },
+    {
+      "source": "BrainHandshake",
+      "target": "NsdDiscovery",
+      "kind": "call"
+    },
+    {
+      "source": "BrainLiteService",
+      "target": "BrainSelectionStore",
+      "kind": "call"
+    },
+    {
+      "source": "BrainLiteService",
+      "target": "ChatRepository",
+      "kind": "call"
+    },
+    {
+      "source": "BrainLiteService",
+      "target": "EmbeddingRepository",
+      "kind": "call"
+    },
+    {
+      "source": "BrainLiteService",
+      "target": "EventBus",
+      "kind": "call"
+    },
+    {
+      "source": "BrainLiteService",
+      "target": "FileRepository",
+      "kind": "call"
+    },
+    {
+      "source": "BrainLiteService",
+      "target": "HealthRoutes",
+      "kind": "call"
+    },
+    {
+      "source": "BrainLiteService",
+      "target": "HeartbeatSender",
+      "kind": "call"
+    },
+    {
+      "source": "BrainLiteService",
+      "target": "KtorServer",
+      "kind": "call"
+    },
+    {
+      "source": "BrainLiteService",
+      "target": "LocalDeviceMetricsProvider",
+      "kind": "call"
+    },
+    {
+      "source": "BrainLiteService",
+      "target": "LocalPairingInfo",
+      "kind": "call"
+    },
+    {
+      "source": "BrainLiteService",
+      "target": "MemoryRepository",
+      "kind": "call"
+    },
+    {
+      "source": "BrainLiteService",
+      "target": "NodeRepository",
+      "kind": "call"
+    },
+    {
+      "source": "BrainLiteService",
+      "target": "NsdDiscovery",
+      "kind": "call"
+    },
+    {
+      "source": "BrainLiteService",
+      "target": "TaskRepository",
+      "kind": "call"
+    },
+    {
+      "source": "BrainModule",
+      "target": "ChatRepository",
+      "kind": "call"
+    },
+    {
+      "source": "BrainModule",
+      "target": "EmbeddingRepository",
+      "kind": "call"
+    },
+    {
+      "source": "BrainModule",
+      "target": "EventBus",
+      "kind": "call"
+    },
+    {
+      "source": "BrainModule",
+      "target": "FileRepository",
+      "kind": "call"
+    },
+    {
+      "source": "BrainModule",
+      "target": "MemoryRepository",
+      "kind": "call"
+    },
+    {
+      "source": "BrainModule",
+      "target": "NodeRepository",
+      "kind": "call"
+    },
+    {
+      "source": "BrainModule",
+      "target": "TaskRepository",
+      "kind": "call"
+    },
+    {
+      "source": "BrainModule",
+      "target": "VisionDatabase",
+      "kind": "call"
+    },
+    {
+      "source": "BrainModule",
+      "target": "ds:room-vision-db",
+      "kind": "read"
+    },
+    {
+      "source": "BrainRepository",
+      "target": "ChatRepository",
+      "kind": "call"
+    },
+    {
+      "source": "BrainRepository",
+      "target": "ChatRoutes",
+      "kind": "call"
+    },
+    {
+      "source": "BrainRepository",
+      "target": "EventBus",
+      "kind": "call"
+    },
+    {
+      "source": "BrainRepository",
+      "target": "brain_main",
+      "kind": "dispatch"
+    },
+    {
+      "source": "BrainSelectionStore",
+      "target": "JoinPayload",
+      "kind": "call"
+    },
+    {
+      "source": "BrainSelectionStore",
+      "target": "ds:pairing-prefs",
+      "kind": "read"
+    },
+    {
+      "source": "BrainSelectionStore",
+      "target": "ds:pairing-prefs",
+      "kind": "write"
+    },
+    {
+      "source": "ChatRepository",
+      "target": "ApiEnvelope",
+      "kind": "call"
+    },
+    {
+      "source": "ChatRoutes",
+      "target": "ApiEnvelope",
+      "kind": "call"
+    },
+    {
+      "source": "ChatRoutes",
+      "target": "ChatRepository",
+      "kind": "call"
+    },
+    {
+      "source": "EmbedRoutes",
+      "target": "ApiEnvelope",
+      "kind": "call"
+    },
+    {
+      "source": "EmbedRoutes",
+      "target": "MemoryRepository",
+      "kind": "call"
+    },
+    {
+      "source": "EmbeddingRepository",
+      "target": "ApiEnvelope",
+      "kind": "call"
+    },
+    {
+      "source": "EmbeddingRepository",
+      "target": "EmbedRoutes",
+      "kind": "call"
+    },
+    {
+      "source": "EventRoutes",
+      "target": "EventBus",
+      "kind": "call"
+    },
+    {
+      "source": "FileRepository",
+      "target": "ApiEnvelope",
+      "kind": "call"
+    },
+    {
+      "source": "FileRoutes",
+      "target": "ApiEnvelope",
+      "kind": "call"
+    },
+    {
+      "source": "FileRoutes",
+      "target": "FileRepository",
+      "kind": "call"
+    },
+    {
+      "source": "HeartbeatSender",
+      "target": "BrainScoreCalculator",
+      "kind": "call"
+    },
+    {
+      "source": "HeartbeatSender",
+      "target": "NodeMetricsCodec",
+      "kind": "call"
+    },
+    {
+      "source": "HeartbeatSender",
+      "target": "NodeRoutes",
+      "kind": "call"
+    },
+    {
+      "source": "HudScreen",
+      "target": "HudViewModel",
+      "kind": "call"
+    },
+    {
+      "source": "HudScreen",
+      "target": "JarvisTheme",
+      "kind": "call"
+    },
+    {
+      "source": "HudViewModel",
+      "target": "BrainRepository",
+      "kind": "call"
+    },
+    {
+      "source": "HudViewModel",
+      "target": "BrainRepository",
+      "kind": "dispatch"
+    },
+    {
+      "source": "HudViewModel",
+      "target": "ChatRepository",
+      "kind": "call"
+    },
+    {
+      "source": "HudViewModel",
+      "target": "EventBus",
+      "kind": "call"
+    },
+    {
+      "source": "HudViewModel",
+      "target": "HudScreen",
+      "kind": "call"
+    },
+    {
+      "source": "KtorServer",
+      "target": "ChatRoutes",
+      "kind": "dispatch"
+    },
+    {
+      "source": "KtorServer",
+      "target": "EmbedRoutes",
+      "kind": "dispatch"
+    },
+    {
+      "source": "KtorServer",
+      "target": "EventBus",
+      "kind": "call"
+    },
+    {
+      "source": "KtorServer",
+      "target": "EventRoutes",
+      "kind": "dispatch"
+    },
+    {
+      "source": "KtorServer",
+      "target": "FileRepository",
+      "kind": "call"
+    },
+    {
+      "source": "KtorServer",
+      "target": "FileRoutes",
+      "kind": "dispatch"
+    },
+    {
+      "source": "KtorServer",
+      "target": "HealthRoutes",
+      "kind": "dispatch"
+    },
+    {
+      "source": "KtorServer",
+      "target": "MemoryRepository",
+      "kind": "call"
+    },
+    {
+      "source": "KtorServer",
+      "target": "MemoryRoutes",
+      "kind": "dispatch"
+    },
+    {
+      "source": "KtorServer",
+      "target": "NodeRepository",
+      "kind": "call"
+    },
+    {
+      "source": "KtorServer",
+      "target": "NodeRoutes",
+      "kind": "dispatch"
+    },
+    {
+      "source": "KtorServer",
+      "target": "TaskRepository",
+      "kind": "call"
+    },
+    {
+      "source": "KtorServer",
+      "target": "TaskRoutes",
+      "kind": "dispatch"
+    },
+    {
+      "source": "LocalDeviceMetricsProvider",
+      "target": "BrainScoreCalculator",
+      "kind": "call"
+    },
+    {
+      "source": "LocalPairingInfo",
+      "target": "JoinPayload",
+      "kind": "call"
+    },
+    {
+      "source": "MainActivity",
+      "target": "BrainElectionScreen",
+      "kind": "call"
+    },
+    {
+      "source": "MainActivity",
+      "target": "HudScreen",
+      "kind": "call"
+    },
+    {
+      "source": "MainActivity",
+      "target": "HudViewModel",
+      "kind": "call"
+    },
+    {
+      "source": "MainActivity",
+      "target": "JarvisTheme",
+      "kind": "call"
+    },
+    {
+      "source": "MainActivity",
+      "target": "SetupWizardScreen",
+      "kind": "call"
+    },
+    {
+      "source": "MemoryRepository",
+      "target": "VisionDatabase",
+      "kind": "call"
+    },
+    {
+      "source": "MemoryRoutes",
+      "target": "ApiEnvelope",
+      "kind": "call"
+    },
+    {
+      "source": "MemoryRoutes",
+      "target": "MemoryRepository",
+      "kind": "call"
+    },
+    {
+      "source": "NodeMetricsCodec",
+      "target": "BrainScoreCalculator",
+      "kind": "call"
+    },
+    {
+      "source": "NodeRepository",
+      "target": "BrainScoreCalculator",
+      "kind": "call"
+    },
+    {
+      "source": "NodeRepository",
+      "target": "NodeMetricsCodec",
+      "kind": "call"
+    },
+    {
+      "source": "NodeRepository",
+      "target": "VisionDatabase",
+      "kind": "call"
+    },
+    {
+      "source": "NodeRepository",
+      "target": "ds:room-vision-db",
+      "kind": "read"
+    },
+    {
+      "source": "NodeRoutes",
+      "target": "NodeRepository",
+      "kind": "call"
+    },
+    {
+      "source": "PairDeviceSection",
+      "target": "JarvisTheme",
+      "kind": "call"
+    },
+    {
+      "source": "PairDeviceSection",
+      "target": "LocalPairingInfo",
+      "kind": "call"
+    },
+    {
+      "source": "PairDeviceSection",
+      "target": "QrPairing",
+      "kind": "call"
+    },
+    {
+      "source": "QrPairing",
+      "target": "JoinPayload",
+      "kind": "call"
+    },
+    {
+      "source": "SetupWizardScreen",
+      "target": "JarvisTheme",
+      "kind": "call"
+    },
+    {
+      "source": "SetupWizardScreen",
+      "target": "NsdDiscovery",
+      "kind": "call"
+    },
+    {
+      "source": "SetupWizardScreen",
+      "target": "SetupWizardViewModel",
+      "kind": "call"
+    },
+    {
+      "source": "SetupWizardViewModel",
+      "target": "BrainHandshake",
+      "kind": "dispatch"
+    },
+    {
+      "source": "SetupWizardViewModel",
+      "target": "BrainSelectionStore",
+      "kind": "dispatch"
+    },
+    {
+      "source": "SetupWizardViewModel",
+      "target": "JoinPayload",
+      "kind": "call"
+    },
+    {
+      "source": "SetupWizardViewModel",
+      "target": "NsdDiscovery",
+      "kind": "call"
+    },
+    {
+      "source": "TaskRepository",
+      "target": "VisionDatabase",
+      "kind": "call"
+    },
+    {
+      "source": "TaskRoutes",
+      "target": "ApiEnvelope",
+      "kind": "call"
+    },
+    {
+      "source": "TaskRoutes",
+      "target": "TaskRepository",
+      "kind": "call"
+    },
+    {
+      "source": "VisionDatabase",
+      "target": "ds:room-vision-db",
+      "kind": "read"
+    },
+    {
+      "source": "VisionDatabase",
+      "target": "ds:room-vision-db",
+      "kind": "write"
+    },
+    {
+      "source": "agent_agent",
+      "target": "brain_main",
+      "kind": "dispatch"
+    },
+    {
+      "source": "brain_main",
+      "target": "brain_logging_config",
+      "kind": "call"
+    }
+  ],
+  "entryPoints": [
+    "BrainLiteService",
+    "JarvisApp",
+    "MainActivity",
+    "agent_agent",
+    "brain_main"
+  ],
+  "deadEnds": [],
+  "observations": [
+    "BrainLiteService is the coordination hub: it owns the Ktor server, NSD advertisement/discovery, heartbeats and the Room registry \u2014 a single point of failure on the elected-brain device.",
+    "BrainRepository (Android Core) still targets a hardcoded external host that has been decommissioned; it bypasses BrainSelectionStore \u2014 launch blocker, also tracked in the auto-run-task queue.",
+    "Room vision.db has many writers (repositories, heartbeat path, DAOs) \u2014 schema changes ripple across the whole Brain-Lite domain.",
+    "All 8 Ktor route files are dispatch targets registered by KtorServer; a grep-only graph would mark them dead. Same for Hilt modules and Composable screens (dispatch via DI/navigation).",
+    "The Python brain (brain/main.py) and Android Brain-Lite implement overlapping APIs (health/chat/embed) \u2014 candidate for a shared OpenAPI contract before the python brain grows.",
+    "docker-compose declares redis/postgres/temporal but brain/main.py references few of them directly \u2014 infra is provisioned ahead of code; verify before scaling effort there.",
+    "Discovery domain (NSD/mDNS + QR pairing + handshake) is cleanly bounded with one outward interface (BrainSelectionStore) \u2014 good service-extraction shape."
+  ],
+  "flows": [
+    {
+      "name": "A phone joins the brain network",
+      "persona": "Device owner (second phone)",
+      "description": "Someone opens the setup wizard on a new phone, finds the household brain over Wi-Fi, and pairs with it.",
+      "steps": [
+        {
+          "label": "Open the setup wizard",
+          "nodes": [
+            "MainActivity",
+            "SetupWizardScreen",
+            "SetupWizardViewModel"
+          ]
+        },
+        {
+          "label": "Scan the local network for brains (mDNS)",
+          "nodes": [
+            "NsdDiscovery"
+          ]
+        },
+        {
+          "label": "Verify the brain with a health handshake",
+          "nodes": [
+            "BrainHandshake",
+            "HealthRoutes"
+          ]
+        },
+        {
+          "label": "Save the pairing securely",
+          "nodes": [
+            "BrainSelectionStore",
+            "ds:pairing-prefs"
+          ]
+        },
+        {
+          "label": "Start sending heartbeats to the elected brain",
+          "nodes": [
+            "HeartbeatSender",
+            "NodeRoutes",
+            "ds:room-vision-db"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "The household elects a brain",
+      "persona": "Household admin",
+      "description": "The admin opens the election screen, compares live device scores, and the strongest device becomes the brain.",
+      "steps": [
+        {
+          "label": "Open the brain election screen",
+          "nodes": [
+            "BrainElectionScreen",
+            "BrainElectionViewModel"
+          ]
+        },
+        {
+          "label": "Collect live metrics from this device",
+          "nodes": [
+            "LocalDeviceMetricsProvider",
+            "NodeMetricsCodec"
+          ]
+        },
+        {
+          "label": "Read registered nodes and their heartbeats",
+          "nodes": [
+            "NodeRepository",
+            "VisionDatabase",
+            "ds:room-vision-db"
+          ]
+        },
+        {
+          "label": "Score candidates and pick the winner",
+          "nodes": [
+            "BrainScoreCalculator"
+          ]
+        },
+        {
+          "label": "Run the brain service on the winner",
+          "nodes": [
+            "BrainLiteService",
+            "KtorServer"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Pairing a device by QR code",
+      "persona": "Device owner",
+      "description": "Instead of scanning the network, the owner shows a QR code on the brain phone and the new phone joins from it.",
+      "steps": [
+        {
+          "label": "Brain phone renders its pairing QR",
+          "nodes": [
+            "PairDeviceSection",
+            "QrPairing",
+            "LocalPairingInfo"
+          ]
+        },
+        {
+          "label": "New phone decodes the join payload",
+          "nodes": [
+            "JoinPayload",
+            "QrPairing"
+          ]
+        },
+        {
+          "label": "Handshake and store the pairing",
+          "nodes": [
+            "BrainHandshake",
+            "BrainSelectionStore",
+            "ds:pairing-prefs"
+          ]
+        }
+      ]
+    }
+  ]
+}
