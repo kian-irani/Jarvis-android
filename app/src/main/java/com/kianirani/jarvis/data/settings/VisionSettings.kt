@@ -27,6 +27,16 @@ class VisionSettings @Inject constructor(@ApplicationContext context: Context) {
     val scanLine: StateFlow<Boolean> = _scanLine
     val aurora: StateFlow<Boolean> = _aurora
 
+    /** P4.5 Trust Level: 0 = SOVEREIGN (local only, no cloud), 1 = BALANCED, 2 = OPEN. */
+    private val _trustLevel = MutableStateFlow(prefs.getInt(KEY_TRUST, 1))
+    val trustLevel: StateFlow<Int> = _trustLevel
+
+    fun setTrustLevel(level: Int) {
+        val l = level.coerceIn(0, 2)
+        prefs.edit().putInt(KEY_TRUST, l).apply()
+        _trustLevel.value = l
+    }
+
     fun set(key: String, value: Boolean) {
         prefs.edit().putBoolean(key, value).apply()
         when (key) {
@@ -42,5 +52,6 @@ class VisionSettings @Inject constructor(@ApplicationContext context: Context) {
         const val KEY_TTS = "tts_enabled"
         const val KEY_SCANLINE = "fx_scanline"
         const val KEY_AURORA = "fx_aurora"
+        const val KEY_TRUST = "trust_level"
     }
 }

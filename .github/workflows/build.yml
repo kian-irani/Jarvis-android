@@ -57,7 +57,7 @@ jobs:
           export PATH="/opt/gradle/gradle-8.11.1/bin:$PATH"
           gradle wrapper --gradle-version=8.11.1 --distribution-type=bin
           chmod +x gradlew
-          ./gradlew assembleDebug --no-daemon --stacktrace
+          ./gradlew assembleDebug assembleRelease --no-daemon --stacktrace
 
       - name: Get APK size
         id: apk_info
@@ -84,9 +84,12 @@ jobs:
         run: |
           APK="${{ steps.apk_info.outputs.apk_path }}"
           cp "$APK" VISION-v16-debug.apk
+          REL=$(ls app/build/outputs/apk/release/*.apk | head -1) && cp "$REL" VISION-v16-release.apk
           gh release delete v16-latest --yes 2>/dev/null || true
           git push --delete origin v16-latest 2>/dev/null || true
-          gh release create v16-latest VISION-v16-debug.apk \
+          git tag -d v16-latest 2>/dev/null || true
+          gh release create v16-latest VISION-v16-debug.apk VISION-v16-release.apk \
+            --target "${{ github.sha }}" \
             --title "VISION v16 — latest build (${{ steps.apk_info.outputs.build_date }})" \
-            --notes "Auto-built from \`${{ github.sha }}\` · size ${{ steps.apk_info.outputs.apk_size }} · run #${{ github.run_number }}. Activation via kiancdn bot." \
+            --notes "Auto-built from \`${{ github.sha }}\` · debug ${{ steps.apk_info.outputs.apk_size }} · run #${{ github.run_number }}. Two variants: **release** (smaller, daily use) and **debug** (verbose, troubleshooting). Activation via kiancdn bot." \
             --latest

@@ -26,12 +26,17 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
+import com.kianirani.jarvis.data.ai.AiProvider
+import com.kianirani.jarvis.data.ai.AiUsageStore
+import com.kianirani.jarvis.data.ai.ChatHistoryStore
+import com.kianirani.jarvis.data.settings.ActivationStore
 import com.kianirani.jarvis.data.settings.VisionSettings
 import com.kianirani.jarvis.ui.theme.JarvisColors
 import com.kianirani.jarvis.ui.theme.VisionColors
@@ -41,7 +46,12 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 
 @HiltViewModel
-class SettingsHubViewModel @Inject constructor(val settings: VisionSettings) : ViewModel()
+class SettingsHubViewModel @Inject constructor(
+    val settings: VisionSettings,
+    val activation: ActivationStore,
+    val usage: AiUsageStore,
+    val history: ChatHistoryStore,
+) : ViewModel()
 
 /**
  * SYSTEM CONFIG — the organized settings hub (USER DIRECTIVE 2026-06-12).
@@ -83,12 +93,28 @@ fun SettingsHubScreen(
             ToggleRow("Plasma aurora", "drifting background nebula", aurora) { s.set(VisionSettings.KEY_AURORA, it) }
             ToggleRow("Scan line", "moving HUD scan beam", scan) { s.set(VisionSettings.KEY_SCANLINE, it) }
         }
-        Section("LAUNCHER", 3) {
+        Section("TRUST LEVEL", 3) {
+            val trust by s.trustLevel.collectAsState()
+            TrustSelector(trust, s::setTrustLevel)
+        }
+        Section("ACTIVATION", 4) {
+            ActivationRow(vm.activation)
+        }
+        Section("PRIVACY MONITOR", 5) {
+            val used = AiProvider.entries.map { it to vm.usage.usage(it) }.filter { it.second.calls > 0 }
+            if (used.isEmpty()) {
+                InfoRow("Cloud calls", "none — nothing has left this device")
+            } else {
+                used.forEach { (p, u) -> InfoRow(p.displayName, "${u.calls} calls · ${u.ok} ok · ${u.failed} failed") }
+            }
+            NavRow("Clear conversation memory", "forget all chat history") { vm.history.clear() }
+        }
+        Section("LAUNCHER", 6) {
             NavRow("Set as default home", "open Android home settings") {
                 runCatching { ctx.startActivity(Intent(Settings.ACTION_HOME_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
             }
         }
-        Section("ABOUT", 4) {
+        Section("ABOUT", 7) {
             InfoRow("Version", "VISION v16.0.0 — Sovereign Intelligence")
             InfoRow("Source", "github.com/kian-irani/Jarvis-android")
         }
@@ -152,6 +178,74 @@ private fun ToggleRow(title: String, subtitle: String, checked: Boolean, onChang
             contentAlignment = if (checked) Alignment.CenterEnd else Alignment.CenterStart,
         ) {
             Box(Modifier.size(16.dp).background(knob, CircleShape))
+        }
+    }
+}
+
+@Composable
+private fun TrustSelector(current: Int, onSelect: (Int) -> Unit) {
+    val levels = listOf(
+        Triple(0, "SOVEREIGN", "local brain only — nothing leaves the device"),
+        Triple(1, "BALANCED", "brain first, cloud fallback (default)"),
+        Triple(2, "OPEN", "fastest answer wins, any provider"),
+    )
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        levels.forEach { (lvl, name, desc) ->
+            val active = lvl == current
+            Row(
+                Modifier.fillMaxWidth()
+                    .border(
+                        1.dp,
+                        if (active) VisionColors.CyanPrimary else JarvisColors.Border,
+                        RoundedCornerShape(6.dp),
+                    )
+                    .background(
+                        if (active) VisionColors.CyanPrimary.copy(alpha = 0.08f) else androidx.compose.ui.graphics.Color.Transparent,
+                        RoundedCornerShape(6.dp),
+                    )
+                    .clickable { onSelect(lvl) }
+                    .padding(10.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column(Modifier.weight(1f)) {
+                    Text(name, style = MaterialTheme.typography.labelLarge,
+                        color = if (active) VisionColors.CyanPrimary else JarvisColors.TextPrimary)
+                    Text(desc, style = MaterialTheme.typography.bodySmall, color = JarvisColors.TextDim)
+                }
+                if (active) Text("◉", color = VisionColors.CyanPrimary)
+            }
+        }
+    }
+}
+
+@Composable
+private fun ActivationRow(store: ActivationStore) {
+    val code by store.code.collectAsState()
+    var input by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf("") }
+    if (code != null) {
+        Row(Modifier.fillMaxWidth().padding(vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+            Text("◉ ACTIVATED", style = MaterialTheme.typography.labelLarge, color = JarvisColors.NeonGreen)
+            Spacer(Modifier.weight(1f))
+            Text("…${code!!.takeLast(4)}", style = MaterialTheme.typography.bodySmall, color = JarvisColors.TextDim)
+            Text("  REMOVE", style = MaterialTheme.typography.labelSmall, color = JarvisColors.DangerRed,
+                modifier = Modifier.clickable { store.deactivate() }.padding(4.dp))
+        }
+    } else {
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            androidx.compose.foundation.text.BasicTextField(
+                value = input, onValueChange = { input = it }, singleLine = true,
+                textStyle = androidx.compose.ui.text.TextStyle(color = JarvisColors.TextPrimary),
+                cursorBrush = androidx.compose.ui.graphics.SolidColor(JarvisColors.CyanPrimary),
+                decorationBox = { inner ->
+                    Row(Modifier.border(1.dp, JarvisColors.Border, RoundedCornerShape(4.dp)).padding(horizontal = 10.dp, vertical = 8.dp)) {
+                        if (input.isEmpty()) Text("activation code from @bot", color = JarvisColors.TextDim, style = MaterialTheme.typography.bodySmall)
+                        inner()
+                    }
+                },
+                modifier = Modifier.weight(1f),
+            )
+            Text("ACTIVATE", style = MaterialTheme.typography.labelLarge, color = JarvisColors.CyanPrimary,
+                modifier = Modifier.clickable(enabled = input.isNotBlank()) { store.activate(input); input = "" }.padding(6.dp))
         }
     }
 }

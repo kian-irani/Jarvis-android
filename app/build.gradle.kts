@@ -23,6 +23,9 @@ android {
         release {
             isMinifyEnabled = false
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            // Signed with the debug key for now so the release variant is
+            // installable straight from GitHub; swap in a real keystore pre-store.
+            signingConfig = signingConfigs.getByName("debug")
         }
     }
     compileOptions {

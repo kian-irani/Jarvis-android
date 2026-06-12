@@ -31,6 +31,8 @@ class HudViewModel @Inject constructor(
     private val brain: BrainRepository,
     private val voice: VoiceController,
     private val cloud: CloudChatRouter,
+    private val interpreter: com.kianirani.jarvis.data.agent.CommandInterpreter,
+    private val settings: com.kianirani.jarvis.data.settings.VisionSettings,
 ) : ViewModel() {
     private val _state = MutableStateFlow(HudUiState())
     val uiState: StateFlow<HudUiState> = _state.asStateFlow()
@@ -94,19 +96,32 @@ class HudViewModel @Inject constructor(
         val msg = _state.value.inputText.trim(); if (msg.isEmpty()) return
         _state.update { it.copy(inputText = "", jarvisOutput = "") }; stopIdle(); addLog("You: $msg", "info")
         viewModelScope.launch {
+            // P5 agentic v1: device commands ("open camera", "battery", …) run
+            // locally with zero latency and zero data leaving the phone.
+            interpreter.tryHandle(msg)?.let { reply ->
+                typeText(reply); speak(reply); addLog("Local: command", "ok"); return@launch
+            }
             typeText("Processing...")
             brain.chat(msg)
-                .onSuccess { resp -> typeText(resp.response); voice.speak(resp.response); addLog("Brain: ${resp.duration_ms}ms", "ok") }
+                .onSuccess { resp -> typeText(resp.response); speak(resp.response); addLog("Brain: ${resp.duration_ms}ms", "ok") }
                 .onFailure {
+                    // P4.5 trust gate: SOVEREIGN (0) means nothing leaves the device.
+                    if (settings.trustLevel.value == 0) {
+                        typeText("Brain unreachable — cloud disabled by SOVEREIGN trust level.")
+                        addLog("Cloud blocked (trust)", "warn"); return@onFailure
+                    }
                     // Standalone path: no brain paired/reachable -> cloud providers
                     cloud.chat(msg)
-                        .onSuccess { r -> typeText(r.text); voice.speak(r.text); addLog("Cloud: ${r.provider.displayName}", "ok") }
+                        .onSuccess { r -> typeText(r.text); speak(r.text); addLog("Cloud: ${r.provider.displayName}", "ok") }
                         .onFailure { e -> typeText("Error: ${e.message}"); addLog("Failed", "err") }
                 }
         }
     }
 
     fun toggleListening() {
+        if (!settings.voiceEnabled.value && !_state.value.isListening) {
+            addLog("Voice input disabled in SYSTEM CONFIG", "warn"); return
+        }
         val now = !_state.value.isListening
         _state.update { it.copy(isListening = now) }
         if (now) {
@@ -131,6 +146,9 @@ class HudViewModel @Inject constructor(
             voice.stopListening(); addLog("Voice off", "info")
         }
     }
+
+    /** TTS honors the settings toggle. */
+    private fun speak(text: String) { if (settings.ttsEnabled.value) voice.speak(text) }
 
     private fun typeText(text: String) { typeJob?.cancel(); typeJob = viewModelScope.launch { _state.update { it.copy(jarvisOutput = "") }; var cur = ""; for (ch in text) { cur += ch; _state.update { it.copy(jarvisOutput = cur) }; delay(28L + (0..18).random()) } } }
     private fun appendText(d: String) = _state.update { it.copy(jarvisOutput = it.jarvisOutput + d) }

@@ -29,7 +29,11 @@ import javax.inject.Singleton
  * behaviour across all providers.
  */
 @Singleton
-class CloudChatRouter @Inject constructor(private val store: AiProviderStore) : java.io.Closeable {
+class CloudChatRouter @Inject constructor(
+    private val store: AiProviderStore,
+    private val history: ChatHistoryStore,
+    private val usage: AiUsageStore,
+) : java.io.Closeable {
 
     companion object {
         const val SYSTEM_RULES =
@@ -54,6 +58,8 @@ class CloudChatRouter @Inject constructor(private val store: AiProviderStore) : 
      * its tokens (user directive: e.g. 4 Grok keys). Failure falls through.
      */
     suspend fun chat(message: String): Result<CloudReply> {
+        // P9 memory-lite: short context window of prior turns precedes the message.
+        val context = history.recent(6)
         val providers = store.configured()
         if (providers.isEmpty()) {
             return Result.failure(IllegalStateException("No AI provider token configured — add one in AI PROVIDERS"))
@@ -65,23 +71,29 @@ class CloudChatRouter @Inject constructor(private val store: AiProviderStore) : 
             val start = rotation.getOrDefault(p, 0) % keys.size
             for (i in keys.indices) {
                 val idx = (start + i) % keys.size
-                runCatching { ask(p, keys[idx], message) }
+                runCatching { ask(p, keys[idx], message, context) }
                     .onSuccess {
                         rotation[p] = idx // stick with the key that worked
+                        usage.record(p, success = true)
+                        history.append("user", message)
+                        history.append("assistant", it)
                         return Result.success(CloudReply(it, p))
                     }
-                    .onFailure { last = it }
+                    .onFailure { last = it; usage.record(p, success = false) }
             }
             rotation[p] = (start + 1) % keys.size
         }
         return Result.failure(last)
     }
 
-    private suspend fun ask(p: AiProvider, token: String, message: String): String = when (p) {
+    private suspend fun ask(p: AiProvider, token: String, message: String, context: List<ChatTurn>): String = when (p) {
         AiProvider.ANTHROPIC -> {
             val body = buildJsonObject {
                 put("model", p.defaultModel); put("max_tokens", 1024); put("system", SYSTEM_RULES)
-                put("messages", buildJsonArray { add(buildJsonObject { put("role", "user"); put("content", message) }) })
+                put("messages", buildJsonArray {
+                    context.forEach { t -> add(buildJsonObject { put("role", t.role); put("content", t.text) }) }
+                    add(buildJsonObject { put("role", "user"); put("content", message) })
+                })
             }
             val resp = http.post("${p.baseUrl}/v1/messages") {
                 header("x-api-key", token); header("anthropic-version", "2023-06-01")
@@ -96,7 +108,13 @@ class CloudChatRouter @Inject constructor(private val store: AiProviderStore) : 
                     put("parts", buildJsonArray { add(buildJsonObject { put("text", SYSTEM_RULES) }) })
                 }
                 put("contents", buildJsonArray {
-                    add(buildJsonObject { put("parts", buildJsonArray { add(buildJsonObject { put("text", message) }) }) })
+                    context.forEach { t ->
+                        add(buildJsonObject {
+                            put("role", if (t.role == "assistant") "model" else "user")
+                            put("parts", buildJsonArray { add(buildJsonObject { put("text", t.text) }) })
+                        })
+                    }
+                    add(buildJsonObject { put("role", "user"); put("parts", buildJsonArray { add(buildJsonObject { put("text", message) }) }) })
                 })
             }
             val resp = http.post("${p.baseUrl}/v1beta/models/${p.defaultModel}:generateContent") {
@@ -114,6 +132,7 @@ class CloudChatRouter @Inject constructor(private val store: AiProviderStore) : 
                 put("model", p.defaultModel)
                 put("messages", buildJsonArray {
                     add(buildJsonObject { put("role", "system"); put("content", SYSTEM_RULES) })
+                    context.forEach { t -> add(buildJsonObject { put("role", t.role); put("content", t.text) }) }
                     add(buildJsonObject { put("role", "user"); put("content", message) })
                 })
             }

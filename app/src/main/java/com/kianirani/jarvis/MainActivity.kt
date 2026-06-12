@@ -56,6 +56,13 @@ class MainActivity : ComponentActivity() {
                     })
                     VisionRoute.HUD -> {
                         val vm: HudViewModel = hiltViewModel()
+                        // P14: text shared from any app lands in the command bar.
+                        androidx.compose.runtime.LaunchedEffect(Unit) {
+                            if (intent?.action == android.content.Intent.ACTION_SEND) {
+                                intent.getStringExtra(android.content.Intent.EXTRA_TEXT)?.let(vm::onInputChange)
+                                intent.action = null
+                            }
+                        }
                         HudScreen(
                             viewModel = vm,
                             onOpenElection = { route = VisionRoute.ELECTION },

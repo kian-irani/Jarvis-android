@@ -61,8 +61,12 @@ data class AppEntry(val label: String, val packageName: String, val icon: ImageB
 class AppDrawerViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
 ) : ViewModel() {
+    // P10 digital-twin-lite: launch counters drive the FREQUENT row.
+    private val counts = context.getSharedPreferences("vision_app_usage", Context.MODE_PRIVATE)
     private val _apps = MutableStateFlow<List<AppEntry>>(emptyList())
     val apps = _apps.asStateFlow()
+    private val _frequent = MutableStateFlow<List<AppEntry>>(emptyList())
+    val frequent = _frequent.asStateFlow()
     private val _query = MutableStateFlow("")
     val query = _query.asStateFlow()
 
@@ -70,7 +74,12 @@ class AppDrawerViewModel @Inject constructor(
 
     fun refresh() {
         viewModelScope.launch {
-            _apps.value = withContext(Dispatchers.IO) { loadApps() }
+            val loaded = withContext(Dispatchers.IO) { loadApps() }
+            _apps.value = loaded
+            _frequent.value = loaded
+                .filter { counts.getInt(it.packageName, 0) > 0 }
+                .sortedByDescending { counts.getInt(it.packageName, 0) }
+                .take(4)
         }
     }
 
@@ -80,6 +89,7 @@ class AppDrawerViewModel @Inject constructor(
         context.packageManager.getLaunchIntentForPackage(packageName)?.let {
             it.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             context.startActivity(it)
+            counts.edit().putInt(packageName, counts.getInt(packageName, 0) + 1).apply()
         }
     }
 
@@ -102,6 +112,7 @@ class AppDrawerViewModel @Inject constructor(
 @Composable
 fun AppDrawerScreen(vm: AppDrawerViewModel = hiltViewModel(), onBack: () -> Unit = {}) {
     val apps by vm.apps.collectAsState()
+    val frequent by vm.frequent.collectAsState()
     val query by vm.query.collectAsState()
     val filtered = if (query.isBlank()) apps else apps.filter { it.label.contains(query, ignoreCase = true) }
     LocalContext.current
@@ -134,6 +145,23 @@ fun AppDrawerScreen(vm: AppDrawerViewModel = hiltViewModel(), onBack: () -> Unit
             },
             modifier = Modifier.fillMaxWidth(),
         )
+        if (frequent.isNotEmpty() && query.isBlank()) {
+            Text("FREQUENT", style = MaterialTheme.typography.labelSmall, color = JarvisColors.CyanSecondary)
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                frequent.forEach { app ->
+                    Column(
+                        Modifier.clickable { vm.launch(app.packageName) }.padding(4.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(4.dp),
+                    ) {
+                        Column(Modifier.glassPanel(radius = 14.dp).padding(8.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                            Image(app.icon, contentDescription = app.label, Modifier.size(40.dp))
+                        }
+                        Text(app.label, style = MaterialTheme.typography.labelSmall, color = JarvisColors.TextDim, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    }
+                }
+            }
+        }
         LazyVerticalGrid(
             columns = GridCells.Adaptive(minSize = 76.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp),

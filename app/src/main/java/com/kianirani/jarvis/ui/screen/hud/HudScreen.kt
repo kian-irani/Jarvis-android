@@ -43,6 +43,7 @@ data class HudUiState(
     val settingsVm: com.kianirani.jarvis.ui.screen.settings.SettingsHubViewModel = androidx.hilt.navigation.compose.hiltViewModel()
     val auroraOn by settingsVm.settings.aurora.collectAsState()
     val scanOn by settingsVm.settings.scanLine.collectAsState()
+    var quickPanel by remember { mutableStateOf(false) }
     val wide = LocalConfiguration.current.screenWidthDp > 600
     // Background art runs edge-to-edge under the system bars; interactive
     // content is inset so it never collides with the status bar clock/icons.
@@ -56,11 +57,80 @@ data class HudUiState(
                 LocalOpenAiSettings provides onOpenAiSettings,
                 LocalOpenApps provides onOpenApps,
                 LocalOpenSettings provides onOpenSettings,
+                LocalOpenQuickPanel provides { quickPanel = true },
             ) {
                 if (wide) LandscapeLayout(state, viewModel) else PortraitLayout(state, viewModel)
             }
             CornerBrackets(Modifier.fillMaxSize())
+            if (quickPanel) QuickPanel(settingsVm) { quickPanel = false }
         }
+    }
+}
+
+/**
+ * VISION QUICKPANEL (P11.5 + user directive 2026-06-12) — swipe-free quick
+ * settings: FX, voice and trust level toggles without leaving the HUD.
+ */
+@Composable fun QuickPanel(vm: com.kianirani.jarvis.ui.screen.settings.SettingsHubViewModel, onDismiss: () -> Unit) {
+    val s = vm.settings
+    val aurora by s.aurora.collectAsState()
+    val scan by s.scanLine.collectAsState()
+    val voice by s.voiceEnabled.collectAsState()
+    val tts by s.ttsEnabled.collectAsState()
+    val trust by s.trustLevel.collectAsState()
+    Box(
+        Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.55f))
+            .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null, onClick = onDismiss),
+        contentAlignment = Alignment.TopCenter,
+    ) {
+        Column(
+            Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 56.dp)
+                .glassPanel(radius = 16.dp)
+                .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) {}
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Text("VISION QUICKPANEL", style = MaterialTheme.typography.labelLarge, color = JarvisColors.CyanPrimary)
+                Spacer(Modifier.weight(1f))
+                Text("✕", color = JarvisColors.TextDim, modifier = Modifier.clickable(onClick = onDismiss).padding(4.dp))
+            }
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                QuickToggle("AURORA", aurora, Modifier.weight(1f)) { s.set(com.kianirani.jarvis.data.settings.VisionSettings.KEY_AURORA, it) }
+                QuickToggle("SCAN", scan, Modifier.weight(1f)) { s.set(com.kianirani.jarvis.data.settings.VisionSettings.KEY_SCANLINE, it) }
+            }
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                QuickToggle("VOICE", voice, Modifier.weight(1f)) { s.set(com.kianirani.jarvis.data.settings.VisionSettings.KEY_VOICE, it) }
+                QuickToggle("TTS", tts, Modifier.weight(1f)) { s.set(com.kianirani.jarvis.data.settings.VisionSettings.KEY_TTS, it) }
+            }
+            val trustName = listOf("SOVEREIGN", "BALANCED", "OPEN")[trust]
+            Row(
+                Modifier.fillMaxWidth()
+                    .border(1.dp, JarvisColors.CyanSecondary.copy(alpha = 0.5f), RoundedCornerShape(8.dp))
+                    .clickable { s.setTrustLevel((trust + 1) % 3) }
+                    .padding(12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text("TRUST", style = MaterialTheme.typography.labelSmall, color = JarvisColors.TextDim)
+                Spacer(Modifier.weight(1f))
+                Text(trustName, style = MaterialTheme.typography.labelLarge, color = JarvisColors.CyanPrimary)
+            }
+        }
+    }
+}
+
+@Composable private fun QuickToggle(label: String, on: Boolean, modifier: Modifier, onChange: (Boolean) -> Unit) {
+    val c = if (on) JarvisColors.CyanPrimary else JarvisColors.TextDim
+    Column(
+        modifier
+            .border(1.dp, c.copy(alpha = 0.5f), RoundedCornerShape(8.dp))
+            .background(if (on) JarvisColors.CyanFaint else Color.Transparent, RoundedCornerShape(8.dp))
+            .clickable { onChange(!on) }
+            .padding(vertical = 12.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Text(label, style = MaterialTheme.typography.labelMedium, color = c)
+        Text(if (on) "ON" else "OFF", style = MaterialTheme.typography.labelSmall, color = c)
     }
 }
 
@@ -69,6 +139,7 @@ val LocalOpenElection = staticCompositionLocalOf<() -> Unit> { {} }
 val LocalOpenAiSettings = staticCompositionLocalOf<() -> Unit> { {} }
 val LocalOpenApps = staticCompositionLocalOf<() -> Unit> { {} }
 val LocalOpenSettings = staticCompositionLocalOf<() -> Unit> { {} }
+val LocalOpenQuickPanel = staticCompositionLocalOf<() -> Unit> { {} }
 
 /**
  * Portrait home (REDESIGN 2026-06-12, user directive): the Eye of Vision is
@@ -142,6 +213,7 @@ val LocalOpenSettings = staticCompositionLocalOf<() -> Unit> { {} }
         DockButton("▦", "APPS", JarvisColors.CyanPrimary, apps)
         DockButton("◆", "BRAIN", JarvisColors.CyanSecondary, election)
         DockButton(if (listening) "●" else "○", "MIC", if (listening) JarvisColors.NeonGreen else JarvisColors.CyanSecondary, onMic)
+        DockButton("☰", "PANEL", JarvisColors.CyanSecondary, LocalOpenQuickPanel.current)
         DockButton("⚙", "CONFIG", JarvisColors.CyanSecondary, settings)
     }
 }
