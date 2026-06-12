@@ -82,14 +82,20 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          # Version-driven tag: v2, v3, v4 … (user order 2026-06-12: drop v16 naming)
+          VER=$(grep -oP 'versionName\s*=\s*"\K[^"]+' app/build.gradle.kts)
+          TAG="v${VER%%.*}"
           APK="${{ steps.apk_info.outputs.apk_path }}"
-          cp "$APK" VISION-v16-debug.apk
-          REL=$(ls app/build/outputs/apk/release/*.apk | head -1) && cp "$REL" VISION-v16-release.apk
+          cp "$APK" "VISION-${TAG}-debug.apk"
+          REL=$(ls app/build/outputs/apk/release/*.apk | head -1) && cp "$REL" "VISION-${TAG}-release.apk"
+          # retire the old v16 rolling release once
           gh release delete v16-latest --yes 2>/dev/null || true
           git push --delete origin v16-latest 2>/dev/null || true
-          git tag -d v16-latest 2>/dev/null || true
-          gh release create v16-latest VISION-v16-debug.apk VISION-v16-release.apk \
+          gh release delete "$TAG" --yes 2>/dev/null || true
+          git push --delete origin "$TAG" 2>/dev/null || true
+          git tag -d "$TAG" 2>/dev/null || true
+          gh release create "$TAG" "VISION-${TAG}-release.apk" "VISION-${TAG}-debug.apk" \
             --target "${{ github.sha }}" \
-            --title "VISION v16 — latest build (${{ steps.apk_info.outputs.build_date }})" \
-            --notes "Auto-built from \`${{ github.sha }}\` · debug ${{ steps.apk_info.outputs.apk_size }} · run #${{ github.run_number }}. Two variants: **release** (smaller, daily use) and **debug** (verbose, troubleshooting). Activation via kiancdn bot." \
+            --title "VISION ${TAG} — ${{ steps.apk_info.outputs.build_date }}" \
+            --notes "Auto-built from \`${{ github.sha }}\` · debug ${{ steps.apk_info.outputs.apk_size }} · run #${{ github.run_number }}. **release** = daily use, **debug** = troubleshooting. Activation via kiancdn bot." \
             --latest

@@ -26,7 +26,10 @@ interface VoiceController {
     fun release()
 }
 
-class AndroidVoiceController(private val context: Context) : VoiceController {
+class AndroidVoiceController(
+    private val context: Context,
+    private val settings: com.kianirani.jarvis.data.settings.VisionSettings? = null,
+) : VoiceController {
     private companion object { const val TAG = "VisionVoice" }
 
     // All SpeechRecognizer/TTS access is posted to the main looper so callers
@@ -90,7 +93,13 @@ class AndroidVoiceController(private val context: Context) : VoiceController {
 
     override fun speak(text: String) {
         if (text.isBlank()) return
-        main.post { if (ttsReady) tts?.speak(text, TextToSpeech.QUEUE_FLUSH, null, "vision-reply") }
+        main.post {
+            if (ttsReady) {
+                // P7 persona: user-tuned delivery style.
+                settings?.let { tts?.setSpeechRate(it.speechRate.value); tts?.setPitch(it.voicePitch.value) }
+                tts?.speak(text, TextToSpeech.QUEUE_FLUSH, null, "vision-reply")
+            }
+        }
     }
 
     override fun release() {

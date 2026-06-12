@@ -48,6 +48,8 @@ object AppModule {
         PrefsAiProviderStore(ctx)
 
     @Provides @Singleton
-    fun provideVoiceController(@ApplicationContext ctx: Context): VoiceController =
-        AndroidVoiceController(ctx)
+    fun provideVoiceController(
+        @ApplicationContext ctx: Context,
+        settings: com.kianirani.jarvis.data.settings.VisionSettings,
+    ): VoiceController = AndroidVoiceController(ctx, settings)
 }

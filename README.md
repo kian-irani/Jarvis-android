@@ -1,7 +1,7 @@
 <div align="center">
 
 # ⚡ Vision OS
-### Sovereign Intelligence Edition · v16.0 · formerly Jarvis-android
+### Sovereign Intelligence Edition · v2 · formerly Jarvis-android
 
 ![Vision OS](assets/promo/banner.png)
 
@@ -9,12 +9,12 @@
 *یک لایه‌ی هوش شخصی حاکمیتی — که با تو زندگی می‌کند و هر روز باهوش‌تر می‌شود*
 
 [![License: Source-Available (Proprietary)](https://img.shields.io/badge/License-Source--Available%20(Proprietary)-red.svg?style=for-the-badge)](LICENSE)
-[![Status](https://img.shields.io/badge/status-build--ready%20v16-magenta?style=for-the-badge)](ROADMAP.md)
+[![Status](https://img.shields.io/badge/status-live%20v2-magenta?style=for-the-badge)](ROADMAP.md)
 [![Platform](https://img.shields.io/badge/platform-Android%20·%20Linux%20·%20PC-3DDC84?style=for-the-badge&logo=android&logoColor=white)](https://www.android.com/)
 [![Local-First](https://img.shields.io/badge/AI-Local--First%20·%20Offline-9cf?style=for-the-badge)](ROADMAP.md)
 [![Activation](https://img.shields.io/badge/Activation-via%20kiancdn%20bot-0088cc?style=for-the-badge&logo=telegram)](docs/ACTIVATION.md)
 [![Contribute](https://img.shields.io/badge/Contributors-Welcome%20(CLA)-cyan?style=for-the-badge)](CONTRIBUTING.md)
-[![Download APK](https://img.shields.io/badge/Download-VISION%20v16%20APK-00E5FF?style=for-the-badge&logo=android&logoColor=black)](https://github.com/kian-irani/Jarvis-android/releases/latest)
+[![Download APK](https://img.shields.io/badge/Download-VISION%20v2%20APK-00E5FF?style=for-the-badge&logo=android&logoColor=black)](https://github.com/kian-irani/Jarvis-android/releases/latest)
 
 </div>
 
@@ -82,7 +82,7 @@ You don't operate tools. You talk to Vision, and Vision does the rest.
 
 ## 🌍 Competitive Edge
 
-| Feature | Microsoft Solara | Google Gemini OS | **Vision v16.0** |
+| Feature | Microsoft Solara | Google Gemini OS | **Vision v2** |
 |---------|:---:|:---:|:---:|
 | Hardware required | new Badge/Desk | dedicated Android XR | ✅ **any existing device** |
 | Full offline | ❌ | ❌ | ✅ **Local-First** |
@@ -112,7 +112,7 @@ User → «kiancdn» Telegram bot → receive token → enter in app → activat
 
 ---
 
-## ✨ Core Features (v16)
+## ✨ Core Features (v2)
 
 | Area | Capabilities |
 |------|--------------|

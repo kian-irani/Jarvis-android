@@ -257,7 +257,7 @@ val LocalOpenQuickPanel = staticCompositionLocalOf<() -> Unit> { {} }
             val logoInf = rememberInfiniteTransition(label = "logo")
             val logoGlow by logoInf.animateFloat(0.4f, 1f, infiniteRepeatable(tween(2200, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "lg")
             Box(Modifier.size(44.dp).clip(RoundedCornerShape(6.dp)).background(VisionColors.PlasmaSweep).border(1.dp, VisionColors.CyanPrimary.copy(alpha = logoGlow), RoundedCornerShape(6.dp)).clickable(onClick = openElection), Alignment.Center) { Text("V", color = VisionColors.Background, style = MaterialTheme.typography.headlineLarge) }
-            Column { Text("VISION", style = MaterialTheme.typography.headlineLarge, color = VisionColors.CyanPrimary); Text("v16.0.0", style = MaterialTheme.typography.labelSmall, color = VisionColors.TextDim) }
+            Column { Text("VISION", style = MaterialTheme.typography.headlineLarge, color = VisionColors.CyanPrimary); Text("v${com.kianirani.jarvis.BuildConfig.VERSION_NAME}", style = MaterialTheme.typography.labelSmall, color = VisionColors.TextDim) }
         }
         Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             listOf("BRAIN" to brainOnline, "NODES" to (nodesOnline > 0), "GROQ" to groqOnline).forEach { (lbl, ok) ->

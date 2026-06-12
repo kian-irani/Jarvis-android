@@ -88,6 +88,10 @@ fun SettingsHubScreen(
         Section("VOICE", 1) {
             ToggleRow("Voice input", "wake Vision with the mic", voice) { s.set(VisionSettings.KEY_VOICE, it) }
             ToggleRow("Spoken replies (TTS)", "Vision reads answers aloud", tts) { s.set(VisionSettings.KEY_TTS, it) }
+            val rate by s.speechRate.collectAsState()
+            val pitch by s.voicePitch.collectAsState()
+            StepperRow("Speech rate", rate, 0.1f) { s.setSpeechRate(it) }
+            StepperRow("Voice pitch", pitch, 0.1f) { s.setVoicePitch(it) }
         }
         Section("INTERFACE FX", 2) {
             ToggleRow("Plasma aurora", "drifting background nebula", aurora) { s.set(VisionSettings.KEY_AURORA, it) }
@@ -115,7 +119,7 @@ fun SettingsHubScreen(
             }
         }
         Section("ABOUT", 7) {
-            InfoRow("Version", "VISION v16.0.0 — Sovereign Intelligence")
+            InfoRow("Version", "VISION v${com.kianirani.jarvis.BuildConfig.VERSION_NAME} — Sovereign Intelligence")
             InfoRow("Source", "github.com/kian-irani/Jarvis-android")
         }
     }
@@ -247,5 +251,17 @@ private fun ActivationRow(store: ActivationStore) {
             Text("ACTIVATE", style = MaterialTheme.typography.labelLarge, color = JarvisColors.CyanPrimary,
                 modifier = Modifier.clickable(enabled = input.isNotBlank()) { store.activate(input); input = "" }.padding(6.dp))
         }
+    }
+}
+
+@Composable
+private fun StepperRow(title: String, value: Float, step: Float, onChange: (Float) -> Unit) {
+    Row(Modifier.fillMaxWidth().padding(vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+        Text(title, style = MaterialTheme.typography.bodyMedium, color = JarvisColors.TextPrimary, modifier = Modifier.weight(1f))
+        Text("−", style = MaterialTheme.typography.headlineMedium, color = JarvisColors.CyanPrimary,
+            modifier = Modifier.clickable { onChange(value - step) }.padding(horizontal = 12.dp))
+        Text("%.1f".format(value), style = MaterialTheme.typography.bodyMedium, color = JarvisColors.TextPrimary)
+        Text("+", style = MaterialTheme.typography.headlineMedium, color = JarvisColors.CyanPrimary,
+            modifier = Modifier.clickable { onChange(value + step) }.padding(horizontal = 12.dp))
     }
 }
