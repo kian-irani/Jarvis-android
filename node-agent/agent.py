@@ -1,8 +1,25 @@
 #!/usr/bin/env python3
-import asyncio, json, uuid, time, platform, os, subprocess, psutil, websockets
+import argparse, asyncio, json, uuid, time, platform, os, subprocess, psutil, websockets
 
-BRAIN_WS  = os.environ.get("JARVIS_BRAIN", "ws://212.87.199.62:8000/node/connect")
-NODE_NAME = os.environ.get("JARVIS_NAME", platform.node())
+def _build_brain_ws(host, port, token):
+    base = f"ws://{host}:{port}/node/connect"
+    return f"{base}?token={token}" if token else base
+
+# CLI args > env vars > legacy defaults. Keeps backward compatibility:
+# JARVIS_BRAIN (full ws:// url) still wins when no --host/--port given.
+_p = argparse.ArgumentParser(description="Vision/JARVIS mesh node agent")
+_p.add_argument("--host", default=os.environ.get("VISION_HOST"), help="brain host/ip")
+_p.add_argument("--port", default=os.environ.get("VISION_PORT"), help="brain port")
+_p.add_argument("--token", default=os.environ.get("VISION_TOKEN"), help="pairing token")
+_p.add_argument("--name", default=os.environ.get("JARVIS_NAME", platform.node()), help="node name")
+_args, _ = _p.parse_known_args()
+
+if _args.host:
+    BRAIN_WS = _build_brain_ws(_args.host, _args.port or 7799, _args.token)
+else:
+    BRAIN_WS = os.environ.get("JARVIS_BRAIN", "ws://212.87.199.62:8000/node/connect")
+
+NODE_NAME = _args.name
 NODE_ID   = os.environ.get("JARVIS_ID", str(uuid.uuid4()))
 
 def detect_type():

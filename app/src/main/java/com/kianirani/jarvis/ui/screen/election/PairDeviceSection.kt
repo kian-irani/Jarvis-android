@@ -25,8 +25,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
+import com.kianirani.jarvis.brain.discovery.JoinPayload
 import com.kianirani.jarvis.brain.discovery.LocalPairingInfoProvider
 import com.kianirani.jarvis.brain.discovery.QrPairing
 import com.kianirani.jarvis.ui.theme.JarvisColors
@@ -83,7 +87,64 @@ fun PairDeviceSection(modifier: Modifier = Modifier) {
                     Text(payload.encode(), style = MaterialTheme.typography.bodySmall, color = JarvisColors.TextDim)
                     Text("Scan with another Vision device, or paste as PAIRING TOKEN.", style = MaterialTheme.typography.bodySmall)
                 }
+                Spacer(Modifier.height(16.dp))
+                MeshNodeScript(payload)
             }
         }
+    }
+}
+
+/**
+ * "ADD MESH NODE" — copyable terminal one-liner built from this brain's live
+ * pairing info. The user pastes it into ANOTHER device's terminal (Linux/macOS/
+ * server) and that device joins this brain as a mesh node via node-agent/agent.py.
+ */
+@Composable
+private fun MeshNodeScript(payload: JoinPayload) {
+    val clipboard = LocalClipboardManager.current
+    val script = remember(payload) {
+        "curl -sL https://raw.githubusercontent.com/kian-irani/Jarvis-android/main/node-agent/agent.py " +
+            "-o vision-node.py && python3 vision-node.py " +
+            "--host ${payload.host} --port ${payload.port} --token ${payload.token}"
+    }
+    Column(Modifier.fillMaxWidth()) {
+        Text(
+            "ADD MESH NODE",
+            style = MaterialTheme.typography.labelLarge,
+            color = VisionColors.Magenta,
+        )
+        Spacer(Modifier.height(8.dp))
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(8.dp))
+                .background(Color(0x33000000))
+                .border(1.dp, VisionColors.BorderViolet, RoundedCornerShape(8.dp))
+                .padding(10.dp),
+        ) {
+            Text(
+                script,
+                style = MaterialTheme.typography.bodySmall,
+                fontFamily = FontFamily.Monospace,
+                color = JarvisColors.TextDim,
+            )
+        }
+        Spacer(Modifier.height(8.dp))
+        Box(
+            Modifier
+                .clip(RoundedCornerShape(8.dp))
+                .background(VisionColors.Magenta.copy(alpha = 0.18f))
+                .border(1.dp, VisionColors.Magenta, RoundedCornerShape(8.dp))
+                .clickable { clipboard.setText(AnnotatedString(script)) }
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+        ) {
+            Text("COPY", style = MaterialTheme.typography.labelLarge, color = VisionColors.Magenta)
+        }
+        Spacer(Modifier.height(6.dp))
+        Text(
+            "Paste in the other device's terminal (needs python3).",
+            style = MaterialTheme.typography.bodySmall,
+            color = JarvisColors.TextDim,
+        )
     }
 }
