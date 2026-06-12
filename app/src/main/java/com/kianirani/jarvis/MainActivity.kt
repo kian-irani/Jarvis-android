@@ -17,7 +17,9 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.kianirani.jarvis.ui.screen.election.BrainElectionScreen
 import com.kianirani.jarvis.ui.screen.hud.HudScreen
 import com.kianirani.jarvis.ui.screen.hud.HudViewModel
+import com.kianirani.jarvis.ui.screen.drawer.AppDrawerScreen
 import com.kianirani.jarvis.ui.screen.settings.AiTokensScreen
+import com.kianirani.jarvis.ui.screen.settings.SettingsHubScreen
 import com.kianirani.jarvis.ui.screen.setup.SetupWizardScreen
 import com.kianirani.jarvis.ui.theme.JarvisTheme
 import dagger.hilt.android.AndroidEntryPoint
@@ -25,7 +27,7 @@ import dagger.hilt.android.AndroidEntryPoint
 private const val PREFS = "vision_prefs"
 private const val KEY_SETUP_COMPLETE = "setup_complete"
 
-enum class VisionRoute { SETUP, HUD, ELECTION, AI_SETTINGS }
+enum class VisionRoute { SETUP, HUD, ELECTION, AI_SETTINGS, APPS, SETTINGS }
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -46,7 +48,7 @@ class MainActivity : ComponentActivity() {
                         if (prefs.getBoolean(KEY_SETUP_COMPLETE, false)) VisionRoute.HUD else VisionRoute.SETUP
                     )
                 }
-                BackHandler(enabled = route == VisionRoute.ELECTION || route == VisionRoute.AI_SETTINGS) { route = VisionRoute.HUD }
+                BackHandler(enabled = route != VisionRoute.HUD && route != VisionRoute.SETUP) { route = VisionRoute.HUD }
                 when (route) {
                     VisionRoute.SETUP -> SetupWizardScreen(onFinished = {
                         prefs.edit().putBoolean(KEY_SETUP_COMPLETE, true).apply()
@@ -58,10 +60,18 @@ class MainActivity : ComponentActivity() {
                             viewModel = vm,
                             onOpenElection = { route = VisionRoute.ELECTION },
                             onOpenAiSettings = { route = VisionRoute.AI_SETTINGS },
+                            onOpenApps = { route = VisionRoute.APPS },
+                            onOpenSettings = { route = VisionRoute.SETTINGS },
                         )
                     }
                     VisionRoute.ELECTION -> BrainElectionScreen()
                     VisionRoute.AI_SETTINGS -> AiTokensScreen(onBack = { route = VisionRoute.HUD })
+                    VisionRoute.APPS -> AppDrawerScreen(onBack = { route = VisionRoute.HUD })
+                    VisionRoute.SETTINGS -> SettingsHubScreen(
+                        onBack = { route = VisionRoute.HUD },
+                        onOpenAiTokens = { route = VisionRoute.AI_SETTINGS },
+                        onOpenElection = { route = VisionRoute.ELECTION },
+                    )
                 }
             }
         }
