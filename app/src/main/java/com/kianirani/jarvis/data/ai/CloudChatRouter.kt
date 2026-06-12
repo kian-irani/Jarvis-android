@@ -33,14 +33,43 @@ class CloudChatRouter @Inject constructor(
     private val store: AiProviderStore,
     private val history: ChatHistoryStore,
     private val usage: AiUsageStore,
+    private val settings: com.kianirani.jarvis.data.settings.VisionSettings,
 ) : java.io.Closeable {
 
     companion object {
+        // Fallback / base identity; the live prompt is built from persona settings.
         const val SYSTEM_RULES =
             "You are VISION, a sovereign personal AI operating system on the user's own device. " +
             "Answer every question helpfully, directly, and concisely. Use the user's language " +
             "(Persian or English). If you are unsure, say so briefly and give your best reasoning. " +
             "Never refuse merely because a question is outside a narrow domain."
+    }
+
+    /** P7 persona: the system prompt reflects the user's name/humor/formality/length sliders. */
+    private fun systemPrompt(): String {
+        val name = settings.personaName.value.ifBlank { "VISION" }
+        val humor = settings.humorLevel.value
+        val formality = settings.formalityLevel.value
+        val length = settings.responseLength.value
+        val tone = when {
+            formality > 7 -> "formal and professional"
+            formality < 3 -> "casual and friendly"
+            else -> "balanced"
+        }
+        val wit = when {
+            humor > 6 -> "use light humor when appropriate"
+            humor < 3 -> "stay serious, no jokes"
+            else -> "be occasionally light"
+        }
+        val len = when {
+            length > 7 -> "give thorough, detailed answers"
+            length < 3 -> "keep answers very brief (1-2 sentences)"
+            else -> "keep answers concise"
+        }
+        return "You are $name, a sovereign personal AI operating system on the user's own device. " +
+            "Answer every question helpfully and directly; $len. Tone: $tone — $wit. " +
+            "Use the user's language (Persian or English). If you are unsure, say so briefly and give " +
+            "your best reasoning. Never refuse merely because a question is outside a narrow domain."
     }
 
     private val json = Json { ignoreUnknownKeys = true; isLenient = true }
@@ -86,10 +115,12 @@ class CloudChatRouter @Inject constructor(
         return Result.failure(last)
     }
 
-    private suspend fun ask(p: AiProvider, token: String, message: String, context: List<ChatTurn>): String = when (p) {
+    private suspend fun ask(p: AiProvider, token: String, message: String, context: List<ChatTurn>): String {
+      val sys = systemPrompt()
+      return when (p) {
         AiProvider.ANTHROPIC -> {
             val body = buildJsonObject {
-                put("model", p.defaultModel); put("max_tokens", 1024); put("system", SYSTEM_RULES)
+                put("model", p.defaultModel); put("max_tokens", 1024); put("system", sys)
                 put("messages", buildJsonArray {
                     context.forEach { t -> add(buildJsonObject { put("role", t.role); put("content", t.text) }) }
                     add(buildJsonObject { put("role", "user"); put("content", message) })
@@ -106,7 +137,7 @@ class CloudChatRouter @Inject constructor(
         AiProvider.GEMINI -> {
             val body = buildJsonObject {
                 putJsonObject("system_instruction") {
-                    put("parts", buildJsonArray { add(buildJsonObject { put("text", SYSTEM_RULES) }) })
+                    put("parts", buildJsonArray { add(buildJsonObject { put("text", sys) }) })
                 }
                 put("contents", buildJsonArray {
                     context.forEach { t ->
@@ -133,7 +164,7 @@ class CloudChatRouter @Inject constructor(
             val body = buildJsonObject {
                 put("model", p.defaultModel)
                 put("messages", buildJsonArray {
-                    add(buildJsonObject { put("role", "system"); put("content", SYSTEM_RULES) })
+                    add(buildJsonObject { put("role", "system"); put("content", sys) })
                     context.forEach { t -> add(buildJsonObject { put("role", t.role); put("content", t.text) }) }
                     add(buildJsonObject { put("role", "user"); put("content", message) })
                 })
@@ -147,6 +178,7 @@ class CloudChatRouter @Inject constructor(
             parse(raw)["choices"]!!.jsonArray.first()
                 .jsonObject["message"]!!.jsonObject["content"]!!.jsonPrimitive.content
         }
+      }
     }
 
     private fun parse(text: String): JsonObject = json.decodeFromString(JsonObject.serializer(), text)

@@ -102,19 +102,24 @@ class HudViewModel @Inject constructor(
                 typeText(reply); speak(reply); addLog("Local: command", "ok"); return@launch
             }
             typeText("Processing...")
-            brain.chat(msg)
-                .onSuccess { resp -> typeText(resp.response); speak(resp.response); addLog("Brain: ${resp.duration_ms}ms", "ok") }
-                .onFailure {
-                    // P4.5 trust gate: SOVEREIGN (0) means nothing leaves the device.
-                    if (settings.trustLevel.value == 0) {
-                        typeText("Brain unreachable — cloud disabled by SOVEREIGN trust level.")
-                        addLog("Cloud blocked (trust)", "warn"); return@onFailure
-                    }
-                    // Standalone path: no brain paired/reachable -> cloud providers
-                    cloud.chat(msg)
-                        .onSuccess { r -> typeText(r.text); speak(r.text); addLog("Cloud: ${r.provider.displayName}", "ok") }
-                        .onFailure { e -> typeText("Error: ${e.message}"); addLog("Failed", "err") }
-                }
+            // Only round-trip the brain when it is actually reachable; otherwise a
+            // dead localhost:7799 socket stalls every message 8-15s before timing
+            // out. When offline we go straight to the cloud path below.
+            if (_state.value.brainOnline) {
+                val handled = brain.chat(msg)
+                    .onSuccess { resp -> typeText(resp.response); speak(resp.response); addLog("Brain: ${resp.duration_ms}ms", "ok") }
+                    .isSuccess
+                if (handled) return@launch
+            }
+            // P4.5 trust gate: SOVEREIGN (0) means nothing leaves the device.
+            if (settings.trustLevel.value == 0) {
+                typeText("Brain unreachable — cloud disabled by SOVEREIGN trust level.")
+                addLog("Cloud blocked (trust)", "warn"); return@launch
+            }
+            // Standalone path: no brain paired/reachable -> cloud providers
+            cloud.chat(msg)
+                .onSuccess { r -> typeText(r.text); speak(r.text); addLog("Cloud: ${r.provider.displayName}", "ok") }
+                .onFailure { e -> typeText("Error: ${e.message}"); addLog("Failed", "err") }
         }
     }
 

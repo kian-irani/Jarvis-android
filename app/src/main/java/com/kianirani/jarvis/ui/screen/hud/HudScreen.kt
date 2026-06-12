@@ -7,6 +7,9 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
@@ -391,10 +394,13 @@ private val AuroraMagentaColors = listOf(VisionColors.Magenta.copy(alpha = 0.16f
 }
 
 @Composable fun InputBar(value: String, onChange: (String)->Unit, onSend: ()->Unit, modifier: Modifier) {
+    val active = value.isNotBlank()
     Row(modifier.border(1.dp,JarvisColors.Border,RoundedCornerShape(4.dp)).background(JarvisColors.CyanFaint,RoundedCornerShape(4.dp)).padding(horizontal=12.dp,vertical=8.dp),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(8.dp)){
         Text(">>",color=JarvisColors.CyanPrimary,style=MaterialTheme.typography.bodyLarge)
-        BasicTextField(value,onChange,Modifier.weight(1f),textStyle=MaterialTheme.typography.bodyMedium.copy(color=JarvisColors.TextPrimary),cursorBrush=SolidColor(JarvisColors.CyanPrimary),decorationBox={inner->Box{if(value.isEmpty())Text("Send command...",style=MaterialTheme.typography.bodyMedium,color=JarvisColors.TextDim);inner()}})
-        Text("ENTER",style=MaterialTheme.typography.labelMedium,color=JarvisColors.TextDim)
+        BasicTextField(value,onChange,Modifier.weight(1f),textStyle=MaterialTheme.typography.bodyMedium.copy(color=JarvisColors.TextPrimary),cursorBrush=SolidColor(JarvisColors.CyanPrimary),singleLine=true,keyboardOptions=KeyboardOptions(imeAction=ImeAction.Send),keyboardActions=KeyboardActions(onSend={if(active)onSend()}),decorationBox={inner->Box{if(value.isEmpty())Text("Send command...",style=MaterialTheme.typography.bodyMedium,color=JarvisColors.TextDim);inner()}})
+        Box(Modifier.clip(RoundedCornerShape(4.dp)).background(if(active)JarvisColors.CyanPrimary.copy(alpha=0.18f) else Color.Transparent).border(1.dp,if(active)JarvisColors.CyanPrimary else JarvisColors.Border,RoundedCornerShape(4.dp)).clickable(enabled=active,onClick=onSend).padding(horizontal=12.dp,vertical=6.dp)){
+            Text("SEND",style=MaterialTheme.typography.labelMedium,color=if(active)JarvisColors.CyanPrimary else JarvisColors.TextDim)
+        }
     }
 }
 

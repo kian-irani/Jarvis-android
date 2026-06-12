@@ -43,6 +43,25 @@ class VisionSettings @Inject constructor(@ApplicationContext context: Context) {
         prefs.edit().putFloat(KEY_PITCH, r).apply(); _voicePitch.value = r
     }
 
+    // P7 persona: identity + answer-style sliders (0..10) the cloud system
+    // prompt is built from. Kept here so both TTS and CloudChatRouter read one source.
+    private val _personaName = MutableStateFlow(prefs.getString(KEY_PERSONA, "VISION") ?: "VISION")
+    private val _humor = MutableStateFlow(prefs.getFloat(KEY_HUMOR, 5f))
+    private val _formality = MutableStateFlow(prefs.getFloat(KEY_FORMALITY, 5f))
+    private val _responseLength = MutableStateFlow(prefs.getFloat(KEY_RESP_LEN, 5f))
+    val personaName: StateFlow<String> = _personaName
+    val humorLevel: StateFlow<Float> = _humor
+    val formalityLevel: StateFlow<Float> = _formality
+    val responseLength: StateFlow<Float> = _responseLength
+
+    fun setPersonaName(v: String) {
+        val n = v.take(24)
+        prefs.edit().putString(KEY_PERSONA, n).apply(); _personaName.value = n
+    }
+    fun setHumorLevel(v: Float) { val r = v.coerceIn(0f, 10f); prefs.edit().putFloat(KEY_HUMOR, r).apply(); _humor.value = r }
+    fun setFormalityLevel(v: Float) { val r = v.coerceIn(0f, 10f); prefs.edit().putFloat(KEY_FORMALITY, r).apply(); _formality.value = r }
+    fun setResponseLength(v: Float) { val r = v.coerceIn(0f, 10f); prefs.edit().putFloat(KEY_RESP_LEN, r).apply(); _responseLength.value = r }
+
     /** P4.5 Trust Level: 0 = SOVEREIGN (local only, no cloud), 1 = BALANCED, 2 = OPEN. */
     private val _trustLevel = MutableStateFlow(prefs.getInt(KEY_TRUST, 1))
     val trustLevel: StateFlow<Int> = _trustLevel
@@ -71,5 +90,9 @@ class VisionSettings @Inject constructor(@ApplicationContext context: Context) {
         const val KEY_TRUST = "trust_level"
         const val KEY_RATE = "voice_rate"
         const val KEY_PITCH = "voice_pitch"
+        const val KEY_PERSONA = "persona_name"
+        const val KEY_HUMOR = "persona_humor"
+        const val KEY_FORMALITY = "persona_formality"
+        const val KEY_RESP_LEN = "persona_resp_len"
     }
 }
