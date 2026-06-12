@@ -29,7 +29,7 @@ import javax.inject.Singleton
  * behaviour across all providers.
  */
 @Singleton
-class CloudChatRouter @Inject constructor(private val store: AiProviderStore) {
+class CloudChatRouter @Inject constructor(private val store: AiProviderStore) : java.io.Closeable {
 
     companion object {
         const val SYSTEM_RULES =
@@ -113,4 +113,7 @@ class CloudChatRouter @Inject constructor(private val store: AiProviderStore) {
     }
 
     private fun parse(text: String): JsonObject = json.decodeFromString(JsonObject.serializer(), text)
+
+    /** Process-lifetime singleton; closed by tests or DI teardown (review HIGH-2). */
+    override fun close() { http.close() }
 }

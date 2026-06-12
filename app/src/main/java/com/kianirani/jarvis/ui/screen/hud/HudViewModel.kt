@@ -8,6 +8,7 @@ import com.kianirani.jarvis.data.repository.BrainEvent
 import com.kianirani.jarvis.data.repository.BrainRepository
 import com.kianirani.jarvis.voice.VoiceController
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -110,13 +111,21 @@ class HudViewModel @Inject constructor(
         _state.update { it.copy(isListening = now) }
         if (now) {
             addLog("Voice on", "ok"); typeText("Listening...")
+            // Recognizer callbacks may arrive on any thread — hop to Main.immediate
+            // before touching state (review finding HIGH-1).
             voice.startListening(
                 onResult = { heard ->
-                    _state.update { it.copy(inputText = heard) }
-                    addLog("Heard: $heard", "info")
-                    sendChat()
+                    viewModelScope.launch(Dispatchers.Main.immediate) {
+                        _state.update { it.copy(inputText = heard) }
+                        addLog("Heard: $heard", "info")
+                        sendChat()
+                    }
                 },
-                onEnd = { _state.update { it.copy(isListening = false) } },
+                onEnd = {
+                    viewModelScope.launch(Dispatchers.Main.immediate) {
+                        _state.update { it.copy(isListening = false) }
+                    }
+                },
             )
         } else {
             voice.stopListening(); addLog("Voice off", "info")

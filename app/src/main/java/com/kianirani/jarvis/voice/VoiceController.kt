@@ -29,6 +29,9 @@ interface VoiceController {
 class AndroidVoiceController(private val context: Context) : VoiceController {
     private companion object { const val TAG = "VisionVoice" }
 
+    // All SpeechRecognizer/TTS access is posted to the main looper so callers
+    // may invoke from any dispatcher (review HIGH-3: explicit thread contract).
+    private val main = android.os.Handler(android.os.Looper.getMainLooper())
     private var recognizer: SpeechRecognizer? = null
     private var tts: TextToSpeech? = null
     private var ttsReady = false
@@ -45,7 +48,11 @@ class AndroidVoiceController(private val context: Context) : VoiceController {
 
     override fun startListening(onResult: (String) -> Unit, onEnd: () -> Unit) {
         if (!available) { onEnd(); return }
-        stopListening()
+        main.post { startListeningOnMain(onResult, onEnd) }
+    }
+
+    private fun startListeningOnMain(onResult: (String) -> Unit, onEnd: () -> Unit) {
+        stopListeningOnMain()
         recognizer = SpeechRecognizer.createSpeechRecognizer(context).apply {
             setRecognitionListener(object : RecognitionListener {
                 override fun onResults(results: Bundle) {
@@ -73,17 +80,24 @@ class AndroidVoiceController(private val context: Context) : VoiceController {
     }
 
     override fun stopListening() {
+        main.post { stopListeningOnMain() }
+    }
+
+    private fun stopListeningOnMain() {
         recognizer?.run { stopListening(); destroy() }
         recognizer = null
     }
 
     override fun speak(text: String) {
-        if (!ttsReady || text.isBlank()) return
-        tts?.speak(text, TextToSpeech.QUEUE_FLUSH, null, "vision-reply")
+        if (text.isBlank()) return
+        main.post { if (ttsReady) tts?.speak(text, TextToSpeech.QUEUE_FLUSH, null, "vision-reply") }
     }
 
     override fun release() {
-        stopListening()
-        tts?.shutdown(); tts = null; ttsReady = false
+        main.post {
+            stopListeningOnMain()
+            ttsReady = false
+            tts?.shutdown(); tts = null
+        }
     }
 }
