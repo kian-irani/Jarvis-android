@@ -40,6 +40,7 @@ data class HudUiState(
     onOpenElection: () -> Unit = {},
     onOpenAiSettings: () -> Unit = {},
     onOpenApps: () -> Unit = {},
+    onOpenRecents: () -> Unit = {},
     onOpenSettings: () -> Unit = {},
 ) {
     val state by viewModel.uiState.collectAsState()
@@ -59,6 +60,7 @@ data class HudUiState(
                 LocalOpenElection provides onOpenElection,
                 LocalOpenAiSettings provides onOpenAiSettings,
                 LocalOpenApps provides onOpenApps,
+                LocalOpenRecents provides onOpenRecents,
                 LocalOpenSettings provides onOpenSettings,
                 LocalOpenQuickPanel provides { quickPanel = true },
             ) {
@@ -141,6 +143,7 @@ data class HudUiState(
 val LocalOpenElection = staticCompositionLocalOf<() -> Unit> { {} }
 val LocalOpenAiSettings = staticCompositionLocalOf<() -> Unit> { {} }
 val LocalOpenApps = staticCompositionLocalOf<() -> Unit> { {} }
+val LocalOpenRecents = staticCompositionLocalOf<() -> Unit> { {} }
 val LocalOpenSettings = staticCompositionLocalOf<() -> Unit> { {} }
 val LocalOpenQuickPanel = staticCompositionLocalOf<() -> Unit> { {} }
 
@@ -279,6 +282,7 @@ val LocalOpenQuickPanel = staticCompositionLocalOf<() -> Unit> { {} }
 /** Bottom dock — launcher-grade shortcuts with big touch targets. */
 @Composable fun LauncherDock(listening: Boolean, onMic: () -> Unit, modifier: Modifier) {
     val apps = LocalOpenApps.current
+    val recents = LocalOpenRecents.current
     val settings = LocalOpenSettings.current
     val election = LocalOpenElection.current
     Row(
@@ -287,6 +291,7 @@ val LocalOpenQuickPanel = staticCompositionLocalOf<() -> Unit> { {} }
         verticalAlignment = Alignment.CenterVertically,
     ) {
         DockButton("▦", "APPS", JarvisColors.CyanPrimary, apps)
+        DockButton("▥", "RECENTS", JarvisColors.CyanSecondary, recents)
         DockButton("◆", "BRAIN", JarvisColors.CyanSecondary, election)
         DockButton(if (listening) "●" else "○", "MIC", if (listening) JarvisColors.NeonGreen else JarvisColors.CyanSecondary, onMic)
         DockButton("☰", "PANEL", JarvisColors.CyanSecondary, LocalOpenQuickPanel.current)

@@ -18,6 +18,7 @@ import com.kianirani.jarvis.ui.screen.election.BrainElectionScreen
 import com.kianirani.jarvis.ui.screen.hud.HudScreen
 import com.kianirani.jarvis.ui.screen.hud.HudViewModel
 import com.kianirani.jarvis.ui.screen.drawer.AppDrawerScreen
+import com.kianirani.jarvis.ui.screen.recents.RecentsScreen
 import com.kianirani.jarvis.ui.screen.onboarding.OnboardingScreen
 import com.kianirani.jarvis.ui.screen.settings.AiTokensScreen
 import com.kianirani.jarvis.ui.screen.settings.SettingsHubScreen
@@ -29,7 +30,7 @@ private const val PREFS = "vision_prefs"
 private const val KEY_SETUP_COMPLETE = "setup_complete"
 private const val KEY_ONBOARDED = "persona_onboarded"
 
-enum class VisionRoute { ONBOARDING, SETUP, HUD, ELECTION, AI_SETTINGS, APPS, SETTINGS }
+enum class VisionRoute { ONBOARDING, SETUP, HUD, ELECTION, AI_SETTINGS, APPS, RECENTS, SETTINGS }
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -88,12 +89,14 @@ class MainActivity : ComponentActivity() {
                             onOpenElection = { route = VisionRoute.ELECTION },
                             onOpenAiSettings = { route = VisionRoute.AI_SETTINGS },
                             onOpenApps = { route = VisionRoute.APPS },
+                            onOpenRecents = { route = VisionRoute.RECENTS },
                             onOpenSettings = { route = VisionRoute.SETTINGS },
                         )
                     }
                     VisionRoute.ELECTION -> BrainElectionScreen()
                     VisionRoute.AI_SETTINGS -> AiTokensScreen(onBack = { route = VisionRoute.HUD })
                     VisionRoute.APPS -> AppDrawerScreen(onBack = { route = VisionRoute.HUD })
+                    VisionRoute.RECENTS -> RecentsScreen(onBack = { route = VisionRoute.HUD })
                     VisionRoute.SETTINGS -> SettingsHubScreen(
                         onBack = { route = VisionRoute.HUD },
                         onOpenAiTokens = { route = VisionRoute.AI_SETTINGS },
