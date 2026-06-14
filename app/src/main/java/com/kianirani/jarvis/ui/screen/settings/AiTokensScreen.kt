@@ -49,6 +49,12 @@ class AiTokensViewModel @Inject constructor(private val store: AiProviderStore) 
     private fun snapshot(): Map<AiProvider, List<String>> =
         AiProvider.entries.associateWith { store.tokens(it) }
 
+    private val _models = MutableStateFlow(modelSnapshot())
+    val models = _models.asStateFlow()
+
+    private fun modelSnapshot(): Map<AiProvider, String> =
+        AiProvider.entries.associateWith { store.model(it) }
+
     fun add(p: AiProvider, token: String) {
         store.addToken(p, token)
         _saved.value = snapshot()
@@ -57,6 +63,11 @@ class AiTokensViewModel @Inject constructor(private val store: AiProviderStore) 
     fun remove(p: AiProvider, token: String) {
         store.removeToken(p, token)
         _saved.value = snapshot()
+    }
+
+    fun setModel(p: AiProvider, model: String) {
+        store.setModel(p, model)
+        _models.value = modelSnapshot()
     }
 }
 
@@ -68,6 +79,7 @@ private fun mask(token: String): String =
 @Composable
 fun AiTokensScreen(vm: AiTokensViewModel = hiltViewModel(), onBack: () -> Unit = {}) {
     val saved by vm.saved.collectAsState()
+    val models by vm.models.collectAsState()
     Column(
         Modifier.fillMaxSize().background(VisionColors.ScreenBackdrop).systemBarsPadding()
             .verticalScroll(rememberScrollState()).padding(16.dp),
@@ -84,7 +96,7 @@ fun AiTokensScreen(vm: AiTokensViewModel = hiltViewModel(), onBack: () -> Unit =
             style = MaterialTheme.typography.bodySmall, color = JarvisColors.TextDim,
         )
         AiProvider.entries.forEachIndexed { i, p ->
-            ProviderCard(p, saved[p].orEmpty(), i, vm::add, vm::remove)
+            ProviderCard(p, saved[p].orEmpty(), models[p] ?: p.defaultModel, i, vm::add, vm::remove, vm::setModel)
         }
     }
 }
@@ -93,11 +105,14 @@ fun AiTokensScreen(vm: AiTokensViewModel = hiltViewModel(), onBack: () -> Unit =
 private fun ProviderCard(
     p: AiProvider,
     tokens: List<String>,
+    model: String,
     index: Int,
     onAdd: (AiProvider, String) -> Unit,
     onRemove: (AiProvider, String) -> Unit,
+    onSetModel: (AiProvider, String) -> Unit,
 ) {
     var input by remember(p) { mutableStateOf("") }
+    var modelInput by remember(p, model) { mutableStateOf(model) }
     val hasToken = tokens.isNotEmpty()
     val accent = if (hasToken) VisionColors.NeonGreen else VisionColors.Border
     val glow = if (hasToken) VisionColors.NeonGreen.copy(alpha = 0.25f) else VisionColors.CyanGlow
@@ -117,7 +132,30 @@ private fun ProviderCard(
                 color = if (hasToken) JarvisColors.NeonGreen else JarvisColors.TextDim,
             )
         }
-        Text("model: ${p.defaultModel}", style = MaterialTheme.typography.labelSmall, color = JarvisColors.TextDim)
+        // Editable model id — e.g. OpenRouter needs a real model ("openrouter/auto"
+        // or a ":free" slug); blank restores the provider default.
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+            Text("model", style = MaterialTheme.typography.labelSmall, color = JarvisColors.TextDim)
+            BasicTextField(
+                value = modelInput, onValueChange = { modelInput = it }, singleLine = true,
+                textStyle = TextStyle(color = JarvisColors.TextPrimary),
+                cursorBrush = SolidColor(JarvisColors.CyanPrimary),
+                decorationBox = { inner ->
+                    Row(
+                        Modifier.border(1.dp, JarvisColors.Border, RoundedCornerShape(4.dp))
+                            .padding(horizontal = 10.dp, vertical = 6.dp),
+                    ) {
+                        if (modelInput.isEmpty()) {
+                            Text(p.defaultModel, color = JarvisColors.TextDim, style = MaterialTheme.typography.bodySmall)
+                        }
+                        inner()
+                    }
+                },
+                modifier = Modifier.weight(1f),
+            )
+            Text("SET", style = MaterialTheme.typography.labelSmall, color = JarvisColors.CyanPrimary,
+                modifier = Modifier.clickable { onSetModel(p, modelInput) }.padding(4.dp))
+        }
         tokens.forEach { t ->
             Row(
                 Modifier.fillMaxWidth()

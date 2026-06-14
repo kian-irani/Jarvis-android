@@ -23,7 +23,9 @@ enum class AiProvider(val displayName: String, val baseUrl: String, val defaultM
     XAI("xAI Grok", "https://api.x.ai", "grok-3-mini"),
     GROQ("Groq", "https://api.groq.com/openai", "llama-3.3-70b-versatile"),
     GEMINI("Google Gemini", "https://generativelanguage.googleapis.com", "gemini-2.0-flash"),
-    OPENROUTER("OpenRouter", "https://openrouter.ai/api", "auto"),
+    // "auto" alone is rejected by OpenRouter (HTTP 400 -> "it won't talk"); the
+    // valid auto-router slug is "openrouter/auto". Users can override per-provider.
+    OPENROUTER("OpenRouter", "https://openrouter.ai/api", "openrouter/auto"),
 }
 
 interface AiProviderStore {
@@ -34,6 +36,10 @@ interface AiProviderStore {
     fun clear(p: AiProvider)
     /** Providers with at least one token, in priority (enum) order. */
     fun configured(): List<AiProvider>
+    /** User-selected model id for [p], or its [AiProvider.defaultModel] if unset. */
+    fun model(p: AiProvider): String
+    /** Override the model id for [p]; blank restores the default. */
+    fun setModel(p: AiProvider, model: String)
 }
 
 /** AES256/Keystore-encrypted token storage — same hardening as brain pairing. */
@@ -88,6 +94,18 @@ class PrefsAiProviderStore(context: Context) : AiProviderStore {
     }
 
     override fun configured(): List<AiProvider> = AiProvider.entries.filter { tokens(it).isNotEmpty() }
+
+    private fun modelKey(p: AiProvider) = "${p.name}_model"
+
+    override fun model(p: AiProvider): String =
+        prefs.getString(modelKey(p), null)?.takeIf { it.isNotBlank() } ?: p.defaultModel
+
+    override fun setModel(p: AiProvider, model: String) {
+        val m = model.trim()
+        prefs.edit().apply {
+            if (m.isEmpty() || m == p.defaultModel) remove(modelKey(p)) else putString(modelKey(p), m)
+        }.apply()
+    }
 
     private fun write(p: AiProvider, list: List<String>) {
         prefs.edit().apply {

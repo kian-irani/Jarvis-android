@@ -127,10 +127,11 @@ class CloudChatRouter @Inject constructor(
 
     private suspend fun ask(p: AiProvider, token: String, message: String, context: List<ChatTurn>): String {
       val sys = systemPrompt()
+      val model = store.model(p)
       return when (p) {
         AiProvider.ANTHROPIC -> {
             val body = buildJsonObject {
-                put("model", p.defaultModel); put("max_tokens", 1024); put("system", sys)
+                put("model", model); put("max_tokens", 1024); put("system", sys)
                 put("messages", buildJsonArray {
                     context.forEach { t -> add(buildJsonObject { put("role", t.role); put("content", t.text) }) }
                     add(buildJsonObject { put("role", "user"); put("content", message) })
@@ -159,7 +160,7 @@ class CloudChatRouter @Inject constructor(
                     add(buildJsonObject { put("role", "user"); put("parts", buildJsonArray { add(buildJsonObject { put("text", message) }) }) })
                 })
             }
-            val resp = http.post("${p.baseUrl}/v1beta/models/${p.defaultModel}:generateContent") {
+            val resp = http.post("${p.baseUrl}/v1beta/models/$model:generateContent") {
                 header("x-goog-api-key", token)
                 contentType(ContentType.Application.Json); setBody(body.toString())
             }
@@ -172,7 +173,7 @@ class CloudChatRouter @Inject constructor(
         // OpenAI-compatible chat/completions: OpenAI, xAI Grok, Groq, OpenRouter
         AiProvider.OPENAI, AiProvider.XAI, AiProvider.GROQ, AiProvider.OPENROUTER -> {
             val body = buildJsonObject {
-                put("model", p.defaultModel)
+                put("model", model)
                 put("messages", buildJsonArray {
                     add(buildJsonObject { put("role", "system"); put("content", sys) })
                     context.forEach { t -> add(buildJsonObject { put("role", t.role); put("content", t.text) }) }
@@ -181,6 +182,11 @@ class CloudChatRouter @Inject constructor(
             }
             val resp = http.post("${p.baseUrl}/v1/chat/completions") {
                 header("Authorization", "Bearer $token")
+                // OpenRouter recommends identifying the app; harmless for others.
+                if (p == AiProvider.OPENROUTER) {
+                    header("HTTP-Referer", "https://github.com/kian-irani/Jarvis-android")
+                    header("X-Title", "Vision OS")
+                }
                 contentType(ContentType.Application.Json); setBody(body.toString())
             }
             val raw = resp.bodyAsText()
