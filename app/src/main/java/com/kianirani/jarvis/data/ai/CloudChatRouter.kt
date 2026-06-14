@@ -97,31 +97,42 @@ class CloudChatRouter @Inject constructor(
      * its tokens (user directive: e.g. 4 Grok keys). Failure falls through.
      */
     suspend fun chat(message: String): Result<CloudReply> {
-        // P9 memory-lite: short context window of prior turns precedes the message.
-        val context = history.recent(6)
         val providers = store.configured()
         if (providers.isEmpty()) {
             return Result.failure(IllegalStateException("No AI provider token configured — add one in AI PROVIDERS"))
         }
         var last: Throwable = IllegalStateException("all providers failed")
         for (p in providers) {
-            val keys = store.tokens(p)
-            if (keys.isEmpty()) continue
-            val start = rotation.getOrDefault(p, 0) % keys.size
-            for (i in keys.indices) {
-                val idx = (start + i) % keys.size
-                runCatching { ask(p, keys[idx], message, context) }
-                    .onSuccess {
-                        rotation[p] = idx // stick with the key that worked
-                        usage.record(p, success = true)
-                        history.append("user", message)
-                        history.append("assistant", it)
-                        return Result.success(CloudReply(it, p))
-                    }
-                    .onFailure { last = it; usage.record(p, success = false) }
-            }
-            rotation[p] = (start + 1) % keys.size
+            chatWith(p, message).onSuccess { return Result.success(it) }.onFailure { last = it }
         }
+        return Result.failure(last)
+    }
+
+    /**
+     * Chat through a single provider, rotating over ALL its tokens. The Vision
+     * Brain backend layer (VB8) targets one provider chosen by the orchestrator;
+     * [chat] simply walks every configured provider via this.
+     */
+    suspend fun chatWith(p: AiProvider, message: String): Result<CloudReply> {
+        // P9 memory-lite: short context window of prior turns precedes the message.
+        val context = history.recent(6)
+        val keys = store.tokens(p)
+        if (keys.isEmpty()) return Result.failure(IllegalStateException("No token for ${p.displayName}"))
+        val start = rotation.getOrDefault(p, 0) % keys.size
+        var last: Throwable = IllegalStateException("${p.displayName} failed")
+        for (i in keys.indices) {
+            val idx = (start + i) % keys.size
+            runCatching { ask(p, keys[idx], message, context) }
+                .onSuccess {
+                    rotation[p] = idx // stick with the key that worked
+                    usage.record(p, success = true)
+                    history.append("user", message)
+                    history.append("assistant", it)
+                    return Result.success(CloudReply(it, p))
+                }
+                .onFailure { last = it; usage.record(p, success = false) }
+        }
+        rotation[p] = (start + 1) % keys.size
         return Result.failure(last)
     }
 

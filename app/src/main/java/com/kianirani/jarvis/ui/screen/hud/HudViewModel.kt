@@ -2,7 +2,6 @@ package com.kianirani.jarvis.ui.screen.hud
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.kianirani.jarvis.data.ai.CloudChatRouter
 import com.kianirani.jarvis.data.repository.ApiNode
 import com.kianirani.jarvis.data.repository.BrainEvent
 import com.kianirani.jarvis.data.repository.BrainRepository
@@ -30,9 +29,10 @@ private val IDLE = listOf("All systems operational.", "3 nodes online.", "Groq r
 class HudViewModel @Inject constructor(
     private val brain: BrainRepository,
     private val voice: VoiceController,
-    private val cloud: CloudChatRouter,
     private val interpreter: com.kianirani.jarvis.data.agent.CommandInterpreter,
     private val settings: com.kianirani.jarvis.data.settings.VisionSettings,
+    private val orchestrator: com.kianirani.jarvis.router.orchestrator.VisionOrchestrator,
+    private val backendRouter: com.kianirani.jarvis.router.backend.BackendRouter,
 ) : ViewModel() {
     private val _state = MutableStateFlow(HudUiState())
     val uiState: StateFlow<HudUiState> = _state.asStateFlow()
@@ -105,34 +105,38 @@ class HudViewModel @Inject constructor(
                 typeText(reply); speak(reply); addLog("Local: command", "ok"); return@launch
             }
             typeText("Processing...")
-            // Only round-trip the brain when it is actually reachable; otherwise a
-            // dead localhost:7799 socket stalls every message 8-15s before timing
-            // out. When offline we go straight to the cloud path below.
-            if (_state.value.brainOnline) {
+            // VISION BRAIN (VB3+VB8): Vision *thinks first*, then routes. The
+            // orchestrator classifies the request and ranks reachable models
+            // (the user's own AiProviderStore tokens, local, mesh) by capability;
+            // the backend router runs them with substitution. This replaces the
+            // old brain-first gate that only ever hit Brain-Lite's Groq key and
+            // ignored the tokens the user added (BUG-AI).
+            // P4.5 trust gate: SOVEREIGN (0) -> privacy/local-only, nothing leaves the device.
+            val privacy = settings.trustLevel.value == 0
+            val decision = orchestrator.decide(msg, privacyMode = privacy)
+            addLog(decision.reason, "info")
+            val answered = backendRouter.execute(decision, msg)
+                .onSuccess { r -> typeText(r.text); speak(r.text); addLog("AI: ${r.model.displayName}", "ok") }
+                .isSuccess
+            if (answered) return@launch
+
+            // Fallback: a paired remote brain/mesh (skip under SOVEREIGN privacy).
+            if (!privacy && _state.value.brainOnline) {
                 val handled = brain.chat(msg)
                     .onSuccess { resp -> typeText(resp.response); speak(resp.response); addLog("Brain: ${resp.duration_ms}ms", "ok") }
                     .isSuccess
                 if (handled) return@launch
             }
-            // P4.5 trust gate: SOVEREIGN (0) means nothing leaves the device.
-            if (settings.trustLevel.value == 0) {
-                typeText("Brain unreachable — cloud disabled by SOVEREIGN trust level.")
-                addLog("Cloud blocked (trust)", "warn"); return@launch
+
+            // Nothing could answer — make it actionable (the #1 "it won't talk" cause).
+            val reply = if (privacy) {
+                "SOVEREIGN trust: cloud is off and no on-device model is ready yet. " +
+                    "حالت SOVEREIGN: ابر خاموش است و مدل روی‌دستگاه هنوز آماده نیست — یک مدل لوکال دانلود کن یا سطح اعتماد را تغییر بده."
+            } else {
+                "I need an AI key to chat. Open SYSTEM CONFIG → AI Providers and add a free key (Groq). " +
+                    "برای گفت‌وگو یک کلید هوش مصنوعی لازم است — در تنظیمات، AI Providers یک کلید رایگان اضافه کن."
             }
-            // Standalone path: no brain paired/reachable -> cloud providers
-            cloud.chat(msg)
-                .onSuccess { r -> typeText(r.text); speak(r.text); addLog("Cloud: ${r.provider.displayName}", "ok") }
-                .onFailure { e ->
-                    // No key configured is the #1 "it won't talk" cause — make it actionable.
-                    val noProvider = e.message?.contains("provider", ignoreCase = true) == true
-                    val reply = if (noProvider) {
-                        "I need an AI key to chat. Open SYSTEM CONFIG → AI Providers and add a free key (Groq). " +
-                            "برای گفت‌وگو یک کلید هوش مصنوعی لازم است — در تنظیمات، AI Providers یک کلید رایگان اضافه کن."
-                    } else {
-                        "Couldn't reach an AI provider: ${e.message?.take(80)}"
-                    }
-                    typeText(reply); speak(reply); addLog(if (noProvider) "No AI key" else "Cloud failed", "err")
-                }
+            typeText(reply); speak(reply); addLog("No answerer", "err")
         }
     }
 
