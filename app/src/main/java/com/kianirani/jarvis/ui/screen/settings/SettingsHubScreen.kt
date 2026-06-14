@@ -5,6 +5,7 @@ import android.provider.Settings
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -26,7 +27,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -44,7 +47,9 @@ import com.kianirani.jarvis.data.ai.ChatHistoryStore
 import com.kianirani.jarvis.data.settings.ActivationStore
 import com.kianirani.jarvis.data.settings.VisionSettings
 import com.kianirani.jarvis.ui.theme.JarvisColors
+import com.kianirani.jarvis.ui.theme.ThemeStore
 import com.kianirani.jarvis.ui.theme.VisionColors
+import com.kianirani.jarvis.ui.theme.VisionThemes
 import com.kianirani.jarvis.ui.theme.glassPanel
 import com.kianirani.jarvis.ui.theme.visionEnter
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -86,7 +91,10 @@ fun SettingsHubScreen(
             Text("SYSTEM CONFIG", style = MaterialTheme.typography.headlineLarge, color = JarvisColors.CyanPrimary)
         }
 
-        Section("INTELLIGENCE", 0) {
+        Section("APPEARANCE", 0) {
+            AppearanceControls()
+        }
+        Section("INTELLIGENCE", 1) {
             NavRow("AI Providers", "API tokens, multi-key rotation", onOpenAiTokens)
             NavRow("Brain & Mesh", "election, pairing, mesh nodes", onOpenElection)
         }
@@ -343,5 +351,186 @@ private fun StepperRow(title: String, value: Float, step: Float, onChange: (Floa
         Text("%.1f".format(value), style = MaterialTheme.typography.bodyMedium, color = JarvisColors.TextPrimary)
         Text("+", style = MaterialTheme.typography.headlineMedium, color = JarvisColors.CyanPrimary,
             modifier = Modifier.clickable { onChange(value + step) }.padding(horizontal = 12.dp))
+    }
+}
+
+// ===========================================================================
+// APPEARANCE (USER DIRECTIVE 2026-06-14: full theme switcher, accent picker,
+// wallpaper, animation toggle, brain badge, reset). Everything applies live —
+// the controls read [ThemeStore] snapshot state and re-render on every change.
+// ===========================================================================
+
+@Composable
+private fun AppearanceControls() {
+    Text("Theme", style = MaterialTheme.typography.bodyMedium, color = JarvisColors.TextPrimary,
+        modifier = Modifier.padding(top = 6.dp, bottom = 6.dp))
+    ThemeSelector()
+
+    Text("Accent", style = MaterialTheme.typography.bodyMedium, color = JarvisColors.TextPrimary,
+        modifier = Modifier.padding(top = 14.dp, bottom = 6.dp))
+    AccentPicker()
+
+    Text("Wallpaper", style = MaterialTheme.typography.bodyMedium, color = JarvisColors.TextPrimary,
+        modifier = Modifier.padding(top = 14.dp, bottom = 6.dp))
+    WallpaperPicker()
+
+    Spacer(Modifier.height(6.dp))
+    ToggleRow("Animations", "motion, pulse & entrance effects", ThemeStore.animations) { ThemeStore.enableAnimations(it) }
+    ToggleRow("Brain badge", "show the active brain node on home", ThemeStore.showBrainBadge) { ThemeStore.setBrainBadge(it) }
+    NavRow("Reset appearance", "theme, accent & wallpaper to defaults") { ThemeStore.reset() }
+}
+
+@Composable
+private fun ThemeSelector() {
+    val current = ThemeStore.themeId
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        VisionThemes.names.forEachIndexed { id, name ->
+            val p = VisionThemes.palette(id)
+            val sel = id == current
+            Column(
+                Modifier.weight(1f)
+                    .border(
+                        if (sel) 2.dp else 1.dp,
+                        if (sel) JarvisColors.CyanPrimary else JarvisColors.Border,
+                        RoundedCornerShape(8.dp),
+                    )
+                    .clickable { ThemeStore.setTheme(id) }
+                    .padding(6.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Box(
+                    Modifier.fillMaxWidth().height(36.dp)
+                        .background(p.background, RoundedCornerShape(6.dp))
+                        .border(1.dp, p.defaultAccent.copy(alpha = 0.4f), RoundedCornerShape(6.dp)),
+                    contentAlignment = Alignment.Center,
+                ) { Box(Modifier.size(16.dp).background(p.defaultAccent, CircleShape)) }
+                Spacer(Modifier.height(5.dp))
+                Text(
+                    name.substringBefore(' '),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = if (sel) JarvisColors.CyanPrimary else JarvisColors.TextDim,
+                )
+                if (sel) Text("◉ ACTIVE", style = MaterialTheme.typography.labelSmall, color = JarvisColors.CyanPrimary)
+            }
+        }
+    }
+}
+
+@Composable
+private fun AccentPicker() {
+    val presets = listOf(
+        Color(0xFF22F5FF), Color(0xFF7C4DFF), Color(0xFFB04DFF), Color(0xFF0E8FA8),
+        Color(0xFF3DFFB0), Color(0xFFFFC233), Color(0xFF1565FF), Color(0xFFFF3B6B),
+    )
+    val current = ThemeStore.accent
+    Row(
+        Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+        verticalAlignment = Alignment.Top,
+    ) {
+        ColorSwatch(VisionThemes.palette(ThemeStore.themeId).defaultAccent, current == null, "AUTO") { ThemeStore.chooseAccent(null) }
+        presets.forEach { c -> ColorSwatch(c, current == c, null) { ThemeStore.chooseAccent(c) } }
+    }
+    HexAccentInput()
+}
+
+@Composable
+private fun ColorSwatch(color: Color, selected: Boolean, label: String?, onClick: () -> Unit) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Box(
+            Modifier.size(40.dp) // ≥ touch comfort within scroll row
+                .border(
+                    if (selected) 2.dp else 1.dp,
+                    if (selected) JarvisColors.CyanPrimary else JarvisColors.Border,
+                    CircleShape,
+                )
+                .padding(3.dp)
+                .background(color, CircleShape)
+                .clickable(onClick = onClick),
+            contentAlignment = Alignment.Center,
+        ) {
+            if (selected) {
+                val check = if (color.luminance() > 0.5f) Color.Black else Color.White
+                Text("✓", color = check, style = MaterialTheme.typography.labelLarge)
+            }
+        }
+        if (label != null) Text(label, style = MaterialTheme.typography.labelSmall, color = JarvisColors.TextDim)
+    }
+}
+
+@Composable
+private fun HexAccentInput() {
+    var hex by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf("") }
+    var error by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
+    Row(
+        Modifier.fillMaxWidth().padding(top = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        BasicTextField(
+            value = hex, onValueChange = { hex = it.take(7); error = false }, singleLine = true,
+            textStyle = MaterialTheme.typography.bodyMedium.copy(color = JarvisColors.TextPrimary),
+            cursorBrush = SolidColor(JarvisColors.CyanPrimary),
+            decorationBox = { inner ->
+                Row(Modifier.border(1.dp, if (error) JarvisColors.DangerRed else JarvisColors.Border, RoundedCornerShape(4.dp)).padding(horizontal = 10.dp, vertical = 8.dp)) {
+                    if (hex.isEmpty()) Text("#RRGGBB custom accent", color = JarvisColors.TextDim, style = MaterialTheme.typography.bodySmall)
+                    inner()
+                }
+            },
+            modifier = Modifier.weight(1f),
+        )
+        Text("APPLY", style = MaterialTheme.typography.labelLarge, color = JarvisColors.CyanPrimary,
+            modifier = Modifier.clickable {
+                val parsed = parseHexColor(hex)
+                if (parsed != null) { ThemeStore.chooseAccent(parsed); hex = "" } else error = true
+            }.padding(6.dp))
+    }
+}
+
+@Composable
+private fun WallpaperPicker() {
+    val presets: List<Pair<String, Color?>> = listOf(
+        "GRADIENT" to null,
+        "INK" to Color(0xFF05070F),
+        "PLUM" to Color(0xFF160A2E),
+        "TEAL" to Color(0xFF06232B),
+        "SLATE" to Color(0xFF11151F),
+        "SNOW" to Color(0xFFE8EEF6),
+    )
+    val current = ThemeStore.wallpaper
+    Row(
+        Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        presets.forEach { (name, c) ->
+            val sel = current == c
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                val box = Modifier.width(54.dp).height(38.dp)
+                    .border(
+                        if (sel) 2.dp else 1.dp,
+                        if (sel) JarvisColors.CyanPrimary else JarvisColors.Border,
+                        RoundedCornerShape(7.dp),
+                    )
+                    .clickable { ThemeStore.chooseWallpaper(c) }
+                Box(
+                    if (c == null) box.background(VisionColors.PlasmaSweep, RoundedCornerShape(7.dp))
+                    else box.background(c, RoundedCornerShape(7.dp)),
+                    contentAlignment = Alignment.Center,
+                ) { if (sel) Text("✓", color = JarvisColors.CyanPrimary, style = MaterialTheme.typography.labelLarge) }
+                Spacer(Modifier.height(4.dp))
+                Text(name, style = MaterialTheme.typography.labelSmall, color = JarvisColors.TextDim)
+            }
+        }
+    }
+}
+
+/** Parse "#RRGGBB" or "RRGGBB" → [Color]; null if malformed. */
+private fun parseHexColor(s: String): Color? {
+    val t = s.trim().removePrefix("#")
+    if (t.length != 6) return null
+    return try {
+        Color(android.graphics.Color.parseColor("#$t"))
+    } catch (e: IllegalArgumentException) {
+        null
     }
 }

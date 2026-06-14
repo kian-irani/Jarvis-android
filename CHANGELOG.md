@@ -7,8 +7,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Planned
+- Home redesign to the new orb-launcher reference (greeting bar · glowing orb · stats · quick-actions grid · Active Agents card · device-status card · 5-item bottom nav) — v12
+- Agents management + Memory workspace screens + responsive (tablet/desktop) layout — v13+
 - Smart home / IoT integrations (Home Assistant, Tasmota) — Phase 16
 - Cross-platform expansion (iOS / Desktop) — Phase 19
+
+---
+
+## [11.0.0] — 2026-06-14 — Theme & Appearance Engine
+
+### Added
+- **Theme switcher** — three full themes applied live: **Deep Space** (default void), **Aurora Dark** (purple nebula), **Light Future** (daylight HUD, AA-contrast dark ink on light surfaces).
+- **Custom accent picker** — 8 preset swatches + AUTO (theme default) + `#RRGGBB` hex input; recolours the orb glow, buttons, borders and selected states everywhere.
+- **Wallpaper picker** — theme gradient or solid-colour presets, applied to every screen backdrop.
+- **Global animation toggle** — one switch stops all entrance/pulse/motion (reduced-motion friendly).
+- **Distributed brain badge** on the home top bar (active node + live status) with a show/hide toggle.
+- **Reset appearance** — one tap restores theme/accent/wallpaper/animations/badge defaults.
+- New **APPEARANCE** section in SYSTEM CONFIG hosting all of the above, applied immediately.
+
+### Changed
+- `VisionColors` is now snapshot-state backed, so every existing screen re-themes instantly without per-screen edits. Persisted via `ThemeStore` (SharedPreferences).
 
 ---
 

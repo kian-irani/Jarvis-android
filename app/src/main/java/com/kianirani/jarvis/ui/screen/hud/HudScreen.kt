@@ -201,13 +201,33 @@ val LocalOpenQuickPanel = staticCompositionLocalOf<() -> Unit> { {} }
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Box(
-                Modifier.size(34.dp).clip(RoundedCornerShape(8.dp)).background(VisionColors.PlasmaSweep)
-                    .clickable(onClick = openElection),
-                Alignment.Center,
-            ) { Text("V", color = VisionColors.Background, style = MaterialTheme.typography.titleMedium) }
-            Text("VISION", style = MaterialTheme.typography.titleLarge, color = VisionColors.CyanPrimary)
+        Column(verticalArrangement = Arrangement.Center) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Box(
+                    Modifier.size(34.dp).clip(RoundedCornerShape(8.dp)).background(VisionColors.PlasmaSweep)
+                        .clickable(onClick = openElection),
+                    Alignment.Center,
+                ) { Text("V", color = VisionColors.Background, style = MaterialTheme.typography.titleMedium) }
+                Text("VISION", style = MaterialTheme.typography.titleLarge, color = VisionColors.CyanPrimary)
+            }
+            // Distributed-brain badge (Settings ▸ Appearance ▸ Brain badge):
+            // which node currently runs Vision + its live status. Tap → election.
+            if (com.kianirani.jarvis.ui.theme.ThemeStore.showBrainBadge) {
+                val on = s.brainOnline
+                val dot = if (on) JarvisColors.NeonGreen else JarvisColors.DangerRed
+                Row(
+                    Modifier.padding(top = 3.dp).clickable(onClick = openElection),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(5.dp),
+                ) {
+                    Box(Modifier.size(6.dp).clip(CircleShape).background(dot))
+                    Text(
+                        "BRAIN ◆ PHONE-LITE" + if (s.nodesOnline > 0) " +${s.nodesOnline}" else "",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = JarvisColors.TextDim,
+                    )
+                }
+            }
         }
         Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             Text(s.currentTime, style = MaterialTheme.typography.displaySmall, color = JarvisColors.CyanPrimary)

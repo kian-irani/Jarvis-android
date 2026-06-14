@@ -53,6 +53,9 @@ class MainActivity : ComponentActivity() {
         androidx.core.content.ContextCompat.startForegroundService(
             this, android.content.Intent(this, com.kianirani.jarvis.brain.BrainLiteService::class.java),
         )
+        // Load persisted appearance (theme / accent / wallpaper / animations /
+        // brain badge) before first composition so the HUD paints correctly.
+        com.kianirani.jarvis.ui.theme.ThemeStore.init(this)
         val prefs = getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         setContent {
             JarvisTheme {

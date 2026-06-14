@@ -39,6 +39,9 @@ import androidx.compose.ui.unit.dp
  */
 @Composable
 fun Modifier.visionEnter(index: Int = 0): Modifier {
+    // Global animation kill-switch (Settings ▸ Appearance ▸ Animations): when
+    // off we snap straight to the resting state — no entrance, no motion.
+    if (!ThemeStore.animations) return this
     var shown by remember { mutableStateOf(false) }
     val p by animateFloatAsState(
         targetValue = if (shown) 1f else 0f,

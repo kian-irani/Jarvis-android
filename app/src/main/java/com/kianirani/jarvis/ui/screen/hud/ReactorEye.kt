@@ -38,15 +38,18 @@ import kotlin.math.sin
  */
 @Composable
 fun ReactorEye(listening: Boolean, modifier: Modifier = Modifier) {
+    // Respect the global animation kill-switch (Settings ▸ Appearance): when
+    // off, the eye freezes in a calm resting pose instead of spinning/breathing.
+    val animate = com.kianirani.jarvis.ui.theme.ThemeStore.animations
     val inf = rememberInfiniteTransition(label = "eye")
-    val spin by inf.animateFloat(0f, 360f, infiniteRepeatable(tween(24000, easing = LinearEasing)), label = "spin")
-    val spin2 by inf.animateFloat(360f, 0f, infiniteRepeatable(tween(15000, easing = LinearEasing)), label = "spin2")
-    val breath by inf.animateFloat(0.95f, 1.05f, infiniteRepeatable(tween(2600, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "breath")
-    val glow by inf.animateFloat(0.35f, 0.8f, infiniteRepeatable(tween(2600, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "glow")
+    val spinA by inf.animateFloat(0f, 360f, infiniteRepeatable(tween(24000, easing = LinearEasing)), label = "spin")
+    val spin2A by inf.animateFloat(360f, 0f, infiniteRepeatable(tween(15000, easing = LinearEasing)), label = "spin2")
+    val breathA by inf.animateFloat(0.95f, 1.05f, infiniteRepeatable(tween(2600, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "breath")
+    val glowA by inf.animateFloat(0.35f, 0.8f, infiniteRepeatable(tween(2600, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "glow")
     // Idle gaze drift: slow figure-eight wander of the pupil.
-    val gazeT by inf.animateFloat(0f, (2 * PI).toFloat(), infiniteRepeatable(tween(9000, easing = LinearEasing)), label = "gaze")
+    val gazeTA by inf.animateFloat(0f, (2 * PI).toFloat(), infiniteRepeatable(tween(9000, easing = LinearEasing)), label = "gaze")
     // Blink: eyelid sweeps closed and open once per cycle, mostly open.
-    val blink by inf.animateFloat(
+    val blinkA by inf.animateFloat(
         0f, 0f,
         infiniteRepeatable(
             keyframes {
@@ -56,6 +59,12 @@ fun ReactorEye(listening: Boolean, modifier: Modifier = Modifier) {
         ),
         label = "blink",
     )
+    val spin = if (animate) spinA else 0f
+    val spin2 = if (animate) spin2A else 0f
+    val breath = if (animate) breathA else 1f
+    val glow = if (animate) glowA else 0.6f
+    val gazeT = if (animate) gazeTA else 0f
+    val blink = if (animate) blinkA else 0f
 
     Canvas(modifier) {
         val cx = size.width / 2f
