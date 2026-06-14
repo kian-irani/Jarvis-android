@@ -291,17 +291,25 @@ object ThemeStore {
     }
 }
 
+// v12 reskin (2026-06-14): soft sans for prose/headings (matches the orb-launcher
+// reference); monospace kept for label* + display roles that carry the HUD's
+// technical/data identity (clock, stat numbers, chips). Colours come from the
+// state-backed [VisionColors] so themes/accent still recolour text.
+private val Sans = FontFamily.SansSerif
+private val Mono = FontFamily.Monospace
 val JarvisTypography = Typography(
-    displayLarge   = TextStyle(fontFamily=FontFamily.Monospace, fontSize=32.sp, letterSpacing=8.sp,   color=VisionColors.CyanPrimary),
-    headlineLarge  = TextStyle(fontFamily=FontFamily.Monospace, fontSize=18.sp, letterSpacing=3.sp,   color=VisionColors.CyanSecondary),
-    headlineMedium = TextStyle(fontFamily=FontFamily.Monospace, fontSize=14.sp, letterSpacing=2.sp,   color=VisionColors.CyanSecondary),
-    bodyLarge      = TextStyle(fontFamily=FontFamily.Monospace, fontSize=14.sp, letterSpacing=0.5.sp, color=VisionColors.TextPrimary,   lineHeight=22.sp),
-    bodyMedium     = TextStyle(fontFamily=FontFamily.Monospace, fontSize=12.sp, letterSpacing=0.3.sp, color=VisionColors.TextSecondary, lineHeight=18.sp),
-    bodySmall      = TextStyle(fontFamily=FontFamily.Monospace, fontSize=10.sp, letterSpacing=0.sp,   color=VisionColors.TextDim,       lineHeight=15.sp),
-    labelLarge     = TextStyle(fontFamily=FontFamily.Monospace, fontSize=11.sp, letterSpacing=2.sp,   color=VisionColors.TextTerminal),
-    labelMedium    = TextStyle(fontFamily=FontFamily.Monospace, fontSize=10.sp, letterSpacing=2.sp,   color=VisionColors.TextSecondary),
-    labelSmall     = TextStyle(fontFamily=FontFamily.Monospace, fontSize=9.sp,  letterSpacing=2.5.sp, color=VisionColors.TextDim),
-    titleLarge     = TextStyle(fontFamily=FontFamily.Monospace, fontSize=20.sp, letterSpacing=1.sp,   color=VisionColors.CyanPrimary),
+    displayLarge   = TextStyle(fontFamily=Mono, fontSize=32.sp, letterSpacing=4.sp,   color=VisionColors.CyanPrimary),
+    displaySmall   = TextStyle(fontFamily=Mono, fontSize=26.sp, letterSpacing=2.sp,   color=VisionColors.CyanPrimary),
+    headlineLarge  = TextStyle(fontFamily=Sans, fontSize=22.sp, fontWeight=androidx.compose.ui.text.font.FontWeight.SemiBold, letterSpacing=0.sp, color=VisionColors.TextPrimary),
+    headlineMedium = TextStyle(fontFamily=Sans, fontSize=16.sp, fontWeight=androidx.compose.ui.text.font.FontWeight.Medium,   letterSpacing=0.sp, color=VisionColors.TextPrimary),
+    titleLarge     = TextStyle(fontFamily=Sans, fontSize=20.sp, fontWeight=androidx.compose.ui.text.font.FontWeight.SemiBold, letterSpacing=0.5.sp, color=VisionColors.TextPrimary),
+    titleMedium    = TextStyle(fontFamily=Sans, fontSize=16.sp, fontWeight=androidx.compose.ui.text.font.FontWeight.Medium,   letterSpacing=0.5.sp, color=VisionColors.TextPrimary),
+    bodyLarge      = TextStyle(fontFamily=Sans, fontSize=15.sp, letterSpacing=0.2.sp, color=VisionColors.TextPrimary,   lineHeight=22.sp),
+    bodyMedium     = TextStyle(fontFamily=Sans, fontSize=13.sp, letterSpacing=0.2.sp, color=VisionColors.TextSecondary, lineHeight=19.sp),
+    bodySmall      = TextStyle(fontFamily=Sans, fontSize=11.sp, letterSpacing=0.1.sp, color=VisionColors.TextDim,       lineHeight=16.sp),
+    labelLarge     = TextStyle(fontFamily=Mono, fontSize=11.sp, letterSpacing=2.sp,   color=VisionColors.TextTerminal),
+    labelMedium    = TextStyle(fontFamily=Mono, fontSize=10.sp, letterSpacing=2.sp,   color=VisionColors.TextSecondary),
+    labelSmall     = TextStyle(fontFamily=Mono, fontSize=9.sp,  letterSpacing=2.5.sp, color=VisionColors.TextDim),
 )
 
 @Composable

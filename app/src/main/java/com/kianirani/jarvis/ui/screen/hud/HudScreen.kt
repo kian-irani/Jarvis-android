@@ -196,6 +196,7 @@ val LocalOpenQuickPanel = staticCompositionLocalOf<() -> Unit> { {} }
  */
 @Composable fun PortraitTopBar(s: HudUiState, modifier: Modifier) {
     val openElection = LocalOpenElection.current
+    val openSettings = LocalOpenSettings.current
     Row(
         modifier.height(56.dp).padding(horizontal = 18.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -229,9 +230,21 @@ val LocalOpenQuickPanel = staticCompositionLocalOf<() -> Unit> { {} }
                 }
             }
         }
-        Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            Text(s.currentTime, style = MaterialTheme.typography.displaySmall, color = JarvisColors.CyanPrimary)
-            Text("UTC+3:30", style = MaterialTheme.typography.labelSmall, color = JarvisColors.TextDim, modifier = Modifier.padding(bottom = 6.dp))
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            Column(horizontalAlignment = Alignment.End) {
+                Text(s.currentTime, style = MaterialTheme.typography.displaySmall, color = JarvisColors.CyanPrimary)
+                Text("UTC+3:30", style = MaterialTheme.typography.labelSmall, color = JarvisColors.TextDim)
+            }
+            // Always-visible Settings entry. User feedback (v11): the only way in
+            // was a small dock glyph that was easy to miss / clipped — this gear
+            // sits in the top bar exactly like the design reference.
+            Box(
+                Modifier.size(42.dp).clip(CircleShape)
+                    .background(JarvisColors.CyanFaint)
+                    .border(1.dp, JarvisColors.CyanSecondary.copy(alpha = 0.6f), CircleShape)
+                    .clickable(onClick = openSettings),
+                contentAlignment = Alignment.Center,
+            ) { Text("⚙", style = MaterialTheme.typography.titleLarge, color = JarvisColors.CyanPrimary) }
         }
     }
 }
