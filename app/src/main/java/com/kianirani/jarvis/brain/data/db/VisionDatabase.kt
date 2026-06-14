@@ -48,6 +48,7 @@ interface MemoryDao {
     @Query("SELECT * FROM memories WHERE (:type IS NULL OR type = :type) ORDER BY created_at DESC LIMIT :limit OFFSET :offset")
     suspend fun list(type: String?, limit: Int, offset: Int): List<MemoryEntity>
     @Query("SELECT * FROM memories WHERE embedding IS NOT NULL") suspend fun allWithEmbedding(): List<MemoryEntity>
+    @Query("SELECT COUNT(*) FROM memories WHERE (:type IS NULL OR type = :type)") suspend fun count(type: String?): Int
 }
 
 @Dao
@@ -63,6 +64,7 @@ interface TaskDao {
     @Update suspend fun update(t: TaskEntity)
     @Query("SELECT * FROM tasks WHERE id = :id") suspend fun byId(id: String): TaskEntity?
     @Query("SELECT * FROM tasks WHERE status = 'pending' ORDER BY created_at LIMIT 1") suspend fun nextPending(): TaskEntity?
+    @Query("SELECT COUNT(*) FROM tasks WHERE status = 'pending'") suspend fun pendingCount(): Int
 }
 
 @Database(entities = [MemoryEntity::class, NodeEntity::class, TaskEntity::class], version = 1, exportSchema = false)

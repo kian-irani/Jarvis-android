@@ -22,6 +22,10 @@ class TaskRepository(
 
     suspend fun byId(id: String): TaskEntity? = dao.byId(id)
 
+    /** Home stats: number of pending tasks + the next one queued. */
+    suspend fun pendingCount(): Int = dao.pendingCount()
+    suspend fun nextPending(): TaskEntity? = dao.nextPending()
+
     /** Process all currently-pending tasks once. Used by tests and the worker loop. */
     suspend fun drainOnce() {
         while (true) {

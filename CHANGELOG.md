@@ -7,12 +7,25 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Planned
-- Home redesign to the new orb-launcher reference (greeting bar · glowing orb · stats · quick-actions grid · Active Agents card · device-status card · 5-item bottom nav) — v12
-- Agents management + Memory workspace screens + responsive (tablet/desktop) layout — v13+
+- Real-time weather on the home greeting bar; drag-to-reorder quick actions
+- Three-column desktop layout (dedicated right panel for agents + widgets)
 - Smart home / IoT integrations (Home Assistant, Tasmota) — Phase 16
 - Cross-platform expansion (iOS / Desktop) — Phase 19
 
 ---
+
+## [12.0.0] — 2026-06-14 — Orb-Launcher Home Redesign + Agents Layer
+
+### Added
+- **New home** matching the design reference: time-based greeting bar (name · weather · live clock · brain dot · gear), a soft glowing **Vision Orb** (radial accent→violet→magenta sphere, animation-gated), an **"Ask Vision…"** command bar, a **stats row** (Agents / Tasks / Devices, live), a **quick-actions grid** (Apps/Files/Browser/Tasks/Automation/Agents) with persisted order + edit-mode reorder + reset, an **Active Agents** card, and a **device/widgets** card (recent task · battery · free RAM · memory count).
+- **5-tab bottom navigation** (Home / Agents / Apps / Memory / Settings) — settings now reachable from an obvious tab *and* the top-bar gear.
+- **Agents layer (`AgentRegistry`)** — 4 agents (Research/Automation/Developer/Device) with **persisted trust levels** (Read/Suggest/Auto/Critical) and status **derived from real capabilities** (AI keys, tools, brain connection, accessibility). New **Agents** management screen + on-home panel.
+- **Memory** workspace screen — on-device memory count, recent memories, semantic search.
+- **Apps** drawer special cards — "Vision Settings" and "Vision Hub" (placeholder lab/notes/files/servers).
+- **Responsive** layout via WindowSizeClass — bottom nav on phones, **NavigationRail** + width-capped content on tablet/desktop.
+
+### Changed
+- **Full reskin** to the soft reference look: sans-serif typography for prose/headings (monospace retained for data labels), rounded glass cards, spherical orb replacing the angular reactor eye on home.
 
 ## [11.0.0] — 2026-06-14 — Theme & Appearance Engine
 

@@ -124,7 +124,13 @@ class AppDrawerViewModel @Inject constructor(
 }
 
 @Composable
-fun AppDrawerScreen(vm: AppDrawerViewModel = hiltViewModel(), onBack: () -> Unit = {}) {
+fun AppDrawerScreen(
+    vm: AppDrawerViewModel = hiltViewModel(),
+    onBack: () -> Unit = {},
+    showBack: Boolean = true,
+    onOpenSettings: () -> Unit = {},
+    onOpenHub: () -> Unit = {},
+) {
     val apps by vm.apps.collectAsState()
     val frequent by vm.frequent.collectAsState()
     val query by vm.query.collectAsState()
@@ -135,7 +141,7 @@ fun AppDrawerScreen(vm: AppDrawerViewModel = hiltViewModel(), onBack: () -> Unit
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            Text("‹ BACK", style = MaterialTheme.typography.labelLarge, color = JarvisColors.TextDim,
+            if (showBack) Text("‹ BACK", style = MaterialTheme.typography.labelLarge, color = JarvisColors.TextDim,
                 modifier = Modifier.clickable(onClick = onBack).padding(end = 12.dp))
             Text("APPLICATIONS", style = MaterialTheme.typography.headlineLarge, color = JarvisColors.CyanPrimary)
             Spacer(Modifier.weight(1f))
@@ -201,6 +207,12 @@ fun AppDrawerScreen(vm: AppDrawerViewModel = hiltViewModel(), onBack: () -> Unit
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             modifier = Modifier.fillMaxSize(),
         ) {
+            // Special Vision entries (spec section 5/7): always reachable from the
+            // app drawer, with a distinct accent background vs. installed apps.
+            if (query.isBlank()) {
+                item(key = "__vision_settings") { SpecialTile("⚙", "Vision Settings", onOpenSettings) }
+                item(key = "__vision_hub") { SpecialTile("✦", "Vision Hub", onOpenHub) }
+            }
             items(filtered, key = { it.packageName }) { app ->
                 Column(
                     Modifier
@@ -223,5 +235,29 @@ fun AppDrawerScreen(vm: AppDrawerViewModel = hiltViewModel(), onBack: () -> Unit
                 }
             }
         }
+    }
+}
+
+/** A distinct accent-tinted launcher tile for built-in Vision destinations. */
+@Composable
+private fun SpecialTile(glyph: String, label: String, onClick: () -> Unit) {
+    Column(
+        Modifier.clickable(onClick = onClick).padding(4.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        Column(
+            Modifier
+                .background(VisionColors.CyanFaint, RoundedCornerShape(14.dp))
+                .border(1.dp, VisionColors.CyanSecondary.copy(alpha = 0.6f), RoundedCornerShape(14.dp))
+                .padding(8.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            androidx.compose.foundation.layout.Box(Modifier.size(44.dp), contentAlignment = Alignment.Center) {
+                Text(glyph, style = MaterialTheme.typography.headlineLarge, color = VisionColors.CyanPrimary)
+            }
+        }
+        Text(label, style = MaterialTheme.typography.labelSmall, color = VisionColors.CyanPrimary,
+            maxLines = 1, overflow = TextOverflow.Ellipsis, textAlign = TextAlign.Center)
     }
 }
