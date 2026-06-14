@@ -107,7 +107,15 @@ Jarvis-android/
 │       ├── launcher/        # Home screen launcher
 │       ├── brain/           # BrainLiteService + KtorServer
 │       ├── agent/           # Agent engine + ReAct loop
-│       ├── router/          # Multi-token AI router
+│       ├── router/          # Cognitive router — "Vision Brain"  ← spec 2026-06-14
+│       │   ├── orchestrator/   # VisionOrchestrator + DecisionObject (M1)
+│       │   ├── registry/       # ModelRegistry — metadata + capability scores (M3)
+│       │   ├── capability/     # CapabilityRouter — rank by capability not provider (M2)
+│       │   ├── health/         # AvailabilityGraph — latency/error/quota/circuit-breaker (M8)
+│       │   ├── cost/           # Adaptive Cost Controller — Economy/Balanced/Premium/Unlimited (M7)
+│       │   ├── backend/        # ModelBackend interface + adapters cloud/local/mesh (M5)
+│       │   ├── local/          # LocalModelEngine — on-device GGUF (llama.cpp/MediaPipe) (M17)
+│       │   └── mesh/           # MeshModelClient — use other nodes' local models (M17+P8)
 │       ├── search/          # AnySearch engine
 │       ├── notes/           # Vision Notes              ← NEW v16
 │       ├── mcp/             # MCP client + host
@@ -513,6 +521,8 @@ Header (16 bytes):
 ## 🔀 Phase 2 — Multi-Token AI Router (هفته ۵–۶)
 
 **هدف:** پشتیبانی از providers و token‌های نامحدود با routing هوشمند.
+
+> 🧠 **به‌روزرسانی 2026-06-14 — Vision Brain (Cognitive Router):** بخش R.1/R.2 (Smart Model Selector، Capability Matrix، Fallback Chain، Health score، Cost Dashboard) با طرح دقیقِ **VisionOrchestrator → CapabilityRouter → ModelRegistry → AvailabilityGraph → SubstitutionEngine → CostController** پیاده می‌شود؛ به‌علاوه‌ی دو backend جدید: **LocalModelEngine** (مدل لوکالِ روی گوشی — پیشنهاد: Qwen2.5-0.5B-Instruct Q4 / Gemma 3 1B) و **MeshModelClient** (مدل لوکالِ دستگاه‌های دیگرِ مش، تکمیل W5). فازهای اجرایی: PLAN → بخش «VISION BRAIN». طرح کامل: `docs/superpowers/specs/2026-06-14-vision-brain-cognitive-router.md`.
 
 ### قوانین Multi-Token (غیرقابل مذاکره)
 

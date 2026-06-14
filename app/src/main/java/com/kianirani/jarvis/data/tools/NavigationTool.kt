@@ -33,7 +33,8 @@ class NavigationTool @Inject constructor() : Tool {
             "home" to "Going home."
         m == "back" || m == "go back" || m.contains("برگرد") || m.contains("بازگشت") ->
             "back" to "Going back."
-        m.contains("recent") || m.contains("اخیر") || m.contains("برنامه‌های باز") ->
+        m.contains("recent") || m.contains("اخیر") ||
+            (m.contains("برنامه") && m.contains("باز")) || m.contains("برنامه‌های باز") ->
             "recents" to "Opening recents."
         m.contains("lock screen") || m == "lock" || m.contains("قفل") ->
             "lock" to "Locking the screen."

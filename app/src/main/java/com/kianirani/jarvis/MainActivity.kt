@@ -50,7 +50,6 @@ import com.kianirani.jarvis.ui.screen.hub.VisionHubScreen
 import com.kianirani.jarvis.ui.screen.hud.HudViewModel
 import com.kianirani.jarvis.ui.screen.memory.MemoryScreen
 import com.kianirani.jarvis.ui.screen.onboarding.OnboardingScreen
-import com.kianirani.jarvis.ui.screen.recents.RecentsScreen
 import com.kianirani.jarvis.ui.screen.settings.AiTokensScreen
 import com.kianirani.jarvis.ui.screen.settings.SettingsHubScreen
 import com.kianirani.jarvis.ui.screen.setup.SetupWizardScreen
@@ -63,7 +62,7 @@ private const val PREFS = "vision_prefs"
 private const val KEY_SETUP_COMPLETE = "setup_complete"
 private const val KEY_ONBOARDED = "persona_onboarded"
 
-enum class VisionRoute { ONBOARDING, SETUP, HOME, AGENTS, APPS, MEMORY, SETTINGS, ELECTION, AI_SETTINGS, RECENTS, HUB }
+enum class VisionRoute { ONBOARDING, SETUP, HOME, AGENTS, APPS, MEMORY, SETTINGS, ELECTION, AI_SETTINGS, HUB }
 
 /** The five tabs that appear in the bottom navigation / nav rail. */
 private val TOP_LEVEL = setOf(VisionRoute.HOME, VisionRoute.AGENTS, VisionRoute.APPS, VisionRoute.MEMORY, VisionRoute.SETTINGS)
@@ -192,7 +191,6 @@ private fun RouteContent(route: VisionRoute, onNavigate: (VisionRoute) -> Unit) 
         )
         VisionRoute.ELECTION -> BrainElectionScreen()
         VisionRoute.AI_SETTINGS -> AiTokensScreen(onBack = { onNavigate(VisionRoute.SETTINGS) })
-        VisionRoute.RECENTS -> RecentsScreen(onBack = { onNavigate(VisionRoute.HOME) })
         VisionRoute.HUB -> VisionHubScreen(onBack = { onNavigate(VisionRoute.APPS) })
         VisionRoute.ONBOARDING, VisionRoute.SETUP -> Unit // handled upstream
     }

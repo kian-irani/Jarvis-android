@@ -125,6 +125,14 @@ class CloudChatRouter @Inject constructor(
         return Result.failure(last)
     }
 
+    /**
+     * Validate a single key with a tiny live request. Success = the provider
+     * accepted the token and answered — powers the "active ✓" badge shown the
+     * instant a token is added (user directive 2026-06-14).
+     */
+    suspend fun test(p: AiProvider, token: String): Result<Unit> =
+        runCatching { ask(p, token, "ping", emptyList()) }.map { }
+
     private suspend fun ask(p: AiProvider, token: String, message: String, context: List<ChatTurn>): String {
       val sys = systemPrompt()
       val model = store.model(p)

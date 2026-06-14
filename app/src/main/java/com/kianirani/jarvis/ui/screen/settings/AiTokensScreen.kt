@@ -30,8 +30,10 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.kianirani.jarvis.data.ai.AiProvider
 import com.kianirani.jarvis.data.ai.AiProviderStore
+import com.kianirani.jarvis.data.ai.CloudChatRouter
 import com.kianirani.jarvis.ui.theme.JarvisColors
 import com.kianirani.jarvis.ui.theme.VisionColors
 import com.kianirani.jarvis.ui.theme.glassPanel
@@ -39,10 +41,18 @@ import com.kianirani.jarvis.ui.theme.visionEnter
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+/** Live reachability of a single key (user directive 2026-06-14: show active ✓). */
+enum class KeyState { TESTING, ACTIVE, FAILED }
+data class KeyStatus(val state: KeyState, val detail: String = "")
+
 @HiltViewModel
-class AiTokensViewModel @Inject constructor(private val store: AiProviderStore) : ViewModel() {
+class AiTokensViewModel @Inject constructor(
+    private val store: AiProviderStore,
+    private val router: CloudChatRouter,
+) : ViewModel() {
     private val _saved = MutableStateFlow(snapshot())
     val saved = _saved.asStateFlow()
 
@@ -55,19 +65,63 @@ class AiTokensViewModel @Inject constructor(private val store: AiProviderStore) 
     private fun modelSnapshot(): Map<AiProvider, String> =
         AiProvider.entries.associateWith { store.model(it) }
 
+    /** token string → live status (TESTING / ACTIVE / FAILED + reason). */
+    private val _status = MutableStateFlow<Map<String, KeyStatus>>(emptyMap())
+    val status = _status.asStateFlow()
+
+    init { validateAll() }
+
     fun add(p: AiProvider, token: String) {
-        store.addToken(p, token)
+        val t = token.trim()
+        store.addToken(p, t)
         _saved.value = snapshot()
+        validate(p, t) // immediately ping the provider so the user sees active/✗
     }
 
     fun remove(p: AiProvider, token: String) {
         store.removeToken(p, token)
         _saved.value = snapshot()
+        _status.value = _status.value - token
     }
 
     fun setModel(p: AiProvider, model: String) {
         store.setModel(p, model)
         _models.value = modelSnapshot()
+    }
+
+    /** Manual re-test (TEST button). */
+    fun test(p: AiProvider, token: String) = validate(p, token)
+
+    private fun validateAll() {
+        snapshot().forEach { (p, tokens) -> tokens.forEach { validate(p, it) } }
+    }
+
+    private fun validate(p: AiProvider, token: String) {
+        if (token.isBlank()) return
+        _status.value = _status.value + (token to KeyStatus(KeyState.TESTING))
+        viewModelScope.launch {
+            val r = router.test(p, token)
+            _status.value = _status.value + (
+                token to if (r.isSuccess) {
+                    KeyStatus(KeyState.ACTIVE)
+                } else {
+                    KeyStatus(KeyState.FAILED, r.exceptionOrNull()?.message?.take(70) ?: "no response")
+                }
+                )
+        }
+    }
+}
+
+@Composable
+private fun KeyStatusBadge(status: KeyStatus?) {
+    val (label, color) = when (status?.state) {
+        KeyState.ACTIVE -> "✓ ACTIVE" to VisionColors.NeonGreen
+        KeyState.TESTING -> "⟳ TESTING" to VisionColors.WarningAmber
+        KeyState.FAILED -> "✗ FAILED" to VisionColors.DangerRed
+        null -> "" to VisionColors.TextDim
+    }
+    if (label.isNotEmpty()) {
+        Text(label, style = MaterialTheme.typography.labelSmall, color = color, modifier = Modifier.padding(end = 6.dp))
     }
 }
 
@@ -80,6 +134,7 @@ private fun mask(token: String): String =
 fun AiTokensScreen(vm: AiTokensViewModel = hiltViewModel(), onBack: () -> Unit = {}) {
     val saved by vm.saved.collectAsState()
     val models by vm.models.collectAsState()
+    val statuses by vm.status.collectAsState()
     Column(
         Modifier.fillMaxSize().background(VisionColors.ScreenBackdrop).systemBarsPadding()
             .verticalScroll(rememberScrollState()).padding(16.dp),
@@ -96,7 +151,7 @@ fun AiTokensScreen(vm: AiTokensViewModel = hiltViewModel(), onBack: () -> Unit =
             style = MaterialTheme.typography.bodySmall, color = JarvisColors.TextDim,
         )
         AiProvider.entries.forEachIndexed { i, p ->
-            ProviderCard(p, saved[p].orEmpty(), models[p] ?: p.defaultModel, i, vm::add, vm::remove, vm::setModel)
+            ProviderCard(p, saved[p].orEmpty(), models[p] ?: p.defaultModel, statuses, i, vm::add, vm::remove, vm::setModel, vm::test)
         }
     }
 }
@@ -106,10 +161,12 @@ private fun ProviderCard(
     p: AiProvider,
     tokens: List<String>,
     model: String,
+    statuses: Map<String, KeyStatus>,
     index: Int,
     onAdd: (AiProvider, String) -> Unit,
     onRemove: (AiProvider, String) -> Unit,
     onSetModel: (AiProvider, String) -> Unit,
+    onTest: (AiProvider, String) -> Unit,
 ) {
     var input by remember(p) { mutableStateOf("") }
     var modelInput by remember(p, model) { mutableStateOf(model) }
@@ -165,8 +222,15 @@ private fun ProviderCard(
             ) {
                 Text(mask(t), style = MaterialTheme.typography.bodySmall, color = JarvisColors.TextPrimary)
                 Spacer(Modifier.weight(1f))
+                KeyStatusBadge(statuses[t])
+                Text("TEST", style = MaterialTheme.typography.labelSmall, color = JarvisColors.CyanSecondary,
+                    modifier = Modifier.clickable { onTest(p, t) }.padding(4.dp))
                 Text("REMOVE", style = MaterialTheme.typography.labelSmall, color = JarvisColors.DangerRed,
                     modifier = Modifier.clickable { onRemove(p, t) }.padding(4.dp))
+            }
+            statuses[t]?.takeIf { it.state == KeyState.FAILED && it.detail.isNotBlank() }?.let {
+                Text("✗ ${it.detail}", style = MaterialTheme.typography.labelSmall, color = JarvisColors.DangerRed,
+                    modifier = Modifier.padding(start = 10.dp))
             }
         }
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {

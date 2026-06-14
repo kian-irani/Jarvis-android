@@ -1,9 +1,14 @@
 package com.kianirani.jarvis.ui.screen.home
 
+import android.content.Context
+import android.content.Intent
+import android.provider.Settings
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -35,12 +40,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.kianirani.jarvis.data.agent.AgentState
 import com.kianirani.jarvis.data.agent.AgentStatus
 import com.kianirani.jarvis.data.settings.QuickAction
+import com.kianirani.jarvis.service.VisionAccessibilityService
 import com.kianirani.jarvis.ui.screen.hud.HudViewModel
 import com.kianirani.jarvis.ui.theme.JarvisColors
 import com.kianirani.jarvis.ui.theme.VisionColors
@@ -71,6 +79,7 @@ fun HomeScreen(
     val agents by home.agentStates.collectAsState()
     val order by home.quickActions.order.collectAsState()
     val name by home.personaName.collectAsState()
+    val ctx = LocalContext.current
     androidx.compose.runtime.LaunchedEffect(Unit) { home.refresh() }
 
     val activeAgents = agents.count { it.status == AgentStatus.ACTIVE || it.status == AgentStatus.WORKING }
@@ -86,10 +95,20 @@ fun HomeScreen(
         VisionOrb(
             listening = s.isListening,
             modifier = Modifier.fillMaxWidth().aspectRatio(1.15f).visionEnter(0)
-                .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null, onClick = hud::toggleListening),
+                // Tap → talk. Swipe up → open the REAL system recent-apps switcher
+                // (GLOBAL_ACTION_RECENTS via accessibility) — the only way a 3rd-party
+                // launcher can reach Overview, since the hardware button can't be rebound.
+                .pointerInput(Unit) { detectTapGestures(onTap = { hud.toggleListening() }) }
+                .pointerInput(Unit) {
+                    var dy = 0f
+                    detectVerticalDragGestures(
+                        onDragEnd = { if (dy < -80f) openSystemRecents(ctx); dy = 0f },
+                        onVerticalDrag = { _, amount -> dy += amount },
+                    )
+                },
         )
         Text(
-            if (s.isListening) "● LISTENING — speak now" else "tap the orb or type to talk",
+            if (s.isListening) "● LISTENING — speak now" else "tap the orb to talk · swipe up for recent apps",
             style = MaterialTheme.typography.labelMedium,
             color = if (s.isListening) JarvisColors.NeonGreen else JarvisColors.TextDim,
             modifier = Modifier.align(Alignment.CenterHorizontally).padding(bottom = 10.dp),
@@ -330,6 +349,23 @@ private fun WidgetRow(label: String, value: String) {
         Text(label, style = MaterialTheme.typography.bodyMedium, color = JarvisColors.TextDim)
         Spacer(Modifier.weight(1f))
         Text(value, style = MaterialTheme.typography.bodyMedium, color = JarvisColors.TextPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+    }
+}
+
+/**
+ * Open the genuine system recent-apps switcher via the accessibility service.
+ * If Device Control isn't enabled yet, guide the user to turn it on once — there
+ * is no app-level way to drive Overview without it.
+ */
+private fun openSystemRecents(ctx: Context) {
+    val svc = VisionAccessibilityService.instance
+    if (svc != null) {
+        svc.openRecents()
+    } else {
+        Toast.makeText(ctx, "Enable Vision Device Control (Accessibility) to open recent apps", Toast.LENGTH_LONG).show()
+        runCatching {
+            ctx.startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+        }
     }
 }
 
