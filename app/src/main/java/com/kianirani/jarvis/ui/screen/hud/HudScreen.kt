@@ -32,7 +32,9 @@ data class HudUiState(
     val brainCpu: Float = 0f, val brainRam: Float = 0f, val brainNet: Float = 0f, val brainDiskIo: Float = 0f,
     val jarvisOutput: String = "", val inputText: String = "", val isListening: Boolean = false,
     val waveformAmplitudes: List<Float> = List(40) { 0.05f },
-    val currentTime: String = "", val eventLog: List<LogEvent> = emptyList()
+    val currentTime: String = "", val eventLog: List<LogEvent> = emptyList(),
+    // VB9 decision telemetry: which model answered and the orchestrator's one-line "why".
+    val decisionModel: String = "", val decisionReason: String = "",
 )
 
 @Composable fun HudScreen(
@@ -178,6 +180,10 @@ val LocalOpenQuickPanel = staticCompositionLocalOf<() -> Unit> { {} }
             FrequentAppsRow(frequent, appsVm::launch, Modifier.fillMaxWidth().visionEnter(2))
             Spacer(Modifier.height(8.dp))
             TypewriterPanel(s.jarvisOutput, Modifier.fillMaxWidth().visionEnter(3))
+            if (s.decisionModel.isNotEmpty() || s.decisionReason.isNotEmpty()) {
+                Spacer(Modifier.height(8.dp))
+                DecisionTelemetry(s, Modifier.fillMaxWidth())
+            }
             Spacer(Modifier.height(8.dp))
             InputBar(s.inputText, vm::onInputChange, vm::sendChat, Modifier.fillMaxWidth().visionEnter(4))
             Spacer(Modifier.height(10.dp))
@@ -502,6 +508,45 @@ private val AuroraMagentaColors = listOf(VisionColors.Magenta.copy(alpha = 0.16f
 @Composable fun LogPanel(s: HudUiState, modifier: Modifier) {
     HudCard(modifier){Column(Modifier.padding(10.dp)){Text("EVENT LOG",style=MaterialTheme.typography.labelSmall,color=JarvisColors.TextDim,modifier=Modifier.padding(bottom=6.dp))
         s.eventLog.takeLast(8).forEach{e->Row(Modifier.padding(bottom=3.dp),horizontalArrangement=Arrangement.spacedBy(5.dp)){Text(e.time,style=MaterialTheme.typography.bodySmall,color=JarvisColors.TextDim);Text(e.message,style=MaterialTheme.typography.bodySmall,maxLines=1,overflow=TextOverflow.Ellipsis,color=when(e.level){EventLevel.OK->JarvisColors.NeonGreen;EventLevel.WARN->JarvisColors.WarningAmber;EventLevel.ERR->JarvisColors.DangerRed;else->JarvisColors.CyanSecondary})}}}}
+}
+
+/**
+ * VB9 — decision telemetry chip. Glanceable "which model answered, and why" so the
+ * user can see the cognitive router's reasoning (transparency + debugging). A status
+ * dot is always paired with the model label (never colour-only); the reason is dim
+ * and truncated to one line. Display-only, so no min touch target applies.
+ */
+@Composable fun DecisionTelemetry(s: HudUiState, modifier: Modifier) {
+    HudCard(modifier) {
+        Row(
+            Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Box(Modifier.size(7.dp).clip(CircleShape).background(JarvisColors.NeonGreen))
+            if (s.decisionModel.isNotEmpty()) {
+                Text(
+                    "VIA ${s.decisionModel}",
+                    style = MaterialTheme.typography.labelMedium.copy(
+                        fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
+                    ),
+                    color = JarvisColors.CyanPrimary,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+            if (s.decisionReason.isNotEmpty()) {
+                Text(
+                    s.decisionReason,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = JarvisColors.TextDim,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f),
+                )
+            }
+        }
+    }
 }
 
 @Composable fun InputBar(value: String, onChange: (String)->Unit, onSend: ()->Unit, modifier: Modifier) {

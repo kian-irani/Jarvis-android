@@ -115,8 +115,14 @@ class HudViewModel @Inject constructor(
             val privacy = settings.trustLevel.value == 0
             val decision = orchestrator.decide(msg, privacyMode = privacy)
             addLog(decision.reason, "info")
+            // VB9: surface the orchestrator's pick + reasoning as glanceable HUD telemetry.
+            _state.update { it.copy(decisionModel = decision.chosen?.displayName ?: "", decisionReason = decision.reason) }
             val answered = backendRouter.execute(decision, msg)
-                .onSuccess { r -> typeText(r.text); speak(r.text); addLog("AI: ${r.model.displayName}", "ok") }
+                .onSuccess { r ->
+                    typeText(r.text); speak(r.text); addLog("AI: ${r.model.displayName}", "ok")
+                    // Reflect the model that actually answered (after any substitution).
+                    _state.update { it.copy(decisionModel = r.model.displayName) }
+                }
                 .isSuccess
             if (answered) return@launch
 
