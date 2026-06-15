@@ -14,8 +14,12 @@ class ToolRegistry @Inject constructor(
     deviceSettings: DeviceSettingsTool,
     navigation: NavigationTool,
     notifications: NotificationTool,
+    call: CallTool,
+    sms: SmsTool,
 ) {
-    private val tools: List<Tool> = listOf(flashlight, deviceSettings, navigation, notifications)
+    // call/sms first: they execute a real action (and report honestly) before any
+    // looser matcher or the LLM can pretend the action happened (v20 fix).
+    private val tools: List<Tool> = listOf(call, sms, flashlight, deviceSettings, navigation, notifications)
 
     /** Ids of registered tools — useful for diagnostics / future tool-calling. */
     val ids: List<String> get() = tools.map { it.id }
