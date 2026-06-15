@@ -1,6 +1,8 @@
 package com.kianirani.jarvis.router.backend
 
 import com.kianirani.jarvis.router.capability.CapabilityRequest
+import com.kianirani.jarvis.router.health.AvailabilityGraph
+import com.kianirani.jarvis.router.health.RateLimited
 import com.kianirani.jarvis.router.orchestrator.DecisionObject
 import com.kianirani.jarvis.router.orchestrator.Intent
 import com.kianirani.jarvis.router.orchestrator.Modality
@@ -100,5 +102,56 @@ class BackendRouterTest {
         val res = r.execute(decision(spec("local", ModelBackend.LOCAL)), "hi")
         assertTrue(res.isFailure)
         assertTrue(res.exceptionOrNull()?.message?.contains("LOCAL_MODEL_UNAVAILABLE") == true)
+    }
+
+    // --- VB4: Availability Graph integration ---
+
+    private var clock = 0L
+    private fun routerWithGraph(graph: AvailabilityGraph, vararg backends: Backend) =
+        BackendRouter(backends.associateBy { it.kind }, graph, now = { clock })
+
+    @Test
+    fun `router skips a model whose breaker is open and substitutes`() = runTest {
+        val graph = AvailabilityGraph(now = { clock }, config = AvailabilityGraph.Config(failureThreshold = 1))
+        val groq = spec("groq-1", ModelBackend.CLOUD, provider = "GROQ")
+        graph.recordFailure(groq) // opens groq's breaker (threshold 1)
+
+        val cloud = FakeBackend(ModelBackend.CLOUD, succeedIds = setOf("groq-1", "openai-1"))
+        val r = routerWithGraph(graph, cloud)
+        val res = r.execute(
+            decision(groq, spec("openai-1", ModelBackend.CLOUD, provider = "OPENAI")),
+            "hi",
+        )
+        assertEquals("ok:openai-1", res.getOrNull()?.text)
+        assertEquals(listOf("openai-1"), cloud.calls) // groq-1 never dispatched (cooling down)
+    }
+
+    @Test
+    fun `router records a RateLimited failure as an exact cooldown`() = runTest {
+        val graph = AvailabilityGraph(now = { clock }, config = AvailabilityGraph.Config(failureThreshold = 5))
+        val rl = object : Backend {
+            override val kind = ModelBackend.CLOUD
+            override suspend fun generate(spec: ModelSpec, message: String) =
+                Result.failure<BackendReply>(RateLimited(retryAfterMs = 30_000))
+        }
+        val groq = spec("groq-1", ModelBackend.CLOUD, provider = "GROQ")
+        val r = routerWithGraph(graph, rl)
+        r.execute(decision(groq), "hi")
+
+        assertEquals(AvailabilityGraph.Circuit.OPEN, graph.health(groq).circuit)
+        assertEquals(30_000L, graph.health(groq).cooldownUntil)
+    }
+
+    @Test
+    fun `router reports ALL_COOLING_DOWN when every candidate breaker is open`() = runTest {
+        val graph = AvailabilityGraph(now = { clock }, config = AvailabilityGraph.Config(failureThreshold = 1))
+        val groq = spec("groq-1", ModelBackend.CLOUD, provider = "GROQ")
+        graph.recordFailure(groq)
+        val cloud = FakeBackend(ModelBackend.CLOUD, succeedIds = setOf("groq-1"))
+        val r = routerWithGraph(graph, cloud)
+        val res = r.execute(decision(groq), "hi")
+        assertTrue(res.isFailure)
+        assertTrue(res.exceptionOrNull()?.message?.contains("ALL_COOLING_DOWN") == true)
+        assertTrue(cloud.calls.isEmpty())
     }
 }
