@@ -4,6 +4,8 @@ import com.kianirani.jarvis.router.health.AvailabilityGraph
 import com.kianirani.jarvis.router.health.RateLimited
 import com.kianirani.jarvis.router.orchestrator.DecisionObject
 import com.kianirani.jarvis.router.registry.ModelBackend
+import com.kianirani.jarvis.router.substitution.SubstitutionEngine
+import com.kianirani.jarvis.router.substitution.SubstitutionPolicy
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -26,21 +28,27 @@ class BackendRouter internal constructor(
     private val backends: Map<ModelBackend, Backend>,
     private val graph: AvailabilityGraph = AvailabilityGraph(),
     private val now: () -> Long = { System.currentTimeMillis() },
+    private val substitution: SubstitutionEngine? = null,
 ) {
     @Inject constructor(
         cloud: CloudBackend,
         local: LocalBackend,
         mesh: MeshBackend,
         graph: AvailabilityGraph,
-    ) : this(listOf<Backend>(cloud, local, mesh).associateBy { it.kind }, graph)
+        substitution: SubstitutionEngine,
+    ) : this(listOf<Backend>(cloud, local, mesh).associateBy { it.kind }, graph, substitution = substitution)
 
     suspend fun execute(decision: DecisionObject, message: String): Result<BackendReply> {
-        if (decision.candidates.isEmpty()) {
+        // VB5: expand the orchestrator's candidates into the full fallback chain
+        // (bounded cloud attempts + guaranteed on-device terminal) before walking.
+        val policy = if (decision.request.localOnly) SubstitutionPolicy.LOCAL_ONLY else SubstitutionPolicy.DEFAULT
+        val chain = substitution?.chain(decision.candidates, policy) ?: decision.candidates
+        if (chain.isEmpty()) {
             return Result.failure(IllegalStateException("NO_CANDIDATE — no reachable model for this request"))
         }
         var last: Throwable = IllegalStateException("all candidates failed")
         var skipped = false
-        for (spec in decision.candidates) {
+        for (spec in chain) {
             val backend = backends[spec.backend] ?: continue
             if (!graph.isAvailable(spec)) {
                 skipped = true
