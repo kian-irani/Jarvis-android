@@ -34,6 +34,7 @@ class CloudChatRouter @Inject constructor(
     private val history: ChatHistoryStore,
     private val usage: AiUsageStore,
     private val settings: com.kianirani.jarvis.data.settings.VisionSettings,
+    private val pool: TokenPool,
 ) : java.io.Closeable {
 
     companion object {
@@ -89,9 +90,6 @@ class CloudChatRouter @Inject constructor(
 
     data class CloudReply(val text: String, val provider: AiProvider)
 
-    /** Round-robin start offset per provider — a 401/429 key is skipped on later calls. */
-    private val rotation = java.util.concurrent.ConcurrentHashMap<AiProvider, Int>()
-
     /**
      * Tries configured providers in order; within a provider rotates over ALL
      * its tokens (user directive: e.g. 4 Grok keys). Failure falls through.
@@ -112,27 +110,32 @@ class CloudChatRouter @Inject constructor(
      * Chat through a single provider, rotating over ALL its tokens. The Vision
      * Brain backend layer (VB8) targets one provider chosen by the orchestrator;
      * [chat] simply walks every configured provider via this.
+     *
+     * VB6: key order comes from the health-aware [TokenPool] — the healthiest,
+     * least-recently-used key first, cooling (401/429) keys skipped until they
+     * auto-recover. Each outcome is recorded so the pool keeps learning.
      */
     suspend fun chatWith(p: AiProvider, message: String): Result<CloudReply> {
         // P9 memory-lite: short context window of prior turns precedes the message.
         val context = history.recent(6)
         val keys = store.tokens(p)
         if (keys.isEmpty()) return Result.failure(IllegalStateException("No token for ${p.displayName}"))
-        val start = rotation.getOrDefault(p, 0) % keys.size
         var last: Throwable = IllegalStateException("${p.displayName} failed")
-        for (i in keys.indices) {
-            val idx = (start + i) % keys.size
-            runCatching { ask(p, keys[idx], message, context) }
+        for (key in pool.order(p, keys)) {
+            runCatching { ask(p, key, message, context) }
                 .onSuccess {
-                    rotation[p] = idx // stick with the key that worked
+                    pool.recordSuccess(p, key)
                     usage.record(p, success = true)
                     history.append("user", message)
                     history.append("assistant", it)
                     return Result.success(CloudReply(it, p))
                 }
-                .onFailure { last = it; usage.record(p, success = false) }
+                .onFailure {
+                    pool.recordFailure(p, key, pool.classify(it.message))
+                    last = it
+                    usage.record(p, success = false)
+                }
         }
-        rotation[p] = (start + 1) % keys.size
         return Result.failure(last)
     }
 
