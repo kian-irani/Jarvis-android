@@ -49,6 +49,19 @@ class CloudChatRouter @Inject constructor(
             "English in the Latin alphabet. NEVER transliterate Persian into Latin/English letters " +
             "(no \"Finglish\" / romanization) and never write English words with Persian letters."
 
+        /**
+         * CF2 tool-calling contract: device actions must be *performed*, never
+         * merely claimed. When the user asks Vision to DO something on the device,
+         * the model must answer with ONLY this JSON (no prose) so the app can run
+         * the real tool and report the actual result.
+         */
+        const val TOOL_PROTOCOL =
+            "TOOLS: You can perform real device actions — calling, texting, opening an app, " +
+            "flashlight, device settings, navigation, battery, time/date. NEVER claim you did " +
+            "such an action in prose. If (and only if) the user asks you to DO one, reply with " +
+            "ONLY this JSON and nothing else: {\"tool\":\"action\",\"args\":\"<the command in plain words>\"}. " +
+            "For everything else (questions, chat), answer normally and do NOT emit JSON."
+
         // Fallback / base identity; the live prompt is built from persona settings.
         const val SYSTEM_RULES =
             "You are VISION, a sovereign personal AI operating system on the user's own device. " +
@@ -91,7 +104,7 @@ class CloudChatRouter @Inject constructor(
             "The user may address you by your name, \"$name\". " +
             "Answer every question helpfully and directly; $len. Tone: $tone — $wit. " +
             "$lang $SCRIPT_RULE If you are unsure, say so briefly and give your best reasoning. " +
-            "Never refuse merely because a question is outside a narrow domain."
+            "Never refuse merely because a question is outside a narrow domain. $TOOL_PROTOCOL"
     }
 
     private val json = Json { ignoreUnknownKeys = true; isLenient = true }

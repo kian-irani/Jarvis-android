@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.kianirani.jarvis.data.repository.ApiNode
 import com.kianirani.jarvis.data.repository.BrainEvent
 import com.kianirani.jarvis.data.repository.BrainRepository
+import com.kianirani.jarvis.core.agent.ToolCaller
 import com.kianirani.jarvis.voice.VoiceController
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -119,7 +120,7 @@ class HudViewModel @Inject constructor(
             _state.update { it.copy(decisionModel = decision.chosen?.displayName ?: "", decisionReason = decision.reason) }
             val answered = backendRouter.execute(decision, msg)
                 .onSuccess { r ->
-                    typeText(r.text); speak(r.text); addLog("AI: ${r.model.displayName}", "ok")
+                    deliver(r.text); addLog("AI: ${r.model.displayName}", "ok")
                     // Reflect the model that actually answered (after any substitution).
                     _state.update { it.copy(decisionModel = r.model.displayName) }
                 }
@@ -129,7 +130,7 @@ class HudViewModel @Inject constructor(
             // Fallback: a paired remote brain/mesh (skip under SOVEREIGN privacy).
             if (!privacy && _state.value.brainOnline) {
                 val handled = brain.chat(msg)
-                    .onSuccess { resp -> typeText(resp.response); speak(resp.response); addLog("Brain: ${resp.duration_ms}ms", "ok") }
+                    .onSuccess { resp -> deliver(resp.response); addLog("Brain: ${resp.duration_ms}ms", "ok") }
                     .isSuccess
                 if (handled) return@launch
             }
@@ -192,6 +193,24 @@ class HudViewModel @Inject constructor(
 
     /** TTS honors the settings toggle. */
     private fun speak(text: String) { if (settings.ttsEnabled.value) voice.speak(text) }
+
+    /**
+     * CF2: if the model emitted a tool-call JSON, run the *real* tool and speak
+     * its actual result — never echo the model's claim or the raw JSON. Plain
+     * answers are spoken as-is. ("Never claim an action without executing it.")
+     */
+    private fun deliver(modelText: String) {
+        val inv = ToolCaller.parse(modelText)
+        if (inv == null) { typeText(modelText); speak(modelText); return }
+        val real = interpreter.tryHandle(inv.args)
+        if (real != null) {
+            typeText(real); speak(real); addLog("Tool: ${inv.tool}(${inv.args})", "ok")
+        } else {
+            // The model asked for an action the tool layer can't perform — stay honest.
+            val miss = "I couldn't perform that action: ${inv.args}"
+            typeText(miss); speak(miss); addLog("Tool miss: ${inv.args}", "warn")
+        }
+    }
 
     private fun typeText(text: String) { typeJob?.cancel(); typeJob = viewModelScope.launch { _state.update { it.copy(jarvisOutput = "") }; var cur = ""; for (ch in text) { cur += ch; _state.update { it.copy(jarvisOutput = cur) }; delay(28L + (0..18).random()) } } }
     private fun appendText(d: String) = _state.update { it.copy(jarvisOutput = it.jarvisOutput + d) }
