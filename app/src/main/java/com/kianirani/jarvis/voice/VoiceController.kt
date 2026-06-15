@@ -109,16 +109,44 @@ class AndroidVoiceController(
     override fun speak(text: String) {
         if (text.isBlank()) return
         main.post {
-            if (ttsReady) {
-                // P7 persona: user-tuned delivery style.
-                settings?.let { tts?.setSpeechRate(it.speechRate.value); tts?.setPitch(it.voicePitch.value) }
-                // Multilingual: speak Persian replies with a Persian voice so
-                // "فارسی in → فارسی out" actually sounds right (USER DIRECTIVE 2026-06-12).
-                tts?.language = ttsLocaleFor(text)
-                tts?.speak(text, TextToSpeech.QUEUE_FLUSH, null, "vision-reply")
-            } else {
-                pendingSpeech = text
+            if (!ttsReady) { pendingSpeech = text; return@post }
+            // P7 persona: user-tuned delivery style.
+            settings?.let { tts?.setSpeechRate(it.speechRate.value); tts?.setPitch(it.voicePitch.value) }
+            // Multilingual: speak Persian replies with a Persian voice so
+            // "فارسی in → فارسی out" actually sounds right (USER DIRECTIVE 2026-06-12).
+            val locale = ttsLocaleFor(text)
+            val res = tts?.setLanguage(locale) ?: TextToSpeech.LANG_NOT_SUPPORTED
+            // BUGFIX 2026-06-15: when the voice data for this language (commonly
+            // Persian) isn't installed, setLanguage returns MISSING_DATA/NOT_SUPPORTED
+            // and speak() silently does nothing — that was "Vision won't talk". Offer
+            // to install the missing voice, then fall back to a working one so we are
+            // never silent.
+            if (res == TextToSpeech.LANG_MISSING_DATA || res == TextToSpeech.LANG_NOT_SUPPORTED) {
+                Log.w(TAG, "TTS voice unavailable for $locale (res=$res) — prompting install")
+                promptInstallVoice(locale)
+                tts?.setLanguage(Locale.getDefault())
             }
+            tts?.speak(text, TextToSpeech.QUEUE_FLUSH, null, "vision-reply")
+        }
+    }
+
+    /** Fire the system "install TTS voice" flow once per process + tell the user why. */
+    private var promptedInstall = false
+    private fun promptInstallVoice(locale: Locale) {
+        if (promptedInstall) return
+        promptedInstall = true
+        runCatching {
+            context.startActivity(
+                Intent(TextToSpeech.Engine.ACTION_INSTALL_TTS_DATA)
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+            )
+        }
+        runCatching {
+            android.widget.Toast.makeText(
+                context,
+                "Install the ${locale.displayLanguage} voice in TTS settings to hear spoken replies",
+                android.widget.Toast.LENGTH_LONG,
+            ).show()
         }
     }
 

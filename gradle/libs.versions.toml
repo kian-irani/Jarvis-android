@@ -32,6 +32,7 @@ compose-ui-tooling-preview = { group = "androidx.compose.ui",      name = "ui-to
 compose-ui-tooling       = { group = "androidx.compose.ui",        name = "ui-tooling" }
 compose-material3        = { group = "androidx.compose.material3", name = "material3" }
 compose-material3-wsc    = { group = "androidx.compose.material3", name = "material3-window-size-class" }
+compose-icons-extended   = { group = "androidx.compose.material", name = "material-icons-extended" }
 compose-animation        = { group = "androidx.compose.animation", name = "animation" }
 compose-foundation       = { group = "androidx.compose.foundation",name = "foundation" }
 activity-compose         = { group = "androidx.activity",          name = "activity-compose",                version.ref = "activity-compose" }
@@ -77,7 +78,7 @@ mockwebserver            = { group = "com.squareup.okhttp3", name = "mockwebserv
 coroutines-test          = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "coroutines" }
 
 [bundles]
-compose = ["compose-ui","compose-ui-graphics","compose-material3","compose-material3-wsc","compose-animation","compose-foundation","compose-ui-tooling-preview"]
+compose = ["compose-ui","compose-ui-graphics","compose-material3","compose-material3-wsc","compose-icons-extended","compose-animation","compose-foundation","compose-ui-tooling-preview"]
 ktor    = ["ktor-core","ktor-okhttp","ktor-websockets","ktor-content-neg","ktor-serialization-json","ktor-logging"]
 
 [plugins]

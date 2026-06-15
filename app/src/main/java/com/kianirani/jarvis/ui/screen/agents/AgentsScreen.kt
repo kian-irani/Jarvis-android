@@ -19,8 +19,10 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import com.kianirani.jarvis.ui.theme.VisionIcons
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -95,7 +97,7 @@ private fun AgentCard(a: AgentState, index: Int, onEnabled: (AgentId, Boolean) -
         verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Box(Modifier.size(34.dp).background(JarvisColors.CyanFaint, RoundedCornerShape(9.dp)), contentAlignment = Alignment.Center) {
-                Text(a.id.glyph, style = MaterialTheme.typography.labelMedium, color = JarvisColors.CyanPrimary)
+                Icon(VisionIcons.forAgent(a.id), contentDescription = a.id.display, tint = JarvisColors.CyanPrimary, modifier = Modifier.size(20.dp))
             }
             Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {

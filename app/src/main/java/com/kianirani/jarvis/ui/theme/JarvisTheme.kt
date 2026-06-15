@@ -24,11 +24,14 @@ import androidx.compose.ui.unit.sp
  * without being touched. [JarvisColors] is kept as a compatibility alias.
  */
 object VisionColors {
-    // Signal — accent (driven by ThemeStore accent + theme)
-    var CyanPrimary   by mutableStateOf(Color(0xFF22F5FF))
-    var CyanSecondary by mutableStateOf(Color(0xFF0FBFE0))
-    var CyanFaint     by mutableStateOf(Color(0x1A22F5FF))
-    var CyanGlow      by mutableStateOf(Color(0x4D22F5FF))
+    // Signal — accent (driven by ThemeStore accent + theme). v28 (2026-06-15):
+    // the identity moved off the old cyan/teal HUD to a deep-space azure→violet
+    // signal that matches the orb-launcher reference. Field names keep the
+    // "Cyan*" alias so every existing call site recolours for free.
+    var CyanPrimary   by mutableStateOf(Color(0xFF4F8CFF))
+    var CyanSecondary by mutableStateOf(Color(0xFF2E63E0))
+    var CyanFaint     by mutableStateOf(Color(0x1A4F8CFF))
+    var CyanGlow      by mutableStateOf(Color(0x4D4F8CFF))
 
     // Plasma — electric violet / magenta secondary
     var Violet        by mutableStateOf(Color(0xFF7C4DFF))
@@ -56,10 +59,10 @@ object VisionColors {
     var GridLine      by mutableStateOf(Color(0x1422F5FF))
 
     // Text — set per theme
-    var TextPrimary   by mutableStateOf(Color(0xFFEAF6FF))
-    var TextSecondary by mutableStateOf(Color(0xFF8FD3E6))
-    var TextTerminal  by mutableStateOf(Color(0xFF22F5FF))
-    var TextDim       by mutableStateOf(Color(0xFF4A6B85))
+    var TextPrimary   by mutableStateOf(Color(0xFFEAF0FF))
+    var TextSecondary by mutableStateOf(Color(0xFFAEB9D6))
+    var TextTerminal  by mutableStateOf(Color(0xFF4F8CFF))
+    var TextDim       by mutableStateOf(Color(0xFF5C6788))
 
     // Glass surface fill colours (set per theme — light themes need a near-opaque
     // light glass so cards read against a light backdrop).
@@ -154,15 +157,15 @@ object VisionThemes {
 
     val names = listOf("DEEP SPACE", "AURORA DARK", "LIGHT FUTURE")
 
-    /** Default void — cyan signal on near-black with a violet undertone. */
+    /** Default void — azure→violet signal on near-black (orb-launcher reference). */
     val deepSpace = Palette(
-        background = Color(0xFF03060F), backgroundAlt = Color(0xFF070B1C),
-        surface = Color(0xFF0A1024), surfaceGlass = Color(0xCC0C1330),
-        textPrimary = Color(0xFFEAF6FF), textSecondary = Color(0xFF8FD3E6), textDim = Color(0xFF4A6B85),
-        violet = Color(0xFF7C4DFF), violetDeep = Color(0xFF4A1FB8), magenta = Color(0xFFB04DFF),
-        blueDeep = Color(0xFF1565FF), blueAccent = Color(0xFF142A7A), blueMid = Color(0xFF0A1140),
-        glassTop = Color(0xE60D1430), glassBot = Color(0xF2060A18), sheen = Color(0x1AFFFFFF),
-        defaultAccent = Color(0xFF22F5FF), isLight = false,
+        background = Color(0xFF04060E), backgroundAlt = Color(0xFF080B1A),
+        surface = Color(0xFF0C1124), surfaceGlass = Color(0xCC0E1430),
+        textPrimary = Color(0xFFEAF0FF), textSecondary = Color(0xFFAEB9D6), textDim = Color(0xFF5C6788),
+        violet = Color(0xFF8B5CF6), violetDeep = Color(0xFF4A1FB8), magenta = Color(0xFFB45CFF),
+        blueDeep = Color(0xFF2D6BFF), blueAccent = Color(0xFF16245C), blueMid = Color(0xFF0A1138),
+        glassTop = Color(0xE6101840), glassBot = Color(0xF2070B1E), sheen = Color(0x1AFFFFFF),
+        defaultAccent = Color(0xFF4F8CFF), isLight = false,
     )
 
     /** Purple nebula — magenta signal on a deep violet-black. */
@@ -305,8 +308,8 @@ private fun visionTypography(
     body: FontFamily,
     mono: FontFamily,
 ) = Typography(
-    displayLarge   = TextStyle(fontFamily=mono, fontSize=32.sp, letterSpacing=4.sp,   color=VisionColors.CyanPrimary),
-    displaySmall   = TextStyle(fontFamily=mono, fontSize=26.sp, letterSpacing=2.sp,   color=VisionColors.CyanPrimary),
+    displayLarge   = TextStyle(fontFamily=display, fontSize=34.sp, fontWeight=androidx.compose.ui.text.font.FontWeight.Bold, letterSpacing=8.sp, color=VisionColors.TextPrimary),
+    displaySmall   = TextStyle(fontFamily=display, fontSize=26.sp, fontWeight=androidx.compose.ui.text.font.FontWeight.SemiBold, letterSpacing=4.sp, color=VisionColors.TextPrimary),
     headlineLarge  = TextStyle(fontFamily=display, fontSize=22.sp, fontWeight=androidx.compose.ui.text.font.FontWeight.SemiBold, letterSpacing=0.sp, color=VisionColors.TextPrimary),
     headlineMedium = TextStyle(fontFamily=display, fontSize=16.sp, fontWeight=androidx.compose.ui.text.font.FontWeight.Medium,   letterSpacing=0.sp, color=VisionColors.TextPrimary),
     titleLarge     = TextStyle(fontFamily=display, fontSize=20.sp, fontWeight=androidx.compose.ui.text.font.FontWeight.SemiBold, letterSpacing=0.5.sp, color=VisionColors.TextPrimary),
@@ -314,9 +317,9 @@ private fun visionTypography(
     bodyLarge      = TextStyle(fontFamily=body, fontSize=15.sp, letterSpacing=0.2.sp, color=VisionColors.TextPrimary,   lineHeight=22.sp),
     bodyMedium     = TextStyle(fontFamily=body, fontSize=13.sp, letterSpacing=0.2.sp, color=VisionColors.TextSecondary, lineHeight=19.sp),
     bodySmall      = TextStyle(fontFamily=body, fontSize=11.sp, letterSpacing=0.1.sp, color=VisionColors.TextDim,       lineHeight=16.sp),
-    labelLarge     = TextStyle(fontFamily=mono, fontSize=11.sp, letterSpacing=2.sp,   color=VisionColors.TextTerminal),
-    labelMedium    = TextStyle(fontFamily=mono, fontSize=10.sp, letterSpacing=2.sp,   color=VisionColors.TextSecondary),
-    labelSmall     = TextStyle(fontFamily=mono, fontSize=9.sp,  letterSpacing=2.5.sp, color=VisionColors.TextDim),
+    labelLarge     = TextStyle(fontFamily=body, fontSize=12.sp, fontWeight=androidx.compose.ui.text.font.FontWeight.Medium, letterSpacing=0.6.sp, color=VisionColors.TextTerminal),
+    labelMedium    = TextStyle(fontFamily=body, fontSize=11.sp, fontWeight=androidx.compose.ui.text.font.FontWeight.Medium, letterSpacing=0.5.sp, color=VisionColors.TextSecondary),
+    labelSmall     = TextStyle(fontFamily=body, fontSize=10.sp, fontWeight=androidx.compose.ui.text.font.FontWeight.Medium, letterSpacing=0.5.sp, color=VisionColors.TextDim),
 )
 
 @Composable

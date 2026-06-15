@@ -28,8 +28,11 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.ui.graphics.vector.ImageVector
+import com.kianirani.jarvis.ui.theme.VisionIcons
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -155,7 +158,7 @@ fun GreetingTopBar(name: String, time: String, brainOnline: Boolean, onOpenSetti
             // Static weather chip (real weather lands in a later phase).
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(3.dp)) {
                 Text("22°", style = MaterialTheme.typography.titleMedium, color = JarvisColors.TextPrimary)
-                Text("☀", style = MaterialTheme.typography.bodyLarge, color = JarvisColors.WarningAmber)
+                Icon(VisionIcons.Weather, contentDescription = "Weather", tint = JarvisColors.WarningAmber, modifier = Modifier.size(18.dp))
             }
             Text(time, style = MaterialTheme.typography.labelLarge, color = JarvisColors.CyanPrimary)
             Box(Modifier.size(7.dp).background(if (brainOnline) JarvisColors.NeonGreen else JarvisColors.DangerRed, CircleShape))
@@ -164,7 +167,7 @@ fun GreetingTopBar(name: String, time: String, brainOnline: Boolean, onOpenSetti
                     .border(1.dp, JarvisColors.CyanSecondary.copy(alpha = 0.6f), CircleShape)
                     .clickable(onClick = onOpenSettings),
                 contentAlignment = Alignment.Center,
-            ) { Text("⚙", style = MaterialTheme.typography.titleMedium, color = JarvisColors.CyanPrimary) }
+            ) { Icon(VisionIcons.Settings, contentDescription = "Settings", tint = JarvisColors.CyanPrimary, modifier = Modifier.size(20.dp)) }
         }
     }
 }
@@ -190,7 +193,7 @@ private fun CommandBar(value: String, onChange: (String) -> Unit, onSend: () -> 
         Box(
             Modifier.size(40.dp).background(VisionColors.PlasmaSweep, CircleShape).clickable(onClick = onSend),
             contentAlignment = Alignment.Center,
-        ) { Text("➤", color = VisionColors.Background, style = MaterialTheme.typography.titleMedium) }
+        ) { Icon(VisionIcons.Send, contentDescription = "Send", tint = VisionColors.Background, modifier = Modifier.size(20.dp)) }
     }
 }
 
@@ -200,19 +203,19 @@ private fun StatsRow(agents: Int, tasks: Int, devices: Int, modifier: Modifier) 
         modifier.glassPanel(radius = 18.dp).padding(vertical = 14.dp),
         horizontalArrangement = Arrangement.SpaceEvenly,
     ) {
-        Stat("🤖", agents, "Agents")
+        Stat(VisionIcons.Agents, agents, "Agents")
         StatDivider()
-        Stat("✓", tasks, "Tasks")
+        Stat(VisionIcons.Tasks, tasks, "Tasks")
         StatDivider()
-        Stat("▣", devices, "Devices")
+        Stat(VisionIcons.Devices, devices, "Devices")
     }
 }
 
 @Composable
-private fun Stat(glyph: String, value: Int, label: String) {
+private fun Stat(icon: ImageVector, value: Int, label: String) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            Text(glyph, style = MaterialTheme.typography.bodyLarge, color = JarvisColors.CyanPrimary)
+            Icon(icon, contentDescription = null, tint = JarvisColors.CyanPrimary, modifier = Modifier.size(18.dp))
             Text("$value", style = MaterialTheme.typography.titleLarge, color = JarvisColors.TextPrimary)
         }
         Text(label, style = MaterialTheme.typography.labelSmall, color = JarvisColors.TextDim)
@@ -279,7 +282,7 @@ private fun QuickTile(
             Modifier.size(46.dp).background(JarvisColors.CyanFaint, CircleShape)
                 .border(1.dp, JarvisColors.CyanSecondary.copy(alpha = 0.45f), CircleShape),
             contentAlignment = Alignment.Center,
-        ) { Text(qa.glyph, style = MaterialTheme.typography.titleMedium, color = JarvisColors.CyanPrimary) }
+        ) { Icon(VisionIcons.forAction(qa), contentDescription = qa.label, tint = JarvisColors.CyanPrimary, modifier = Modifier.size(22.dp)) }
         Text(qa.label, style = MaterialTheme.typography.bodySmall, color = JarvisColors.TextPrimary, maxLines = 1)
         if (edit) {
             Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
@@ -308,7 +311,7 @@ fun AgentsPanel(agents: List<AgentState>, onOpenAgents: () -> Unit, modifier: Mo
                 Box(
                     Modifier.size(30.dp).background(JarvisColors.CyanFaint, RoundedCornerShape(8.dp)),
                     contentAlignment = Alignment.Center,
-                ) { Text(a.id.glyph, style = MaterialTheme.typography.labelMedium, color = JarvisColors.CyanPrimary) }
+                ) { Icon(VisionIcons.forAgent(a.id), contentDescription = a.id.display, tint = JarvisColors.CyanPrimary, modifier = Modifier.size(18.dp)) }
                 Spacer(Modifier.width(12.dp))
                 Text(a.id.display, style = MaterialTheme.typography.bodyLarge, color = JarvisColors.TextPrimary)
                 Spacer(Modifier.weight(1f))

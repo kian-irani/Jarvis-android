@@ -26,8 +26,11 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.NavigationRail
 import androidx.compose.material3.NavigationRailItem
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.ui.graphics.vector.ImageVector
+import com.kianirani.jarvis.ui.theme.VisionIcons
 import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
@@ -66,13 +69,13 @@ enum class VisionRoute { ONBOARDING, SETUP, HOME, AGENTS, APPS, MEMORY, SETTINGS
 
 /** The five tabs that appear in the bottom navigation / nav rail. */
 private val TOP_LEVEL = setOf(VisionRoute.HOME, VisionRoute.AGENTS, VisionRoute.APPS, VisionRoute.MEMORY, VisionRoute.SETTINGS)
-private data class NavItem(val route: VisionRoute, val glyph: String, val label: String)
+private data class NavItem(val route: VisionRoute, val icon: ImageVector, val label: String)
 private val NAV_ITEMS = listOf(
-    NavItem(VisionRoute.HOME, "⌂", "Home"),
-    NavItem(VisionRoute.AGENTS, "🤖", "Agents"),
-    NavItem(VisionRoute.APPS, "▦", "Apps"),
-    NavItem(VisionRoute.MEMORY, "◈", "Memory"),
-    NavItem(VisionRoute.SETTINGS, "⚙", "Settings"),
+    NavItem(VisionRoute.HOME, VisionIcons.Home, "Home"),
+    NavItem(VisionRoute.AGENTS, VisionIcons.Agents, "Agents"),
+    NavItem(VisionRoute.APPS, VisionIcons.Apps, "Apps"),
+    NavItem(VisionRoute.MEMORY, VisionIcons.Memory, "Memory"),
+    NavItem(VisionRoute.SETTINGS, VisionIcons.Settings, "Settings"),
 )
 
 @AndroidEntryPoint
@@ -217,7 +220,7 @@ private fun VisionBottomBar(route: VisionRoute, onNavigate: (VisionRoute) -> Uni
             NavigationBarItem(
                 selected = route == item.route,
                 onClick = { onNavigate(item.route) },
-                icon = { Text(item.glyph, style = MaterialTheme.typography.titleMedium) },
+                icon = { Icon(item.icon, contentDescription = item.label) },
                 label = { Text(item.label, style = MaterialTheme.typography.labelSmall) },
                 colors = NavigationBarItemDefaults.colors(
                     selectedIconColor = VisionColors.CyanPrimary,
@@ -238,7 +241,7 @@ private fun VisionNavRail(route: VisionRoute, onNavigate: (VisionRoute) -> Unit)
             NavigationRailItem(
                 selected = route == item.route,
                 onClick = { onNavigate(item.route) },
-                icon = { Text(item.glyph, style = MaterialTheme.typography.titleMedium) },
+                icon = { Icon(item.icon, contentDescription = item.label) },
                 label = { Text(item.label, style = MaterialTheme.typography.labelSmall) },
             )
         }

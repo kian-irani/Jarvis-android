@@ -38,11 +38,22 @@ class CloudChatRouter @Inject constructor(
 ) : java.io.Closeable {
 
     companion object {
+        /**
+         * Native-script mandate (fixes the "Finglish" bug, 2026-06-15): the reply
+         * is read aloud by TTS, so Persian MUST be written in the Persian alphabet —
+         * Latin transliteration ("salam", "chetori") both looks wrong and makes the
+         * Persian voice unusable. Declared first so [SYSTEM_RULES] can embed it.
+         */
+        const val SCRIPT_RULE =
+            "Write every language in its own native script: Persian in Persian letters (فارسی), " +
+            "English in the Latin alphabet. NEVER transliterate Persian into Latin/English letters " +
+            "(no \"Finglish\" / romanization) and never write English words with Persian letters."
+
         // Fallback / base identity; the live prompt is built from persona settings.
         const val SYSTEM_RULES =
             "You are VISION, a sovereign personal AI operating system on the user's own device. " +
             "Answer every question helpfully, directly, and concisely. Use the user's language " +
-            "(Persian or English). If you are unsure, say so briefly and give your best reasoning. " +
+            "(Persian or English). $SCRIPT_RULE If you are unsure, say so briefly and give your best reasoning. " +
             "Never refuse merely because a question is outside a narrow domain."
     }
 
@@ -79,7 +90,7 @@ class CloudChatRouter @Inject constructor(
         return "You are $name, a sovereign personal AI operating system on the user's own device. " +
             "The user may address you by your name, \"$name\". " +
             "Answer every question helpfully and directly; $len. Tone: $tone — $wit. " +
-            "$lang If you are unsure, say so briefly and give your best reasoning. " +
+            "$lang $SCRIPT_RULE If you are unsure, say so briefly and give your best reasoning. " +
             "Never refuse merely because a question is outside a narrow domain."
     }
 
