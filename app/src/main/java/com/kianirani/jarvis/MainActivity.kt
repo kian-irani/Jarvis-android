@@ -95,6 +95,7 @@ class MainActivity : ComponentActivity() {
         )
         // Load persisted appearance before first composition.
         com.kianirani.jarvis.ui.theme.ThemeStore.init(this)
+        com.kianirani.jarvis.ui.theme.FontStore.init(this)
         val prefs = getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         setContent {
             JarvisTheme {

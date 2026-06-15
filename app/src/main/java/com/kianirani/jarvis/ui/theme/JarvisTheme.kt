@@ -295,21 +295,28 @@ object ThemeStore {
 // reference); monospace kept for label* + display roles that carry the HUD's
 // technical/data identity (clock, stat numbers, chips). Colours come from the
 // state-backed [VisionColors] so themes/accent still recolour text.
-private val Sans = FontFamily.SansSerif
-private val Mono = FontFamily.Monospace
-val JarvisTypography = Typography(
-    displayLarge   = TextStyle(fontFamily=Mono, fontSize=32.sp, letterSpacing=4.sp,   color=VisionColors.CyanPrimary),
-    displaySmall   = TextStyle(fontFamily=Mono, fontSize=26.sp, letterSpacing=2.sp,   color=VisionColors.CyanPrimary),
-    headlineLarge  = TextStyle(fontFamily=Sans, fontSize=22.sp, fontWeight=androidx.compose.ui.text.font.FontWeight.SemiBold, letterSpacing=0.sp, color=VisionColors.TextPrimary),
-    headlineMedium = TextStyle(fontFamily=Sans, fontSize=16.sp, fontWeight=androidx.compose.ui.text.font.FontWeight.Medium,   letterSpacing=0.sp, color=VisionColors.TextPrimary),
-    titleLarge     = TextStyle(fontFamily=Sans, fontSize=20.sp, fontWeight=androidx.compose.ui.text.font.FontWeight.SemiBold, letterSpacing=0.5.sp, color=VisionColors.TextPrimary),
-    titleMedium    = TextStyle(fontFamily=Sans, fontSize=16.sp, fontWeight=androidx.compose.ui.text.font.FontWeight.Medium,   letterSpacing=0.5.sp, color=VisionColors.TextPrimary),
-    bodyLarge      = TextStyle(fontFamily=Sans, fontSize=15.sp, letterSpacing=0.2.sp, color=VisionColors.TextPrimary,   lineHeight=22.sp),
-    bodyMedium     = TextStyle(fontFamily=Sans, fontSize=13.sp, letterSpacing=0.2.sp, color=VisionColors.TextSecondary, lineHeight=19.sp),
-    bodySmall      = TextStyle(fontFamily=Sans, fontSize=11.sp, letterSpacing=0.1.sp, color=VisionColors.TextDim,       lineHeight=16.sp),
-    labelLarge     = TextStyle(fontFamily=Mono, fontSize=11.sp, letterSpacing=2.sp,   color=VisionColors.TextTerminal),
-    labelMedium    = TextStyle(fontFamily=Mono, fontSize=10.sp, letterSpacing=2.sp,   color=VisionColors.TextSecondary),
-    labelSmall     = TextStyle(fontFamily=Mono, fontSize=9.sp,  letterSpacing=2.5.sp, color=VisionColors.TextDim),
+//
+// FNT (2026-06-15): the prose families are now driven by the state-backed
+// [VisionFonts] (user font picker, default Space Grotesk + Inter). Heading +
+// body roles take the chosen display/body families; display* + label* keep the
+// monospace identity (clock, stat numbers, chips) regardless of the pack.
+private fun visionTypography(
+    display: FontFamily,
+    body: FontFamily,
+    mono: FontFamily,
+) = Typography(
+    displayLarge   = TextStyle(fontFamily=mono, fontSize=32.sp, letterSpacing=4.sp,   color=VisionColors.CyanPrimary),
+    displaySmall   = TextStyle(fontFamily=mono, fontSize=26.sp, letterSpacing=2.sp,   color=VisionColors.CyanPrimary),
+    headlineLarge  = TextStyle(fontFamily=display, fontSize=22.sp, fontWeight=androidx.compose.ui.text.font.FontWeight.SemiBold, letterSpacing=0.sp, color=VisionColors.TextPrimary),
+    headlineMedium = TextStyle(fontFamily=display, fontSize=16.sp, fontWeight=androidx.compose.ui.text.font.FontWeight.Medium,   letterSpacing=0.sp, color=VisionColors.TextPrimary),
+    titleLarge     = TextStyle(fontFamily=display, fontSize=20.sp, fontWeight=androidx.compose.ui.text.font.FontWeight.SemiBold, letterSpacing=0.5.sp, color=VisionColors.TextPrimary),
+    titleMedium    = TextStyle(fontFamily=display, fontSize=16.sp, fontWeight=androidx.compose.ui.text.font.FontWeight.Medium,   letterSpacing=0.5.sp, color=VisionColors.TextPrimary),
+    bodyLarge      = TextStyle(fontFamily=body, fontSize=15.sp, letterSpacing=0.2.sp, color=VisionColors.TextPrimary,   lineHeight=22.sp),
+    bodyMedium     = TextStyle(fontFamily=body, fontSize=13.sp, letterSpacing=0.2.sp, color=VisionColors.TextSecondary, lineHeight=19.sp),
+    bodySmall      = TextStyle(fontFamily=body, fontSize=11.sp, letterSpacing=0.1.sp, color=VisionColors.TextDim,       lineHeight=16.sp),
+    labelLarge     = TextStyle(fontFamily=mono, fontSize=11.sp, letterSpacing=2.sp,   color=VisionColors.TextTerminal),
+    labelMedium    = TextStyle(fontFamily=mono, fontSize=10.sp, letterSpacing=2.sp,   color=VisionColors.TextSecondary),
+    labelSmall     = TextStyle(fontFamily=mono, fontSize=9.sp,  letterSpacing=2.5.sp, color=VisionColors.TextDim),
 )
 
 @Composable
@@ -338,5 +345,7 @@ fun JarvisTheme(content: @Composable () -> Unit) {
             error = VisionColors.DangerRed, onError = VisionColors.Background,
         )
     }
-    MaterialTheme(colorScheme = scheme, typography = JarvisTypography, content = content)
+    // Reads VisionFonts snapshot state → recomposes when the font picker changes.
+    val typography = visionTypography(VisionFonts.display, VisionFonts.body, VisionFonts.mono)
+    MaterialTheme(colorScheme = scheme, typography = typography, content = content)
 }

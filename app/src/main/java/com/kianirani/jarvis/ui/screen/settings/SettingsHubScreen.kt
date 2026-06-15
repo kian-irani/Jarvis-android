@@ -38,7 +38,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
 import com.kianirani.jarvis.data.ai.AiProvider
@@ -46,8 +48,11 @@ import com.kianirani.jarvis.data.ai.AiUsageStore
 import com.kianirani.jarvis.data.ai.ChatHistoryStore
 import com.kianirani.jarvis.data.settings.ActivationStore
 import com.kianirani.jarvis.data.settings.VisionSettings
+import com.kianirani.jarvis.ui.theme.FontCatalog
+import com.kianirani.jarvis.ui.theme.FontStore
 import com.kianirani.jarvis.ui.theme.JarvisColors
 import com.kianirani.jarvis.ui.theme.ThemeStore
+import com.kianirani.jarvis.ui.theme.VisionFontFamilies
 import com.kianirani.jarvis.ui.theme.VisionColors
 import com.kianirani.jarvis.ui.theme.VisionThemes
 import com.kianirani.jarvis.ui.theme.glassPanel
@@ -113,7 +118,14 @@ fun SettingsHubScreen(
             val respLen by s.responseLength.collectAsState()
             val lang by s.language.collectAsState()
             PersonaNameRow(personaName) { s.setPersonaName(it) }
-            LanguageRow(lang) { s.setLanguage(it) }
+            LanguageRow(lang) {
+                s.setLanguage(it)
+                // Keep the "Auto" typeface in sync: Persian UI → Vazirmatn.
+                FontStore.setPersian(
+                    it == VisionSettings.LANG_FA ||
+                        (it == VisionSettings.LANG_AUTO && java.util.Locale.getDefault().language == "fa"),
+                )
+            }
             SliderRow("Humor", humor) { s.setHumorLevel(it) }
             SliderRow("Formality", formality) { s.setFormalityLevel(it) }
             SliderRow("Response length", respLen) { s.setResponseLength(it) }
@@ -374,10 +386,67 @@ private fun AppearanceControls() {
         modifier = Modifier.padding(top = 14.dp, bottom = 6.dp))
     WallpaperPicker()
 
+    Text("Typeface", style = MaterialTheme.typography.bodyMedium, color = JarvisColors.TextPrimary,
+        modifier = Modifier.padding(top = 14.dp, bottom = 6.dp))
+    FontPicker()
+
     Spacer(Modifier.height(6.dp))
     ToggleRow("Animations", "motion, pulse & entrance effects", ThemeStore.animations) { ThemeStore.enableAnimations(it) }
     ToggleRow("Brain badge", "show the active brain node on home", ThemeStore.showBrainBadge) { ThemeStore.setBrainBadge(it) }
-    NavRow("Reset appearance", "theme, accent & wallpaper to defaults") { ThemeStore.reset() }
+    NavRow("Reset appearance", "theme, accent, wallpaper & font to defaults") {
+        ThemeStore.reset(); FontStore.reset()
+    }
+}
+
+/**
+ * FNT3 — typeface picker. Each chip previews its own face ("Aa") in that font so
+ * the choice reads visually; "Auto" follows the UI language (Vazirmatn for
+ * Persian, else Space Grotesk). Selecting one re-themes the whole UI live.
+ */
+@Composable
+private fun FontPicker() {
+    val current = FontStore.fontId
+    Row(
+        Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        FontCatalog.ids.forEach { id ->
+            val sel = id == current
+            Column(
+                Modifier
+                    .border(
+                        if (sel) 2.dp else 1.dp,
+                        if (sel) JarvisColors.CyanPrimary else JarvisColors.Border,
+                        RoundedCornerShape(8.dp),
+                    )
+                    .clickable { FontStore.setFont(id) }
+                    .padding(horizontal = 14.dp, vertical = 8.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Text(
+                    "Aa",
+                    fontFamily = fontPreviewFamily(id),
+                    fontSize = 20.sp,
+                    color = if (sel) JarvisColors.CyanPrimary else JarvisColors.TextPrimary,
+                )
+                Spacer(Modifier.height(2.dp))
+                Text(
+                    FontCatalog.name(id),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = if (sel) JarvisColors.CyanPrimary else JarvisColors.TextDim,
+                )
+            }
+        }
+    }
+}
+
+/** Preview face for a picker id ("Auto" previews its default, Space Grotesk). */
+private fun fontPreviewFamily(id: Int): FontFamily = when (id) {
+    FontCatalog.INTER -> VisionFontFamilies.Inter
+    FontCatalog.DM_SANS -> VisionFontFamilies.DmSans
+    FontCatalog.EXO_2 -> VisionFontFamilies.Exo2
+    FontCatalog.VAZIRMATN -> VisionFontFamilies.Vazirmatn
+    else -> VisionFontFamilies.SpaceGrotesk
 }
 
 @Composable
