@@ -1,5 +1,7 @@
 package com.kianirani.jarvis.router.backend
 
+import com.kianirani.jarvis.router.cost.CostController
+import com.kianirani.jarvis.router.cost.CostMode
 import com.kianirani.jarvis.router.health.AvailabilityGraph
 import com.kianirani.jarvis.router.health.RateLimited
 import com.kianirani.jarvis.router.orchestrator.DecisionObject
@@ -29,6 +31,7 @@ class BackendRouter internal constructor(
     private val graph: AvailabilityGraph = AvailabilityGraph(),
     private val now: () -> Long = { System.currentTimeMillis() },
     private val substitution: SubstitutionEngine? = null,
+    private val costController: CostController? = null,
 ) {
     @Inject constructor(
         cloud: CloudBackend,
@@ -36,12 +39,24 @@ class BackendRouter internal constructor(
         mesh: MeshBackend,
         graph: AvailabilityGraph,
         substitution: SubstitutionEngine,
-    ) : this(listOf<Backend>(cloud, local, mesh).associateBy { it.kind }, graph, substitution = substitution)
+        costController: CostController,
+    ) : this(
+        listOf<Backend>(cloud, local, mesh).associateBy { it.kind },
+        graph,
+        substitution = substitution,
+        costController = costController,
+    )
 
     suspend fun execute(decision: DecisionObject, message: String): Result<BackendReply> {
         // VB5: expand the orchestrator's candidates into the full fallback chain
         // (bounded cloud attempts + guaranteed on-device terminal) before walking.
-        val policy = if (decision.request.localOnly) SubstitutionPolicy.LOCAL_ONLY else SubstitutionPolicy.DEFAULT
+        // LM4: in Economy mode prefer the free on-device model first (cloud kept as
+        // fallback); Privacy/Offline (localOnly) still drops cloud entirely.
+        val policy = when {
+            decision.request.localOnly -> SubstitutionPolicy.LOCAL_ONLY
+            costController?.mode == CostMode.ECONOMY -> SubstitutionPolicy.PREFER_LOCAL
+            else -> SubstitutionPolicy.DEFAULT
+        }
         val chain = substitution?.chain(decision.candidates, policy) ?: decision.candidates
         if (chain.isEmpty()) {
             return Result.failure(IllegalStateException("NO_CANDIDATE — no reachable model for this request"))

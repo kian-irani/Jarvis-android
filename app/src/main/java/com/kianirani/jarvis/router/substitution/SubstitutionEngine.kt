@@ -53,6 +53,14 @@ class SubstitutionEngine @Inject constructor(
                 .firstOrNull { it.key !in chain }
                 ?.let { chain[it.key] = it }
         }
-        return chain.values.toList()
+        val ordered = chain.values.toList()
+        // LM4 — hybrid routing: in Economy/Offline mode, try the free on-device model
+        // first while keeping cloud/mesh as the fallback tail. partition() preserves the
+        // relative order within each group, so the cloud fallback ranking is intact.
+        if (policy.preferLocal) {
+            val (locals, rest) = ordered.partition { it.isLocal }
+            return locals + rest
+        }
+        return ordered
     }
 }

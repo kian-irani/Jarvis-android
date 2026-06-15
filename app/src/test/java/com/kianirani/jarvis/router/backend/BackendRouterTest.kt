@@ -1,6 +1,8 @@
 package com.kianirani.jarvis.router.backend
 
 import com.kianirani.jarvis.router.capability.CapabilityRequest
+import com.kianirani.jarvis.router.cost.CostController
+import com.kianirani.jarvis.router.cost.CostMode
 import com.kianirani.jarvis.router.health.AvailabilityGraph
 import com.kianirani.jarvis.router.health.RateLimited
 import com.kianirani.jarvis.router.orchestrator.DecisionObject
@@ -8,7 +10,9 @@ import com.kianirani.jarvis.router.orchestrator.Intent
 import com.kianirani.jarvis.router.orchestrator.Modality
 import com.kianirani.jarvis.router.registry.Capability
 import com.kianirani.jarvis.router.registry.ModelBackend
+import com.kianirani.jarvis.router.registry.ModelRegistry
 import com.kianirani.jarvis.router.registry.ModelSpec
+import com.kianirani.jarvis.router.substitution.SubstitutionEngine
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -153,5 +157,51 @@ class BackendRouterTest {
         assertTrue(res.isFailure)
         assertTrue(res.exceptionOrNull()?.message?.contains("ALL_COOLING_DOWN") == true)
         assertTrue(cloud.calls.isEmpty())
+    }
+
+    // --- LM4: hybrid routing ---
+
+    @Test
+    fun `economy mode tries the on-device model before cloud`() = runTest {
+        val cloud = FakeBackend(ModelBackend.CLOUD, succeedIds = setOf("groq-1"))
+        val local = FakeBackend(ModelBackend.LOCAL, succeedIds = setOf("local"))
+        val cost = CostController().apply { mode = CostMode.ECONOMY }
+        val r = BackendRouter(
+            listOf<Backend>(cloud, local).associateBy { it.kind },
+            substitution = SubstitutionEngine(ModelRegistry()),
+            costController = cost,
+        )
+        val res = r.execute(
+            decision(
+                spec("groq-1", ModelBackend.CLOUD, provider = "GROQ"),
+                spec("local", ModelBackend.LOCAL),
+            ),
+            "hi",
+        )
+        assertEquals("ok:local", res.getOrNull()?.text)
+        assertEquals(listOf("local"), local.calls)
+        assertTrue("cloud must not be tried once the local model answers", cloud.calls.isEmpty())
+    }
+
+    @Test
+    fun `balanced mode keeps cloud first`() = runTest {
+        val cloud = FakeBackend(ModelBackend.CLOUD, succeedIds = setOf("groq-1"))
+        val local = FakeBackend(ModelBackend.LOCAL, succeedIds = setOf("local"))
+        val cost = CostController().apply { mode = CostMode.BALANCED }
+        val r = BackendRouter(
+            listOf<Backend>(cloud, local).associateBy { it.kind },
+            substitution = SubstitutionEngine(ModelRegistry()),
+            costController = cost,
+        )
+        val res = r.execute(
+            decision(
+                spec("groq-1", ModelBackend.CLOUD, provider = "GROQ"),
+                spec("local", ModelBackend.LOCAL),
+            ),
+            "hi",
+        )
+        assertEquals("ok:groq-1", res.getOrNull()?.text)
+        assertEquals(listOf("groq-1"), cloud.calls)
+        assertTrue("local must not be reached when cloud succeeds first", local.calls.isEmpty())
     }
 }

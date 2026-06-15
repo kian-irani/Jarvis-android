@@ -102,4 +102,41 @@ class SubstitutionEngineTest {
         val chain = engine().chain(emptyList(), SubstitutionPolicy(alwaysAppendLocal = false))
         assertTrue(chain.isEmpty())
     }
+
+    // --- LM4: hybrid routing (preferLocal) ---
+
+    @Test
+    fun `preferLocal moves the on-device model to the front, cloud kept as fallback`() {
+        val ranked = listOf(
+            spec("c1", ModelBackend.CLOUD, provider = "GROQ"),
+            spec("c2", ModelBackend.CLOUD, provider = "OPENAI"),
+            local,
+        )
+        val chain = engine().chain(ranked, SubstitutionPolicy.PREFER_LOCAL)
+        assertEquals(listOf("qwen2.5-0.5b", "c1", "c2"), chain.map { it.id })
+    }
+
+    @Test
+    fun `preferLocal appends then fronts the seeded local for a cloud-only list`() {
+        val ranked = listOf(
+            spec("c1", ModelBackend.CLOUD, provider = "GROQ"),
+            spec("c2", ModelBackend.CLOUD, provider = "OPENAI"),
+        )
+        val chain = engine().chain(ranked, SubstitutionPolicy.PREFER_LOCAL)
+        assertTrue(chain.first().isLocal)
+        // cloud fallback survives behind the local, in its original rank order
+        assertEquals(listOf("c1", "c2"), chain.drop(1).map { it.id })
+    }
+
+    @Test
+    fun `preferLocal preserves cloud rank order within the fallback tail`() {
+        val ranked = listOf(
+            spec("c1", ModelBackend.CLOUD, provider = "GROQ"),
+            local,
+            spec("c2", ModelBackend.CLOUD, provider = "OPENAI"),
+            spec("mesh1", ModelBackend.MESH, node = "n1"),
+        )
+        val chain = engine().chain(ranked, SubstitutionPolicy.PREFER_LOCAL)
+        assertEquals(listOf("qwen2.5-0.5b", "c1", "c2", "mesh1"), chain.map { it.id })
+    }
 }

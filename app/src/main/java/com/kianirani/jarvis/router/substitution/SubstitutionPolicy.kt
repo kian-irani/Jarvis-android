@@ -14,16 +14,26 @@ package com.kianirani.jarvis.router.substitution
  * @param alwaysAppendLocal append the best on-device model as a last resort even if it
  *        was not among the ranked candidates — the anti-"Vision went silent" guarantee.
  * @param keepMesh include reachable MESH models in the chain (Privacy mode may drop them).
+ * @param preferLocal LM4 hybrid routing — move the on-device model(s) to the front of the
+ *        chain so the free local model is tried first, with cloud kept as the fallback.
+ *        Used in Economy/Offline mode (Privacy uses [LOCAL_ONLY], which drops cloud entirely).
  */
 data class SubstitutionPolicy(
     val maxCloudAttempts: Int = 4,
     val alwaysAppendLocal: Boolean = true,
     val keepMesh: Boolean = true,
+    val preferLocal: Boolean = false,
 ) {
     companion object {
         val DEFAULT = SubstitutionPolicy()
 
         /** Privacy/Offline: on-device only, no cloud or mesh hops. */
         val LOCAL_ONLY = SubstitutionPolicy(maxCloudAttempts = 0, alwaysAppendLocal = true, keepMesh = false)
+
+        /**
+         * LM4 — Economy/Offline: try the free on-device model first, but keep cloud (and mesh)
+         * in the chain as a fallback if the local model is unavailable or fails.
+         */
+        val PREFER_LOCAL = SubstitutionPolicy(preferLocal = true)
     }
 }
