@@ -26,6 +26,7 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -113,6 +114,7 @@ fun WorkspaceHomePager(
             title = folder?.title ?: "Folder",
             children = layout.folderChildren(id),
             visualFor = visuals::get,
+            onRename = { newTitle -> vm.store.renameFolder(id, newTitle) },
             onLaunch = { pkg -> vm.launch(pkg); openFolder = null },
             onDismiss = { openFolder = null },
         )
@@ -336,12 +338,13 @@ private fun PageDots(count: Int, current: Int, modifier: Modifier = Modifier) {
     }
 }
 
-/** Glass dialog listing a folder's apps (LR2 peek; LR5 brings full management). */
+/** Glass dialog listing a folder's apps with an editable title (LR5 rename). */
 @Composable
 private fun FolderDialog(
     title: String,
     children: List<LauncherItem>,
     visualFor: (String?) -> AppVisual?,
+    onRename: (String) -> Unit,
     onLaunch: (String) -> Unit,
     onDismiss: () -> Unit,
 ) {
@@ -350,7 +353,20 @@ private fun FolderDialog(
             Modifier.fillMaxWidth().clip(RoundedCornerShape(24.dp)).glassPanel(radius = 24.dp).padding(18.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
-            Text(title, style = MaterialTheme.typography.titleMedium, color = VisionColors.TextPrimary)
+            // Editable folder name — commit on each edit so it persists (LR5).
+            var name by remember(title) { mutableStateOf(title) }
+            BasicTextField(
+                value = name,
+                onValueChange = { name = it; onRename(it) },
+                singleLine = true,
+                textStyle = MaterialTheme.typography.titleMedium.copy(color = VisionColors.TextPrimary),
+                cursorBrush = androidx.compose.ui.graphics.SolidColor(VisionColors.CyanPrimary),
+                modifier = Modifier.fillMaxWidth(),
+                decorationBox = { inner ->
+                    if (name.isEmpty()) Text("Folder name", style = MaterialTheme.typography.titleMedium, color = VisionColors.TextDim)
+                    inner()
+                },
+            )
             if (children.isEmpty()) {
                 Text("Empty folder", style = MaterialTheme.typography.bodyMedium, color = VisionColors.TextDim)
             } else {
