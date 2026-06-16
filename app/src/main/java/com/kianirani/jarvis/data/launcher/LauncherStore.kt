@@ -68,6 +68,14 @@ class LauncherStore @Inject constructor(@ApplicationContext context: Context) {
 
     fun reset() = update(LauncherLayout())
 
+    /** LR11 — serialize the whole layout for backup (clipboard / file). */
+    fun exportJson(): String = json.encodeToString(LauncherLayout.serializer(), _layout.value)
+
+    /** LR11 — restore a layout from a backup string. False when it doesn't parse. */
+    fun importJson(text: String): Boolean =
+        runCatching { json.decodeFromString<LauncherLayout>(text) }.getOrNull()
+            ?.also { update(it) } != null
+
     /**
      * Pin an app to the home workspace at the first free cell, scanning pages in
      * order and adding a fresh page if every page is full. No-op (returns false)

@@ -70,9 +70,13 @@ class SettingsHubViewModel @Inject constructor(
     val usage: AiUsageStore,
     val history: ChatHistoryStore,
     private val voice: com.kianirani.jarvis.voice.VoiceController,
+    private val launcher: com.kianirani.jarvis.data.launcher.LauncherStore,
 ) : ViewModel() {
     fun voicesFor(language: String) = voice.voicesFor(language)
     fun testVoice(language: String) = voice.speakSample(language)
+    fun exportLayout(): String = launcher.exportJson()
+    fun importLayout(text: String): Boolean = launcher.importJson(text)
+    fun resetLayout() = launcher.reset()
 }
 
 /**
@@ -180,6 +184,21 @@ fun SettingsHubScreen(
             }
             NavRow("Notification Access", "let Vision read your notifications when asked") {
                 runCatching { ctx.startActivity(Intent("android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
+            }
+            // LR11 — back up / restore the home layout via the clipboard.
+            val clipboard = ctx.getSystemService(android.content.ClipboardManager::class.java)
+            NavRow("Back up home layout", "copy your layout to the clipboard") {
+                clipboard?.setPrimaryClip(android.content.ClipData.newPlainText("Vision layout", vm.exportLayout()))
+                android.widget.Toast.makeText(ctx, "Home layout copied", android.widget.Toast.LENGTH_SHORT).show()
+            }
+            NavRow("Restore home layout", "import a layout from the clipboard") {
+                val text = clipboard?.primaryClip?.getItemAt(0)?.coerceToText(ctx)?.toString().orEmpty()
+                val ok = text.isNotBlank() && vm.importLayout(text)
+                android.widget.Toast.makeText(ctx, if (ok) "Home layout restored" else "No valid layout on the clipboard", android.widget.Toast.LENGTH_SHORT).show()
+            }
+            NavRow("Reset home layout", "remove all pinned apps (re-seeds on restart)") {
+                vm.resetLayout()
+                android.widget.Toast.makeText(ctx, "Home layout cleared", android.widget.Toast.LENGTH_SHORT).show()
             }
         }
         Section("ABOUT", 8) {
