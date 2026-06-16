@@ -4,6 +4,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
@@ -32,14 +34,21 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.window.Dialog
 import com.kianirani.jarvis.data.launcher.Container
 import com.kianirani.jarvis.data.launcher.ItemType
+import com.kianirani.jarvis.data.launcher.LauncherGeometry
 import com.kianirani.jarvis.data.launcher.LauncherItem
 import com.kianirani.jarvis.data.launcher.LauncherLayout
 import com.kianirani.jarvis.ui.theme.VisionColors
@@ -77,6 +86,9 @@ fun WorkspaceHomePager(
                     visualFor = visuals::get,
                     onLaunch = vm::launch,
                     onOpenFolder = { openFolder = it },
+                    onMove = { id, x, y -> vm.store.move(id, Container.WORKSPACE, page - 1, x, y) },
+                    onMakeFolder = { targetId, draggedId -> vm.store.createFolder(targetId, draggedId) },
+                    onAddToFolder = { folderId, itemId -> vm.store.addToFolder(folderId, itemId) },
                     modifier = Modifier.fillMaxSize(),
                 )
             }
@@ -108,6 +120,11 @@ fun WorkspaceHomePager(
  * One workspace page: a fixed [gridCols]×[gridRows] grid (no scroll — a real
  * launcher page) painted from the layout's cells. Empty cells stay blank so the
  * spatial arrangement the user/seed chose is preserved.
+ *
+ * LR3 DragController: a long-press picks up the cell under the finger; dragging
+ * shows a floating icon; on release the target cell is resolved via
+ * [LauncherGeometry] and the layout is mutated — drop on empty → move, drop on an
+ * app → folder, drop on a folder → add. (Cross-page / dock drags arrive in LR6.)
  */
 @Composable
 private fun WorkspacePage(
@@ -116,26 +133,89 @@ private fun WorkspacePage(
     visualFor: (String?) -> AppVisual?,
     onLaunch: (String) -> Unit,
     onOpenFolder: (String) -> Unit,
+    onMove: (id: String, x: Int, y: Int) -> Unit,
+    onMakeFolder: (targetId: String, draggedId: String) -> Unit,
+    onAddToFolder: (folderId: String, itemId: String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val cols = layout.gridCols
+    val rows = layout.gridRows
     val cells = layout.cells(Container.WORKSPACE, page)
-    val byPos = remember(cells) { cells.associateBy { it.cellY * layout.gridCols + it.cellX } }
-    Column(
-        modifier.systemBarsPadding().padding(horizontal = 14.dp, vertical = 8.dp),
-        verticalArrangement = Arrangement.spacedBy(4.dp),
+    val byPos = remember(cells) { cells.associateBy { it.cellY * cols + it.cellX } }
+    var gridSize by remember { mutableStateOf(IntSize.Zero) }
+    var dragging by remember { mutableStateOf<LauncherItem?>(null) }
+    var dragPos by remember { mutableStateOf(Offset.Zero) }
+
+    Box(
+        modifier.systemBarsPadding().padding(horizontal = 14.dp, vertical = 8.dp)
+            .onSizeChanged { gridSize = it }
+            .pointerInput(cells, gridSize, cols, rows) {
+                detectDragGesturesAfterLongPress(
+                    onDragStart = { off ->
+                        if (gridSize.width > 0 && gridSize.height > 0) {
+                            val (cx, cy) = LauncherGeometry.cellAt(off.x, off.y, gridSize.width.toFloat(), gridSize.height.toFloat(), cols, rows)
+                            dragging = byPos[cy * cols + cx]
+                            dragPos = off
+                        }
+                    },
+                    onDrag = { change, amount -> change.consume(); dragPos += amount },
+                    onDragEnd = {
+                        val d = dragging
+                        if (d != null && gridSize.width > 0) {
+                            val (tx, ty) = LauncherGeometry.cellAt(dragPos.x, dragPos.y, gridSize.width.toFloat(), gridSize.height.toFloat(), cols, rows)
+                            val target = byPos[ty * cols + tx]
+                            when {
+                                target == null -> onMove(d.id, tx, ty)
+                                target.id == d.id -> Unit // dropped back on itself
+                                target.type == ItemType.FOLDER && d.type == ItemType.APP -> onAddToFolder(target.id, d.id)
+                                target.type == ItemType.APP && d.type == ItemType.APP -> onMakeFolder(target.id, d.id)
+                                else -> onMove(d.id, tx, ty)
+                            }
+                        }
+                        dragging = null
+                    },
+                    onDragCancel = { dragging = null },
+                )
+            },
     ) {
-        for (y in 0 until layout.gridRows) {
-            Row(
-                Modifier.fillMaxWidth().weight(1f),
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
-            ) {
-                for (x in 0 until layout.gridCols) {
-                    val item = byPos[y * layout.gridCols + x]
-                    Box(Modifier.weight(1f).fillMaxHeight(), contentAlignment = Alignment.Center) {
-                        if (item != null) {
-                            WorkspaceCell(item, visualFor, onLaunch, onOpenFolder)
+        Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            for (y in 0 until rows) {
+                Row(
+                    Modifier.fillMaxWidth().weight(1f),
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                ) {
+                    for (x in 0 until cols) {
+                        val item = byPos[y * cols + x]
+                        Box(Modifier.weight(1f).fillMaxHeight(), contentAlignment = Alignment.Center) {
+                            if (item != null) {
+                                // The picked-up tile dims in place while it floats under the finger.
+                                Box(Modifier.fillMaxSize().alpha(if (item.id == dragging?.id) 0.3f else 1f), contentAlignment = Alignment.Center) {
+                                    WorkspaceCell(item, visualFor, onLaunch, onOpenFolder)
+                                }
+                            }
                         }
                     }
+                }
+            }
+        }
+
+        // Floating drag image tracking the finger.
+        dragging?.let { d ->
+            val cw = if (cols > 0) gridSize.width / cols else 0
+            val ch = if (rows > 0) gridSize.height / rows else 0
+            Box(
+                Modifier.offset { IntOffset((dragPos.x - cw / 2f).toInt(), (dragPos.y - ch / 2f).toInt()) }
+                    .size(64.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                val v = visualFor(d.packageName)
+                if (v != null) {
+                    Image(v.icon, contentDescription = v.label, modifier = Modifier.size(56.dp).clip(RoundedCornerShape(16.dp)))
+                } else {
+                    Box(
+                        Modifier.size(56.dp).clip(RoundedCornerShape(16.dp)).glassPanel(radius = 16.dp),
+                        contentAlignment = Alignment.Center,
+                    ) { Icon(VisionIcons.Apps, d.title, tint = VisionColors.CyanPrimary, modifier = Modifier.size(26.dp)) }
                 }
             }
         }
