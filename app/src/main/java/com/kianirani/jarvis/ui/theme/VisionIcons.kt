@@ -8,6 +8,7 @@ import androidx.compose.material.icons.rounded.Bolt
 import androidx.compose.material.icons.rounded.Call
 import androidx.compose.material.icons.rounded.ChatBubble
 import androidx.compose.material.icons.rounded.CheckCircle
+import androidx.compose.material.icons.rounded.ChevronLeft
 import androidx.compose.material.icons.rounded.Code
 import androidx.compose.material.icons.rounded.Dashboard
 import androidx.compose.material.icons.rounded.DeveloperBoard
@@ -61,6 +62,10 @@ object VisionIcons {
     val Phone: ImageVector = Icons.Rounded.Call
     val Messages: ImageVector = Icons.Rounded.ChatBubble
     val Camera: ImageVector = Icons.Rounded.PhotoCamera
+
+    // App drawer (RD3): search + back.
+    val Search: ImageVector = Icons.Rounded.Search
+    val Back: ImageVector = Icons.Rounded.ChevronLeft
 
     /** Icon for a home quick-action tile. */
     fun forAction(a: QuickAction): ImageVector = when (a) {
