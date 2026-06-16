@@ -68,6 +68,23 @@ class LauncherStore @Inject constructor(@ApplicationContext context: Context) {
 
     fun reset() = update(LauncherLayout())
 
+    /**
+     * LR5 — pull a folder child back onto the home workspace at the first free
+     * cell (adds a page if every page is full). False when the id isn't a child.
+     */
+    fun pullFromFolder(itemId: String): Boolean {
+        val l = _layout.value
+        l.items.firstOrNull { it.id == itemId && it.parentId != null } ?: return false
+        for (p in 0 until l.pageCount) {
+            LauncherOps.firstFreeCell(l, Container.WORKSPACE, p)?.let { (x, y) ->
+                update(LauncherOps.removeFromFolder(l, itemId, Container.WORKSPACE, p, x, y)); return true
+            }
+        }
+        val grown = LauncherOps.addPage(l)
+        update(LauncherOps.removeFromFolder(grown, itemId, Container.WORKSPACE, grown.pageCount - 1, 0, 0))
+        return true
+    }
+
     /** LR11 — serialize the whole layout for backup (clipboard / file). */
     fun exportJson(): String = json.encodeToString(LauncherLayout.serializer(), _layout.value)
 

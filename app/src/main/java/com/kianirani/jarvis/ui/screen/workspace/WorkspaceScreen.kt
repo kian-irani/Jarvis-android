@@ -4,6 +4,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -116,6 +117,7 @@ fun WorkspaceHomePager(
             visualFor = visuals::get,
             onRename = { newTitle -> vm.store.renameFolder(id, newTitle) },
             onLaunch = { pkg -> vm.launch(pkg); openFolder = null },
+            onPullOut = { childId -> vm.store.pullFromFolder(childId); openFolder = null },
             onDismiss = { openFolder = null },
         )
     }
@@ -279,10 +281,12 @@ private fun WorkspaceCell(
 }
 
 /** A pinned app: rounded icon + single-line label. */
+@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
-private fun AppTile(label: String, icon: AppVisual?, onClick: () -> Unit) {
+private fun AppTile(label: String, icon: AppVisual?, onLongClick: (() -> Unit)? = null, onClick: () -> Unit) {
     Column(
-        Modifier.fillMaxSize().clip(RoundedCornerShape(16.dp)).clickable(onClick = onClick)
+        Modifier.fillMaxSize().clip(RoundedCornerShape(16.dp))
+            .combinedClickable(onClick = onClick, onLongClick = onLongClick)
             .padding(vertical = 4.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(4.dp),
@@ -367,6 +371,7 @@ private fun FolderDialog(
     visualFor: (String?) -> AppVisual?,
     onRename: (String) -> Unit,
     onLaunch: (String) -> Unit,
+    onPullOut: (String) -> Unit,
     onDismiss: () -> Unit,
 ) {
     Dialog(onDismissRequest = onDismiss) {
@@ -394,9 +399,14 @@ private fun FolderDialog(
                 LazyVerticalGrid(columns = GridCells.Fixed(4), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     items(children, key = { it.id }) { child ->
                         val v = visualFor(child.packageName)
-                        AppTile(label = v?.label ?: child.label.orEmpty(), icon = v, onClick = { child.packageName?.let(onLaunch) })
+                        AppTile(
+                            label = v?.label ?: child.label.orEmpty(), icon = v,
+                            onLongClick = { onPullOut(child.id) },
+                            onClick = { child.packageName?.let(onLaunch) },
+                        )
                     }
                 }
+                Text("Long-press an app to move it back to home", style = MaterialTheme.typography.labelSmall, color = VisionColors.TextDim)
             }
         }
     }
