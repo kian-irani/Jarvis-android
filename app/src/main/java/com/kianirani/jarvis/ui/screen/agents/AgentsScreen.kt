@@ -65,17 +65,31 @@ fun AgentsScreen(
 ) {
     val agents by vm.states.collectAsState()
     androidx.compose.runtime.LaunchedEffect(Unit) { vm.refresh() }
+    val activeCount = agents.count { it.status.name == "ACTIVE" || it.status.name == "WORKING" }
     Column(
         Modifier.fillMaxSize().background(JarvisColors.ScreenBackdrop).systemBarsPadding()
-            .verticalScroll(rememberScrollState()).padding(16.dp),
+            .verticalScroll(rememberScrollState()).padding(horizontal = 16.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
-        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            if (showBack) Text("‹ BACK", style = MaterialTheme.typography.labelLarge, color = JarvisColors.TextDim,
-                modifier = Modifier.clickable(onClick = onBack).padding(end = 12.dp))
-            Text("AGENTS", style = MaterialTheme.typography.headlineLarge, color = JarvisColors.CyanPrimary)
+        Row(Modifier.fillMaxWidth().padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+            if (showBack) {
+                Box(
+                    Modifier.size(40.dp).background(JarvisColors.CyanFaint, CircleShape)
+                        .border(1.dp, JarvisColors.CyanSecondary.copy(alpha = 0.5f), CircleShape)
+                        .clickable(onClick = onBack),
+                    contentAlignment = Alignment.Center,
+                ) { Icon(VisionIcons.Back, "Back", tint = JarvisColors.CyanPrimary, modifier = Modifier.size(22.dp)) }
+                Spacer(Modifier.width(12.dp))
+            }
+            Column(Modifier.weight(1f)) {
+                Text("Agents", style = MaterialTheme.typography.headlineLarge, color = JarvisColors.TextPrimary)
+                Text("$activeCount of ${agents.size} active", style = MaterialTheme.typography.bodySmall, color = JarvisColors.TextDim)
+            }
         }
-        agents.forEachIndexed { i, a -> AgentCard(a, i, vm::setEnabled, vm::setTrust) }
+        agents.forEachIndexed { i, a ->
+            val action = vm.history.firstOrNull { it.agent == a.id }?.text
+            AgentCard(a, i, action, vm::setEnabled, vm::setTrust)
+        }
 
         Column(Modifier.fillMaxWidth().visionEnter(agents.size).glassPanel(radius = 14.dp).padding(14.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -92,7 +106,7 @@ fun AgentsScreen(
 }
 
 @Composable
-private fun AgentCard(a: AgentState, index: Int, onEnabled: (AgentId, Boolean) -> Unit, onTrust: (AgentId, TrustLevel) -> Unit) {
+private fun AgentCard(a: AgentState, index: Int, currentAction: String?, onEnabled: (AgentId, Boolean) -> Unit, onTrust: (AgentId, TrustLevel) -> Unit) {
     Column(Modifier.fillMaxWidth().visionEnter(index).glassPanel(radius = 16.dp).padding(14.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
@@ -107,6 +121,14 @@ private fun AgentCard(a: AgentState, index: Int, onEnabled: (AgentId, Boolean) -
             Box(Modifier.size(10.dp).background(statusColor(a.status), CircleShape))
             Spacer(Modifier.width(12.dp))
             MiniSwitch(a.enabled) { onEnabled(a.id, it) }
+        }
+        // Current action (spec: Status / Progress / Current Action) — latest from history.
+        if (a.enabled && currentAction != null) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Box(Modifier.size(6.dp).background(statusColor(a.status), CircleShape))
+                Text(currentAction, style = MaterialTheme.typography.bodySmall, color = JarvisColors.TextSecondary,
+                    maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+            }
         }
         // Trust level selector
         Text("TRUST", style = MaterialTheme.typography.labelSmall, color = JarvisColors.TextDim)
