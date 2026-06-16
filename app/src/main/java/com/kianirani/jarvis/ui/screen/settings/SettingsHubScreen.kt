@@ -23,6 +23,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
@@ -52,6 +53,7 @@ import com.kianirani.jarvis.ui.theme.FontCatalog
 import com.kianirani.jarvis.ui.theme.FontStore
 import com.kianirani.jarvis.ui.theme.JarvisColors
 import com.kianirani.jarvis.ui.theme.ThemeStore
+import com.kianirani.jarvis.ui.theme.VisionIcons
 import com.kianirani.jarvis.ui.theme.VisionFontFamilies
 import com.kianirani.jarvis.ui.theme.VisionColors
 import com.kianirani.jarvis.ui.theme.VisionThemes
@@ -90,10 +92,18 @@ fun SettingsHubScreen(
             .verticalScroll(rememberScrollState()).padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
-        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            Text("‹ BACK", style = MaterialTheme.typography.labelLarge, color = JarvisColors.TextDim,
-                modifier = Modifier.clickable(onClick = onBack).padding(end = 12.dp))
-            Text("SYSTEM CONFIG", style = MaterialTheme.typography.headlineLarge, color = JarvisColors.CyanPrimary)
+        Row(Modifier.fillMaxWidth().padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                Modifier.size(40.dp).background(JarvisColors.CyanFaint, CircleShape)
+                    .border(1.dp, JarvisColors.CyanSecondary.copy(alpha = 0.5f), CircleShape)
+                    .clickable(onClick = onBack),
+                contentAlignment = Alignment.Center,
+            ) { Icon(VisionIcons.Back, "Back", tint = JarvisColors.CyanPrimary, modifier = Modifier.size(22.dp)) }
+            Spacer(Modifier.width(12.dp))
+            Column(Modifier.weight(1f)) {
+                Text("Settings", style = MaterialTheme.typography.headlineLarge, color = JarvisColors.TextPrimary)
+                Text("Appearance · Intelligence · Privacy", style = MaterialTheme.typography.bodySmall, color = JarvisColors.TextDim)
+            }
         }
 
         Section("APPEARANCE", 0) {
@@ -172,11 +182,11 @@ fun SettingsHubScreen(
 private fun Section(title: String, index: Int, content: @Composable () -> Unit) {
     Column(
         Modifier.fillMaxWidth().visionEnter(index)
-            .glassPanel(radius = 10.dp)
-            .padding(12.dp),
-        verticalArrangement = Arrangement.spacedBy(4.dp),
+            .glassPanel(radius = 18.dp)
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
-        Text(title, style = MaterialTheme.typography.labelSmall, color = JarvisColors.CyanSecondary)
+        Text(title, style = MaterialTheme.typography.labelMedium, color = JarvisColors.CyanSecondary)
         content()
     }
 }
