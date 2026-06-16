@@ -5,6 +5,7 @@ import android.content.Intent
 import android.provider.Settings
 import android.widget.Toast
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -98,6 +99,7 @@ fun HomeScreen(
     val stats by home.stats.collectAsStateWithLifecycle()
     val agents by home.agentStates.collectAsStateWithLifecycle()
     val order by home.quickActions.order.collectAsStateWithLifecycle()
+    val favorites by home.favorites.collectAsStateWithLifecycle()
     val name by home.personaName.collectAsStateWithLifecycle()
     val ctx = LocalContext.current
     androidx.compose.runtime.LaunchedEffect(Unit) { home.refresh() }
@@ -146,6 +148,11 @@ fun HomeScreen(
 
         QuickAccessRow(order, home.quickActions::move, home.quickActions::reset, onQuickAction, Modifier.fillMaxWidth().visionEnter(2))
         Spacer(Modifier.height(14.dp))
+
+        if (favorites.isNotEmpty()) {
+            FavoritesRow(favorites, home::launchFavorite, Modifier.fillMaxWidth().visionEnter(3))
+            Spacer(Modifier.height(14.dp))
+        }
 
         OverviewCard(stats, agents, onOpenMemory, Modifier.fillMaxWidth().visionEnter(3))
         Spacer(Modifier.height(14.dp))
@@ -376,6 +383,32 @@ private fun QuickTile(
                 Text("‹", style = MaterialTheme.typography.titleMedium, color = JarvisColors.CyanPrimary, modifier = Modifier.clickable(onClick = onLeft))
                 Text("›", style = MaterialTheme.typography.titleMedium, color = JarvisColors.CyanPrimary, modifier = Modifier.clickable(onClick = onRight))
             }
+        }
+    }
+}
+
+/** Home favourites (RD2.b) — real apps (phone/SMS/browser + most-used) on Home. */
+@Composable
+private fun FavoritesRow(favorites: List<FavoriteApp>, onLaunch: (String) -> Unit, modifier: Modifier) {
+    Column(modifier) {
+        Text("Favorites", style = MaterialTheme.typography.titleMedium, color = JarvisColors.TextPrimary, modifier = Modifier.padding(bottom = 10.dp))
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            favorites.forEach { fav ->
+                Column(
+                    Modifier.weight(1f).clip(RoundedCornerShape(16.dp)).clickable { onLaunch(fav.packageName) }.padding(vertical = 10.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
+                    Box(
+                        Modifier.size(48.dp).clip(RoundedCornerShape(14.dp))
+                            .background(VisionColors.Surface.copy(alpha = 0.55f))
+                            .border(1.dp, JarvisColors.Border, RoundedCornerShape(14.dp)),
+                        contentAlignment = Alignment.Center,
+                    ) { Image(fav.icon, fav.label, Modifier.size(34.dp).clip(RoundedCornerShape(10.dp))) }
+                    Text(fav.label, style = MaterialTheme.typography.labelSmall, color = JarvisColors.TextSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis, textAlign = TextAlign.Center)
+                }
+            }
+            repeat(4 - favorites.size.coerceAtMost(4)) { Spacer(Modifier.weight(1f)) }
         }
     }
 }
