@@ -35,6 +35,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.runtime.Composable
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -68,7 +69,11 @@ class SettingsHubViewModel @Inject constructor(
     val activation: ActivationStore,
     val usage: AiUsageStore,
     val history: ChatHistoryStore,
-) : ViewModel()
+    private val voice: com.kianirani.jarvis.voice.VoiceController,
+) : ViewModel() {
+    fun voicesFor(language: String) = voice.voicesFor(language)
+    fun testVoice(language: String) = voice.speakSample(language)
+}
 
 /**
  * SYSTEM CONFIG — the organized settings hub (USER DIRECTIVE 2026-06-12).
@@ -120,6 +125,12 @@ fun SettingsHubScreen(
             val pitch by s.voicePitch.collectAsStateWithLifecycle()
             StepperRow("Speech rate", rate, 0.1f) { s.setSpeechRate(it) }
             StepperRow("Voice pitch", pitch, 0.1f) { s.setVoicePitch(it) }
+            // FV2 — pick the actual Persian / English voice + test it. Code-switch
+            // replies speak each language with its own selected voice.
+            val voiceFa by s.voiceNameFa.collectAsStateWithLifecycle()
+            val voiceEn by s.voiceNameEn.collectAsStateWithLifecycle()
+            VoicePickerRow("Persian voice", VisionSettings.LANG_FA, voiceFa, vm)
+            VoicePickerRow("English voice", VisionSettings.LANG_EN, voiceEn, vm)
         }
         Section("PERSONA", 2) {
             val personaName by s.personaName.collectAsStateWithLifecycle()
@@ -344,6 +355,57 @@ private fun LanguageRow(lang: String, onChange: (String) -> Unit) {
             )
         }
     }
+}
+
+/**
+ * FV2 voice picker — a labelled row with an "Auto" chip plus one chip per
+ * installed voice for [language], and a TEST button that speaks a sample with the
+ * current selection. Selecting a chip pins that voice; "Auto" clears the pin so
+ * the controller uses the best installed voice.
+ */
+@Composable
+private fun VoicePickerRow(title: String, language: String, selected: String, vm: SettingsHubViewModel) {
+    val voices = remember(language) { vm.voicesFor(language) }
+    Column(Modifier.fillMaxWidth().padding(vertical = 6.dp)) {
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Text(title, style = MaterialTheme.typography.bodyMedium, color = JarvisColors.TextPrimary, modifier = Modifier.weight(1f))
+            Text(
+                "TEST", style = MaterialTheme.typography.labelMedium, color = JarvisColors.CyanPrimary,
+                modifier = Modifier.clickable { vm.testVoice(language) }
+                    .border(1.dp, JarvisColors.CyanPrimary, RoundedCornerShape(4.dp))
+                    .padding(horizontal = 10.dp, vertical = 5.dp),
+            )
+        }
+        if (voices.isEmpty()) {
+            Text(
+                "No installed voices — add one in the system TTS settings",
+                style = MaterialTheme.typography.bodySmall, color = JarvisColors.TextDim,
+                modifier = Modifier.padding(top = 6.dp),
+            )
+        } else {
+            Row(
+                Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(top = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                VoiceChip("Auto", selected.isBlank()) { vm.settings.setVoiceName(language, "") }
+                voices.forEach { v ->
+                    VoiceChip(v.displayName, selected == v.id) { vm.settings.setVoiceName(language, v.id) }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun VoiceChip(label: String, selected: Boolean, onClick: () -> Unit) {
+    Text(
+        label,
+        style = MaterialTheme.typography.labelMedium,
+        color = if (selected) JarvisColors.CyanPrimary else JarvisColors.TextDim,
+        modifier = Modifier.clickable(onClick = onClick)
+            .border(1.dp, if (selected) JarvisColors.CyanPrimary else JarvisColors.Border, RoundedCornerShape(8.dp))
+            .padding(horizontal = 12.dp, vertical = 6.dp),
+    )
 }
 
 @Composable
