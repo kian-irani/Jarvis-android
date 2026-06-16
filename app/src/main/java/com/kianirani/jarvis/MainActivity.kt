@@ -15,6 +15,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.Box
@@ -34,6 +35,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationRail
@@ -255,7 +257,16 @@ private fun handleQuickAction(qa: QuickAction, ctx: Context, onNavigate: (Vision
 private fun VisionBottomBar(route: VisionRoute, onNavigate: (VisionRoute) -> Unit) {
     val ctx = LocalContext.current
     Box(
-        Modifier.fillMaxWidth().navigationBarsPadding().padding(horizontal = 22.dp, vertical = 10.dp),
+        Modifier.fillMaxWidth().navigationBarsPadding().padding(horizontal = 22.dp, vertical = 10.dp)
+            // Swipe up on the dock opens the app drawer (RD10 launcher gesture).
+            // A drag is distinct from a tap, so the dock buttons still work.
+            .pointerInput(Unit) {
+                var dy = 0f
+                detectVerticalDragGestures(
+                    onDragEnd = { if (dy < -70f) onNavigate(VisionRoute.APPS); dy = 0f },
+                    onVerticalDrag = { _, amount -> dy += amount },
+                )
+            },
         contentAlignment = Alignment.Center,
     ) {
         Row(
