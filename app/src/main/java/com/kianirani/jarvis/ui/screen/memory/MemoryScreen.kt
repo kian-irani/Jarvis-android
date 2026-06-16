@@ -11,13 +11,17 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -30,12 +34,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kianirani.jarvis.brain.data.MemoryRepository
 import com.kianirani.jarvis.ui.theme.JarvisColors
+import com.kianirani.jarvis.ui.theme.VisionIcons
 import com.kianirani.jarvis.ui.theme.glassPanel
 import com.kianirani.jarvis.ui.theme.visionEnter
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -87,22 +93,42 @@ fun MemoryScreen(
             .verticalScroll(rememberScrollState()).padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
-        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            if (showBack) Text("‹ BACK", style = MaterialTheme.typography.labelLarge, color = JarvisColors.TextDim,
-                modifier = Modifier.clickable(onClick = onBack).padding(end = 12.dp))
-            Text("MEMORY", style = MaterialTheme.typography.headlineLarge, color = JarvisColors.CyanPrimary)
+        Row(Modifier.fillMaxWidth().padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+            if (showBack) {
+                Box(
+                    Modifier.size(40.dp).background(JarvisColors.CyanFaint, CircleShape)
+                        .border(1.dp, JarvisColors.CyanSecondary.copy(alpha = 0.5f), CircleShape)
+                        .clickable(onClick = onBack),
+                    contentAlignment = Alignment.Center,
+                ) { Icon(VisionIcons.Back, "Back", tint = JarvisColors.CyanPrimary, modifier = Modifier.size(22.dp)) }
+                Spacer(Modifier.width(12.dp))
+            }
+            Column(Modifier.weight(1f)) {
+                Text("Memory", style = MaterialTheme.typography.headlineLarge, color = JarvisColors.TextPrimary)
+                Text("On-device knowledge graph", style = MaterialTheme.typography.bodySmall, color = JarvisColors.TextDim)
+            }
         }
 
-        Row(Modifier.fillMaxWidth().visionEnter(0).glassPanel(radius = 14.dp).padding(16.dp)) {
+        Row(
+            Modifier.fillMaxWidth().visionEnter(0).glassPanel(radius = 18.dp).padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Box(
+                Modifier.size(48.dp).background(JarvisColors.CyanFaint, RoundedCornerShape(14.dp)),
+                contentAlignment = Alignment.Center,
+            ) { Icon(VisionIcons.Memory, null, tint = JarvisColors.CyanPrimary, modifier = Modifier.size(26.dp)) }
+            Spacer(Modifier.width(14.dp))
             Column(Modifier.weight(1f)) {
                 Text("${ui.count}", style = MaterialTheme.typography.headlineLarge, color = JarvisColors.TextPrimary)
                 Text("memories stored on device", style = MaterialTheme.typography.bodySmall, color = JarvisColors.TextDim)
             }
         }
 
-        // Search
-        Row(Modifier.fillMaxWidth().visionEnter(1).glassPanel(radius = 14.dp).padding(horizontal = 14.dp, vertical = 4.dp),
+        // Glass search pill — leading search icon + send button.
+        Row(Modifier.fillMaxWidth().visionEnter(1).glassPanel(radius = 26.dp).padding(start = 16.dp, end = 8.dp, top = 6.dp, bottom = 6.dp),
             verticalAlignment = Alignment.CenterVertically) {
+            Icon(VisionIcons.Search, null, tint = JarvisColors.TextDim, modifier = Modifier.size(20.dp))
+            Spacer(Modifier.width(10.dp))
             BasicTextField(
                 value = query, onValueChange = { query = it }, singleLine = true,
                 textStyle = MaterialTheme.typography.bodyLarge.copy(color = JarvisColors.TextPrimary),
@@ -112,19 +138,37 @@ fun MemoryScreen(
                 modifier = Modifier.weight(1f).padding(vertical = 12.dp),
                 decorationBox = { inner -> if (query.isEmpty()) Text("Search memory…", style = MaterialTheme.typography.bodyLarge, color = JarvisColors.TextDim); inner() },
             )
-            Text("GO", style = MaterialTheme.typography.labelLarge, color = JarvisColors.CyanPrimary,
-                modifier = Modifier.clickable { vm.search(query) }.padding(8.dp))
+            Box(
+                Modifier.size(40.dp).background(JarvisColors.CyanFaint, CircleShape)
+                    .border(1.dp, JarvisColors.CyanSecondary.copy(alpha = 0.5f), CircleShape)
+                    .clickable { vm.search(query) },
+                contentAlignment = Alignment.Center,
+            ) { Icon(VisionIcons.Send, "Search", tint = JarvisColors.CyanPrimary, modifier = Modifier.size(18.dp)) }
         }
+
+        Text(
+            if (query.isBlank()) "RECENT" else "RESULTS",
+            style = MaterialTheme.typography.labelSmall, color = JarvisColors.CyanSecondary,
+        )
 
         if (ui.rows.isEmpty()) {
             Text(if (ui.searching) "Searching…" else "No memories yet — chat with Vision to build context.",
                 style = MaterialTheme.typography.bodyMedium, color = JarvisColors.TextDim,
-                modifier = Modifier.padding(top = 8.dp))
+                modifier = Modifier.padding(top = 4.dp))
         } else {
             ui.rows.forEachIndexed { i, r ->
-                Column(Modifier.fillMaxWidth().visionEnter(i + 2).glassPanel(radius = 12.dp).padding(12.dp)) {
-                    Text(r.title, style = MaterialTheme.typography.bodyLarge, color = JarvisColors.TextPrimary)
-                    Text(r.subtitle, style = MaterialTheme.typography.labelSmall, color = JarvisColors.CyanSecondary)
+                Row(Modifier.fillMaxWidth().visionEnter(i + 2).glassPanel(radius = 14.dp).padding(12.dp),
+                    verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        Modifier.size(34.dp).background(JarvisColors.CyanFaint, RoundedCornerShape(10.dp)),
+                        contentAlignment = Alignment.Center,
+                    ) { Icon(VisionIcons.Memory, null, tint = JarvisColors.CyanPrimary, modifier = Modifier.size(18.dp)) }
+                    Spacer(Modifier.width(12.dp))
+                    Column(Modifier.weight(1f)) {
+                        Text(r.title, style = MaterialTheme.typography.bodyLarge, color = JarvisColors.TextPrimary,
+                            maxLines = 2, overflow = TextOverflow.Ellipsis)
+                        Text(r.subtitle, style = MaterialTheme.typography.labelSmall, color = JarvisColors.CyanSecondary)
+                    }
                 }
             }
         }
