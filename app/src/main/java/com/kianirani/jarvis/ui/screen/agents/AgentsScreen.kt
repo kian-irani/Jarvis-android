@@ -24,7 +24,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import com.kianirani.jarvis.ui.theme.VisionIcons
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -63,7 +63,7 @@ fun AgentsScreen(
     onBack: () -> Unit = {},
     vm: AgentsViewModel = hiltViewModel(),
 ) {
-    val agents by vm.states.collectAsState()
+    val agents by vm.states.collectAsStateWithLifecycle()
     androidx.compose.runtime.LaunchedEffect(Unit) { vm.refresh() }
     val activeCount = agents.count { it.status.name == "ACTIVE" || it.status.name == "WORKING" }
     Column(

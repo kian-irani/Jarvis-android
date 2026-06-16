@@ -31,7 +31,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -184,9 +184,9 @@ fun AppDrawerScreen(
     onOpenSettings: () -> Unit = {},
     onOpenHub: () -> Unit = {},
 ) {
-    val apps by vm.apps.collectAsState()
-    val frequent by vm.frequent.collectAsState()
-    val query by vm.query.collectAsState()
+    val apps by vm.apps.collectAsStateWithLifecycle()
+    val frequent by vm.frequent.collectAsStateWithLifecycle()
+    val query by vm.query.collectAsStateWithLifecycle()
     var category by remember { mutableStateOf(AppCategory.ALL) }
 
     val base = when (category) {

@@ -33,7 +33,7 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -82,10 +82,10 @@ fun SettingsHubScreen(
     onOpenElection: () -> Unit = {},
 ) {
     val s = vm.settings
-    val voice by s.voiceEnabled.collectAsState()
-    val tts by s.ttsEnabled.collectAsState()
-    val scan by s.scanLine.collectAsState()
-    val aurora by s.aurora.collectAsState()
+    val voice by s.voiceEnabled.collectAsStateWithLifecycle()
+    val tts by s.ttsEnabled.collectAsStateWithLifecycle()
+    val scan by s.scanLine.collectAsStateWithLifecycle()
+    val aurora by s.aurora.collectAsStateWithLifecycle()
     val ctx = LocalContext.current
     Column(
         Modifier.fillMaxSize().background(VisionColors.ScreenBackdrop).systemBarsPadding()
@@ -116,17 +116,17 @@ fun SettingsHubScreen(
         Section("VOICE", 1) {
             ToggleRow("Voice input", "wake Vision with the mic", voice) { s.set(VisionSettings.KEY_VOICE, it) }
             ToggleRow("Spoken replies (TTS)", "Vision reads answers aloud", tts) { s.set(VisionSettings.KEY_TTS, it) }
-            val rate by s.speechRate.collectAsState()
-            val pitch by s.voicePitch.collectAsState()
+            val rate by s.speechRate.collectAsStateWithLifecycle()
+            val pitch by s.voicePitch.collectAsStateWithLifecycle()
             StepperRow("Speech rate", rate, 0.1f) { s.setSpeechRate(it) }
             StepperRow("Voice pitch", pitch, 0.1f) { s.setVoicePitch(it) }
         }
         Section("PERSONA", 2) {
-            val personaName by s.personaName.collectAsState()
-            val humor by s.humorLevel.collectAsState()
-            val formality by s.formalityLevel.collectAsState()
-            val respLen by s.responseLength.collectAsState()
-            val lang by s.language.collectAsState()
+            val personaName by s.personaName.collectAsStateWithLifecycle()
+            val humor by s.humorLevel.collectAsStateWithLifecycle()
+            val formality by s.formalityLevel.collectAsStateWithLifecycle()
+            val respLen by s.responseLength.collectAsStateWithLifecycle()
+            val lang by s.language.collectAsStateWithLifecycle()
             PersonaNameRow(personaName) { s.setPersonaName(it) }
             LanguageRow(lang) {
                 s.setLanguage(it)
@@ -145,7 +145,7 @@ fun SettingsHubScreen(
             ToggleRow("Scan line", "moving HUD scan beam", scan) { s.set(VisionSettings.KEY_SCANLINE, it) }
         }
         Section("TRUST LEVEL", 4) {
-            val trust by s.trustLevel.collectAsState()
+            val trust by s.trustLevel.collectAsStateWithLifecycle()
             TrustSelector(trust, s::setTrustLevel)
         }
         Section("ACTIVATION", 5) {
@@ -277,7 +277,7 @@ private fun TrustSelector(current: Int, onSelect: (Int) -> Unit) {
 
 @Composable
 private fun ActivationRow(store: ActivationStore) {
-    val code by store.code.collectAsState()
+    val code by store.code.collectAsStateWithLifecycle()
     var input by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf("") }
     if (code != null) {
         Row(Modifier.fillMaxWidth().padding(vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {

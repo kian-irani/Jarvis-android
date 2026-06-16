@@ -35,7 +35,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -56,6 +55,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kianirani.jarvis.data.agent.AgentState
 import com.kianirani.jarvis.data.agent.AgentStatus
 import com.kianirani.jarvis.data.settings.QuickAction
@@ -94,11 +94,11 @@ fun HomeScreen(
     showSidePanels: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
-    val s by hud.uiState.collectAsState()
-    val stats by home.stats.collectAsState()
-    val agents by home.agentStates.collectAsState()
-    val order by home.quickActions.order.collectAsState()
-    val name by home.personaName.collectAsState()
+    val s by hud.uiState.collectAsStateWithLifecycle()
+    val stats by home.stats.collectAsStateWithLifecycle()
+    val agents by home.agentStates.collectAsStateWithLifecycle()
+    val order by home.quickActions.order.collectAsStateWithLifecycle()
+    val name by home.personaName.collectAsStateWithLifecycle()
     val ctx = LocalContext.current
     androidx.compose.runtime.LaunchedEffect(Unit) { home.refresh() }
 
