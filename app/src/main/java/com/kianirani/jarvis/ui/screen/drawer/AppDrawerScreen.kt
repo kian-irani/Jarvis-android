@@ -7,6 +7,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -91,11 +92,16 @@ data class AppEntry(
 class AppDrawerViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
     private val chatHistory: com.kianirani.jarvis.data.ai.ChatHistoryStore,
+    private val launcher: com.kianirani.jarvis.data.launcher.LauncherStore,
 ) : ViewModel() {
     /** P6 AnySearch-lite: the same query also searches conversation memory. */
     fun searchMemory(q: String): List<com.kianirani.jarvis.data.ai.ChatTurn> =
         if (q.length < 3) emptyList()
         else chatHistory.all().filter { it.text.contains(q, ignoreCase = true) }.takeLast(3)
+
+    /** Long-press in the drawer pins the app to the home workspace (LR4-lite). */
+    fun addToHome(app: AppEntry): Boolean =
+        launcher.addAppToHome(com.kianirani.jarvis.data.launcher.AppRef(app.packageName, null, app.label))
 
     // P10 digital-twin-lite: launch counters drive the FREQUENT row + Recent filter.
     private val counts = context.getSharedPreferences("vision_app_usage", Context.MODE_PRIVATE)
@@ -189,6 +195,15 @@ fun AppDrawerScreen(
     val query by vm.query.collectAsStateWithLifecycle()
     val badges by com.kianirani.jarvis.service.VisionNotificationService.badges.collectAsStateWithLifecycle()
     var category by remember { mutableStateOf(AppCategory.ALL) }
+    val ctx = LocalContext.current
+    val addToHome: (AppEntry) -> Unit = { app ->
+        val added = vm.addToHome(app)
+        android.widget.Toast.makeText(
+            ctx,
+            if (added) "${app.label} added to Home" else "${app.label} is already on Home",
+            android.widget.Toast.LENGTH_SHORT,
+        ).show()
+    }
 
     val base = when (category) {
         AppCategory.ALL -> apps
@@ -275,14 +290,14 @@ fun AppDrawerScreen(
         ) {
             if (showExtras && frequent.isNotEmpty()) {
                 header("Recent")
-                items(frequent, key = { "freq_${it.packageName}" }) { app -> AppTile(app.label, app.icon, badges[app.packageName] ?: 0, accent = true) { vm.launch(app.packageName) } }
+                items(frequent, key = { "freq_${it.packageName}" }) { app -> AppTile(app.label, app.icon, badges[app.packageName] ?: 0, accent = true, onLongClick = { addToHome(app) }) { vm.launch(app.packageName) } }
                 header("All apps")
             }
             if (showExtras) {
                 item(key = "__vision_settings") { SpecialTile(VisionIcons.Settings, "Settings", onOpenSettings) }
                 item(key = "__vision_hub") { SpecialTile(VisionIcons.Spark, "Vision Hub", onOpenHub) }
             }
-            items(filtered, key = { it.packageName }) { app -> AppTile(app.label, app.icon, badges[app.packageName] ?: 0) { vm.launch(app.packageName) } }
+            items(filtered, key = { it.packageName }) { app -> AppTile(app.label, app.icon, badges[app.packageName] ?: 0, onLongClick = { addToHome(app) }) { vm.launch(app.packageName) } }
         }
     }
 }
@@ -312,10 +327,12 @@ private fun CategoryChip(label: String, selected: Boolean, onClick: () -> Unit) 
 }
 
 /** One app in the grid — a rounded-icon surface with a label below + notif badge. */
+@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
-private fun AppTile(label: String, icon: ImageBitmap, badge: Int = 0, accent: Boolean = false, onClick: () -> Unit) {
+private fun AppTile(label: String, icon: ImageBitmap, badge: Int = 0, accent: Boolean = false, onLongClick: () -> Unit = {}, onClick: () -> Unit) {
     Column(
-        Modifier.clip(RoundedCornerShape(18.dp)).clickable(onClick = onClick).padding(vertical = 4.dp),
+        Modifier.clip(RoundedCornerShape(18.dp))
+            .combinedClickable(onClick = onClick, onLongClick = onLongClick).padding(vertical = 4.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {

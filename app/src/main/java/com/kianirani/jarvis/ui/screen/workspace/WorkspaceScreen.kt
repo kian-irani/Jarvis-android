@@ -9,7 +9,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
@@ -89,6 +91,7 @@ fun WorkspaceHomePager(
                     onMove = { id, x, y -> vm.store.move(id, Container.WORKSPACE, page - 1, x, y) },
                     onMakeFolder = { targetId, draggedId -> vm.store.createFolder(targetId, draggedId) },
                     onAddToFolder = { folderId, itemId -> vm.store.addToFolder(folderId, itemId) },
+                    onRemove = { id -> vm.store.remove(id) },
                     modifier = Modifier.fillMaxSize(),
                 )
             }
@@ -136,6 +139,7 @@ private fun WorkspacePage(
     onMove: (id: String, x: Int, y: Int) -> Unit,
     onMakeFolder: (targetId: String, draggedId: String) -> Unit,
     onAddToFolder: (folderId: String, itemId: String) -> Unit,
+    onRemove: (id: String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val cols = layout.gridCols
@@ -145,6 +149,9 @@ private fun WorkspacePage(
     var gridSize by remember { mutableStateOf(IntSize.Zero) }
     var dragging by remember { mutableStateOf<LauncherItem?>(null) }
     var dragPos by remember { mutableStateOf(Offset.Zero) }
+    // Drop strip at the top removes the dragged item from home (shares this Box's
+    // coordinate space with the gesture, so a hit-test on dragPos.y is exact).
+    val removeStripPx = with(androidx.compose.ui.platform.LocalDensity.current) { 64.dp.toPx() }
 
     Box(
         modifier.systemBarsPadding().padding(horizontal = 14.dp, vertical = 8.dp)
@@ -162,14 +169,18 @@ private fun WorkspacePage(
                     onDragEnd = {
                         val d = dragging
                         if (d != null && gridSize.width > 0) {
-                            val (tx, ty) = LauncherGeometry.cellAt(dragPos.x, dragPos.y, gridSize.width.toFloat(), gridSize.height.toFloat(), cols, rows)
-                            val target = byPos[ty * cols + tx]
-                            when {
-                                target == null -> onMove(d.id, tx, ty)
-                                target.id == d.id -> Unit // dropped back on itself
-                                target.type == ItemType.FOLDER && d.type == ItemType.APP -> onAddToFolder(target.id, d.id)
-                                target.type == ItemType.APP && d.type == ItemType.APP -> onMakeFolder(target.id, d.id)
-                                else -> onMove(d.id, tx, ty)
+                            if (dragPos.y <= removeStripPx) {
+                                onRemove(d.id)
+                            } else {
+                                val (tx, ty) = LauncherGeometry.cellAt(dragPos.x, dragPos.y, gridSize.width.toFloat(), gridSize.height.toFloat(), cols, rows)
+                                val target = byPos[ty * cols + tx]
+                                when {
+                                    target == null -> onMove(d.id, tx, ty)
+                                    target.id == d.id -> Unit // dropped back on itself
+                                    target.type == ItemType.FOLDER && d.type == ItemType.APP -> onAddToFolder(target.id, d.id)
+                                    target.type == ItemType.APP && d.type == ItemType.APP -> onMakeFolder(target.id, d.id)
+                                    else -> onMove(d.id, tx, ty)
+                                }
                             }
                         }
                         dragging = null
@@ -196,6 +207,22 @@ private fun WorkspacePage(
                         }
                     }
                 }
+            }
+        }
+
+        // Remove strip — appears at the top while dragging; drop here to unpin.
+        if (dragging != null) {
+            Row(
+                Modifier.align(Alignment.TopCenter).fillMaxWidth().height(56.dp)
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(VisionColors.DangerRed.copy(alpha = 0.18f))
+                    .border(1.dp, VisionColors.DangerRed.copy(alpha = 0.6f), RoundedCornerShape(16.dp)),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Icon(VisionIcons.Close, "Remove", tint = VisionColors.DangerRed, modifier = Modifier.size(20.dp))
+                Spacer(Modifier.size(8.dp))
+                Text("Remove from home", style = MaterialTheme.typography.labelLarge, color = VisionColors.DangerRed)
             }
         }
 

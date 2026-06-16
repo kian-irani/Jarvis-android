@@ -69,6 +69,24 @@ class LauncherStore @Inject constructor(@ApplicationContext context: Context) {
     fun reset() = update(LauncherLayout())
 
     /**
+     * Pin an app to the home workspace at the first free cell, scanning pages in
+     * order and adding a fresh page if every page is full. No-op (returns false)
+     * when the app is already pinned on the workspace, so taps don't duplicate it.
+     */
+    fun addAppToHome(app: AppRef): Boolean {
+        val l = _layout.value
+        if (l.items.any { it.parentId == null && it.container == Container.WORKSPACE && it.packageName == app.packageName }) return false
+        for (p in 0 until l.pageCount) {
+            LauncherOps.firstFreeCell(l, Container.WORKSPACE, p)?.let { (x, y) ->
+                addApp(app, Container.WORKSPACE, p, x, y); return true
+            }
+        }
+        update(LauncherOps.addPage(l))
+        addApp(app, Container.WORKSPACE, _layout.value.pageCount - 1, 0, 0)
+        return true
+    }
+
+    /**
      * Seed a sensible first-run layout from the installed apps: the dock filled
      * with the first [LauncherLayout.dockCount]−1 apps (centre slot reserved for
      * Vision), the rest flowing onto page-0 cells row-major. Only runs when empty.
