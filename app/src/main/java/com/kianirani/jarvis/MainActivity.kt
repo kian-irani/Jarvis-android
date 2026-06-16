@@ -27,6 +27,7 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -115,6 +116,7 @@ class MainActivity : ComponentActivity() {
             JarvisTheme {
                 val widthClass = calculateWindowSizeClass(this).widthSizeClass
                 val compact = widthClass == WindowWidthSizeClass.Compact
+                val expanded = widthClass == WindowWidthSizeClass.Expanded
                 var route by rememberSaveable {
                     mutableStateOf(
                         if (!prefs.getBoolean(KEY_ONBOARDED, false)) VisionRoute.ONBOARDING else VisionRoute.HOME,
@@ -133,7 +135,7 @@ class MainActivity : ComponentActivity() {
                         prefs.edit().putBoolean(KEY_SETUP_COMPLETE, true).apply()
                         route = VisionRoute.HOME
                     })
-                    else -> VisionShell(route, compact, onNavigate = { route = it })
+                    else -> VisionShell(route, compact, expanded, onNavigate = { route = it })
                 }
             }
         }
@@ -146,8 +148,11 @@ class MainActivity : ComponentActivity() {
  * screens (Election, AI tokens, Recents, Hub) render full-screen without the bar.
  */
 @Composable
-private fun VisionShell(route: VisionRoute, compact: Boolean, onNavigate: (VisionRoute) -> Unit) {
+private fun VisionShell(route: VisionRoute, compact: Boolean, expanded: Boolean, onNavigate: (VisionRoute) -> Unit) {
     val isTop = route in TOP_LEVEL
+    // On expanded widths Home shows a persistent right-hand Agents panel, so it
+    // must use the full pane (no readability cap fighting the side panel).
+    val homeWide = expanded && route == VisionRoute.HOME
     Scaffold(
         containerColor = androidx.compose.ui.graphics.Color.Transparent,
         // Each screen manages its own status-bar inset via systemBarsPadding;
@@ -160,8 +165,8 @@ private fun VisionShell(route: VisionRoute, compact: Boolean, onNavigate: (Visio
                 if (isTop && !compact) VisionNavRail(route, onNavigate)
                 Box(Modifier.weight(1f).fillMaxHeight(), contentAlignment = Alignment.TopCenter) {
                     // Constrain content width on large screens for readability.
-                    Box(Modifier.widthIn(max = if (compact) Dp.Unspecified else 760.dp).fillMaxSize()) {
-                        RouteContent(route, onNavigate)
+                    Box(Modifier.widthIn(max = if (compact || homeWide) Dp.Unspecified else 760.dp).fillMaxSize()) {
+                        RouteContent(route, homeWide, onNavigate)
                     }
                 }
             }
@@ -170,7 +175,7 @@ private fun VisionShell(route: VisionRoute, compact: Boolean, onNavigate: (Visio
 }
 
 @Composable
-private fun RouteContent(route: VisionRoute, onNavigate: (VisionRoute) -> Unit) {
+private fun RouteContent(route: VisionRoute, homeWide: Boolean, onNavigate: (VisionRoute) -> Unit) {
     val ctx = androidx.compose.ui.platform.LocalContext.current
     when (route) {
         VisionRoute.HOME -> {
@@ -184,13 +189,27 @@ private fun RouteContent(route: VisionRoute, onNavigate: (VisionRoute) -> Unit) 
                     intent.action = null
                 }
             }
-            HomeScreen(
-                hud = hud, home = home,
-                onOpenSettings = { onNavigate(VisionRoute.SETTINGS) },
-                onOpenAgents = { onNavigate(VisionRoute.AGENTS) },
-                onOpenMemory = { onNavigate(VisionRoute.MEMORY) },
-                onQuickAction = { handleQuickAction(it, ctx, onNavigate) },
-            )
+            val homeContent = @Composable { sidePanels: Boolean ->
+                HomeScreen(
+                    hud = hud, home = home,
+                    onOpenSettings = { onNavigate(VisionRoute.SETTINGS) },
+                    onOpenAgents = { onNavigate(VisionRoute.AGENTS) },
+                    onOpenMemory = { onNavigate(VisionRoute.MEMORY) },
+                    onQuickAction = { handleQuickAction(it, ctx, onNavigate) },
+                    showSidePanels = sidePanels,
+                )
+            }
+            if (homeWide) {
+                // Expanded layout: home pane + persistent Agents side panel (RD7).
+                Row(Modifier.fillMaxSize()) {
+                    Box(Modifier.weight(1f).fillMaxHeight()) { homeContent(true) }
+                    Box(Modifier.width(360.dp).fillMaxHeight()) {
+                        com.kianirani.jarvis.ui.screen.agents.AgentsScreen(showBack = false)
+                    }
+                }
+            } else {
+                homeContent(false)
+            }
         }
         VisionRoute.AGENTS -> AgentsScreen(showBack = false)
         VisionRoute.APPS -> AppDrawerScreen(
