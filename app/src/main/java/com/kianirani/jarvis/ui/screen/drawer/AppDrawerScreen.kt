@@ -187,6 +187,7 @@ fun AppDrawerScreen(
     val apps by vm.apps.collectAsStateWithLifecycle()
     val frequent by vm.frequent.collectAsStateWithLifecycle()
     val query by vm.query.collectAsStateWithLifecycle()
+    val badges by com.kianirani.jarvis.service.VisionNotificationService.badges.collectAsStateWithLifecycle()
     var category by remember { mutableStateOf(AppCategory.ALL) }
 
     val base = when (category) {
@@ -274,14 +275,14 @@ fun AppDrawerScreen(
         ) {
             if (showExtras && frequent.isNotEmpty()) {
                 header("Recent")
-                items(frequent, key = { "freq_${it.packageName}" }) { app -> AppTile(app.label, app.icon, accent = true) { vm.launch(app.packageName) } }
+                items(frequent, key = { "freq_${it.packageName}" }) { app -> AppTile(app.label, app.icon, badges[app.packageName] ?: 0, accent = true) { vm.launch(app.packageName) } }
                 header("All apps")
             }
             if (showExtras) {
                 item(key = "__vision_settings") { SpecialTile(VisionIcons.Settings, "Settings", onOpenSettings) }
                 item(key = "__vision_hub") { SpecialTile(VisionIcons.Spark, "Vision Hub", onOpenHub) }
             }
-            items(filtered, key = { it.packageName }) { app -> AppTile(app.label, app.icon) { vm.launch(app.packageName) } }
+            items(filtered, key = { it.packageName }) { app -> AppTile(app.label, app.icon, badges[app.packageName] ?: 0) { vm.launch(app.packageName) } }
         }
     }
 }
@@ -310,20 +311,34 @@ private fun CategoryChip(label: String, selected: Boolean, onClick: () -> Unit) 
     }
 }
 
-/** One app in the grid — a rounded-icon surface with a label below. */
+/** One app in the grid — a rounded-icon surface with a label below + notif badge. */
 @Composable
-private fun AppTile(label: String, icon: ImageBitmap, accent: Boolean = false, onClick: () -> Unit) {
+private fun AppTile(label: String, icon: ImageBitmap, badge: Int = 0, accent: Boolean = false, onClick: () -> Unit) {
     Column(
         Modifier.clip(RoundedCornerShape(18.dp)).clickable(onClick = onClick).padding(vertical = 4.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
-        Box(
-            Modifier.size(54.dp).clip(RoundedCornerShape(16.dp))
-                .background(if (accent) JarvisColors.CyanFaint else VisionColors.Surface.copy(alpha = 0.55f))
-                .border(1.dp, JarvisColors.Border, RoundedCornerShape(16.dp)),
-            contentAlignment = Alignment.Center,
-        ) { Image(icon, contentDescription = label, Modifier.size(38.dp).clip(RoundedCornerShape(11.dp))) }
+        Box(contentAlignment = Alignment.TopEnd) {
+            Box(
+                Modifier.size(54.dp).clip(RoundedCornerShape(16.dp))
+                    .background(if (accent) JarvisColors.CyanFaint else VisionColors.Surface.copy(alpha = 0.55f))
+                    .border(1.dp, JarvisColors.Border, RoundedCornerShape(16.dp)),
+                contentAlignment = Alignment.Center,
+            ) { Image(icon, contentDescription = label, Modifier.size(38.dp).clip(RoundedCornerShape(11.dp))) }
+            if (badge > 0) {
+                Box(
+                    Modifier.size(20.dp).clip(CircleShape).background(VisionColors.Magenta)
+                        .border(1.5.dp, VisionColors.Background, CircleShape),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(
+                        if (badge > 9) "9+" else "$badge",
+                        style = MaterialTheme.typography.labelSmall, color = VisionColors.TextPrimary,
+                    )
+                }
+            }
+        }
         Text(
             label, style = MaterialTheme.typography.labelSmall, color = JarvisColors.TextPrimary,
             maxLines = 1, overflow = TextOverflow.Ellipsis, textAlign = TextAlign.Center,

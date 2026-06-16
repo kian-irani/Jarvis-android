@@ -166,7 +166,17 @@ fun HomeScreen(
 /** Centered "VISION OS / AI-NATIVE LAUNCHER" wordmark with a ghost settings gear. */
 @Composable
 private fun VisionOsHeader(brainOnline: Boolean, onOpenSettings: () -> Unit) {
-    Box(Modifier.fillMaxWidth().height(52.dp), contentAlignment = Alignment.Center) {
+    val ctx = LocalContext.current
+    // Launcher gesture (RD10): a downward pull on the header opens the system
+    // notification shade — the classic home-screen swipe-down.
+    val headerGesture = Modifier.pointerInput(Unit) {
+        var dy = 0f
+        detectVerticalDragGestures(
+            onDragEnd = { if (dy > 60f) expandNotificationShade(ctx); dy = 0f },
+            onVerticalDrag = { _, amount -> dy += amount },
+        )
+    }
+    Box(Modifier.fillMaxWidth().height(52.dp).then(headerGesture), contentAlignment = Alignment.Center) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
                 "VISION OS",
@@ -504,6 +514,20 @@ private fun ConnectedDevicesCard(nodesOnline: Int, modifier: Modifier) {
  * If Device Control isn't enabled yet, guide the user to turn it on once — there
  * is no app-level way to drive Overview without it.
  */
+/**
+ * Open the system notification shade (RD10 launcher gesture). Uses the hidden
+ * StatusBarManager#expandNotificationsPanel via reflection — best-effort, since
+ * some OEM builds restrict it; failure is silent (the gesture just no-ops).
+ */
+private fun expandNotificationShade(ctx: Context) {
+    runCatching {
+        val sb = ctx.getSystemService("statusbar")
+        Class.forName("android.app.StatusBarManager")
+            .getMethod("expandNotificationsPanel")
+            .invoke(sb)
+    }
+}
+
 private fun openSystemRecents(ctx: Context) {
     val svc = VisionAccessibilityService.instance
     if (svc != null) {
