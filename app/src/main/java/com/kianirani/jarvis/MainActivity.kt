@@ -281,10 +281,10 @@ private fun VisionBottomBar(route: VisionRoute, onNavigate: (VisionRoute) -> Uni
                         alpha = 0.30f,
                     )
                 }
-                .clip(RoundedCornerShape(30.dp))
+                .clip(RoundedCornerShape(34.dp))
                 .background(VisionColors.GlassPanel)
-                .border(1.dp, VisionColors.Border, RoundedCornerShape(30.dp))
-                .padding(horizontal = 10.dp, vertical = 8.dp),
+                .border(1.dp, VisionColors.Border, RoundedCornerShape(34.dp))
+                .padding(horizontal = 12.dp, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
@@ -307,7 +307,7 @@ private fun DockItem(
     onClick: () -> Unit,
 ) {
     Box(
-        modifier.height(56.dp).clip(RoundedCornerShape(18.dp)).clickable(onClick = onClick),
+        modifier.height(64.dp).clip(RoundedCornerShape(20.dp)).clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
         Icon(
@@ -318,26 +318,24 @@ private fun DockItem(
     }
 }
 
-/** The centre Vision slot — a larger plasma orb that pops above the dock rail. */
+/** The centre Vision slot — a large, softly-glowing plasma orb that pops above the rail. */
 @Composable
 private fun DockVision(selected: Boolean, modifier: Modifier = Modifier, onClick: () -> Unit) {
-    Box(modifier.height(56.dp), contentAlignment = Alignment.Center) {
+    Box(modifier.height(64.dp), contentAlignment = Alignment.Center) {
         Box(
-            Modifier.offset(y = (-14).dp).size(58.dp)
+            Modifier.offset(y = (-18).dp).size(70.dp)
                 .drawBehind {
-                    drawCircle(
-                        color = if (selected) VisionColors.CyanPrimary else VisionColors.Violet,
-                        radius = size.minDimension * 0.72f,
-                        alpha = 0.40f,
-                    )
+                    // Two-layer soft glow so the Vision button reads as the hero of the dock.
+                    drawCircle(color = VisionColors.Violet, radius = size.minDimension * 0.92f, alpha = 0.30f)
+                    drawCircle(color = VisionColors.CyanPrimary, radius = size.minDimension * 0.72f, alpha = 0.40f)
                 }
                 .clip(CircleShape)
                 .background(VisionColors.PlasmaSweep)
-                .border(1.5.dp, VisionColors.TextPrimary.copy(alpha = 0.35f), CircleShape)
+                .border(1.5.dp, VisionColors.TextPrimary.copy(alpha = 0.4f), CircleShape)
                 .clickable(onClick = onClick),
             contentAlignment = Alignment.Center,
         ) {
-            Icon(VisionIcons.Spark, "Vision", tint = VisionColors.Background, modifier = Modifier.size(28.dp))
+            Icon(VisionIcons.Spark, "Vision", tint = VisionColors.Background, modifier = Modifier.size(32.dp))
         }
     }
 }

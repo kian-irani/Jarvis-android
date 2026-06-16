@@ -52,14 +52,16 @@ import kotlin.random.Random
 fun VisionOrb(listening: Boolean, modifier: Modifier = Modifier) {
     val animate = ThemeStore.animations
     val inf = rememberInfiniteTransition(label = "orb")
-    val breathA by inf.animateFloat(0.97f, 1.03f, infiniteRepeatable(tween(3200, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "breath")
-    val glowA by inf.animateFloat(0.5f, 0.95f, infiniteRepeatable(tween(2800, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "glow")
-    val spinA by inf.animateFloat(0f, 360f, infiniteRepeatable(tween(18000, easing = LinearEasing)), label = "spin")
+    val breathA by inf.animateFloat(0.96f, 1.04f, infiniteRepeatable(tween(3600, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "breath")
+    val glowA by inf.animateFloat(0.5f, 0.98f, infiniteRepeatable(tween(2800, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "glow")
+    val spinA by inf.animateFloat(0f, 360f, infiniteRepeatable(tween(20000, easing = LinearEasing)), label = "spin")
+    val spin2A by inf.animateFloat(360f, 0f, infiniteRepeatable(tween(28000, easing = LinearEasing)), label = "spin2")
     val twinkleA by inf.animateFloat(0f, (2f * Math.PI).toFloat(), infiniteRepeatable(tween(4200, easing = LinearEasing)), label = "twinkle")
 
     val breath = if (animate) breathA else 1f
-    val glow = if (animate) glowA else 0.7f
+    val glow = if (animate) glowA else 0.75f
     val spin = if (animate) spinA else 24f
+    val spin2 = if (animate) spin2A else -16f
     val twinkle = if (animate) twinkleA else 1.2f
 
     val accent = VisionColors.CyanPrimary
@@ -70,11 +72,11 @@ fun VisionOrb(listening: Boolean, modifier: Modifier = Modifier) {
     // Stable particle field (polar within the ring band) — regenerated only if seed changes.
     val particles = remember {
         val rnd = Random(7)
-        List(46) {
+        List(58) {
             Particle(
                 angle = rnd.nextFloat() * (2f * Math.PI).toFloat(),
-                radiusFrac = 0.30f + rnd.nextFloat() * 0.72f, // some inside, most near the ring
-                sizeFrac = 0.004f + rnd.nextFloat() * 0.010f,
+                radiusFrac = 0.34f + rnd.nextFloat() * 0.74f, // some inside, most near the ring
+                sizeFrac = 0.004f + rnd.nextFloat() * 0.011f,
                 phase = rnd.nextFloat() * (2f * Math.PI).toFloat(),
             )
         }
@@ -85,62 +87,101 @@ fun VisionOrb(listening: Boolean, modifier: Modifier = Modifier) {
             val cx = size.width / 2f
             val cy = size.height / 2f
             val base = minOf(cx, cy)
-            val ringR = base * (if (listening) 0.64f else 0.70f) * breath
+            val ringR = base * (if (listening) 0.62f else 0.68f) * breath
             val stroke = base * 0.085f
-            val haloAlpha = (if (listening) 0.55f else 0.36f) * glow
+            val haloAlpha = (if (listening) 0.6f else 0.4f) * glow
 
-            // 1. Soft outer halo bloom
+            // 1. Layered glow — a wide soft bloom + a tighter brighter halo (depth).
+            drawCircle(
+                Brush.radialGradient(
+                    0f to accent.copy(alpha = haloAlpha * 0.55f),
+                    0.45f to violet.copy(alpha = haloAlpha * 0.5f),
+                    0.8f to magenta.copy(alpha = haloAlpha * 0.18f),
+                    1f to Color.Transparent,
+                    center = Offset(cx, cy), radius = base * 1.05f,
+                ),
+                base * 1.05f, Offset(cx, cy),
+            )
             drawCircle(
                 Brush.radialGradient(
                     0f to accent.copy(alpha = haloAlpha * 0.5f),
-                    0.55f to violet.copy(alpha = haloAlpha * 0.5f),
+                    0.7f to blue.copy(alpha = haloAlpha * 0.35f),
                     1f to Color.Transparent,
-                    center = Offset(cx, cy), radius = base * 1.0f,
+                    center = Offset(cx, cy), radius = ringR * 1.25f,
                 ),
-                base, Offset(cx, cy),
+                ringR * 1.25f, Offset(cx, cy),
             )
 
-            // 2. Dark translucent core (depth + lets the wordmark read)
+            // 2. Inner core — a translucent blue depth gradient with a top-left
+            //    light reflection so it reads as a polished sphere, not a hole.
             drawCircle(
                 Brush.radialGradient(
-                    0f to Color.Black.copy(alpha = 0.55f),
-                    0.7f to Color.Black.copy(alpha = 0.30f),
+                    0f to blue.copy(alpha = 0.22f),
+                    0.55f to Color.Black.copy(alpha = 0.34f),
                     1f to Color.Transparent,
-                    center = Offset(cx, cy - ringR * 0.05f), radius = ringR,
+                    center = Offset(cx, cy - ringR * 0.04f), radius = ringR,
                 ),
                 ringR, Offset(cx, cy),
             )
+            drawCircle( // inner reflection highlight (top-left)
+                Brush.radialGradient(
+                    0f to Color.White.copy(alpha = 0.16f * glow),
+                    1f to Color.Transparent,
+                    center = Offset(cx - ringR * 0.32f, cy - ringR * 0.36f), radius = ringR * 0.6f,
+                ),
+                ringR * 0.6f, Offset(cx - ringR * 0.32f, cy - ringR * 0.36f),
+            )
 
-            // 3. The luminous ring — rotating sweep, drawn 3× at decreasing alpha for a bloom.
+            // 3. Energy rings — concentric thin rings, counter-rotating, at decreasing alpha.
             val sweep = Brush.sweepGradient(
                 0f to accent, 0.3f to blue, 0.55f to violet, 0.78f to magenta, 1f to accent,
                 center = Offset(cx, cy),
             )
+            rotate(spin2, Offset(cx, cy)) {
+                drawCircle(accent, ringR * 1.16f, Offset(cx, cy), alpha = 0.14f * glow, style = Stroke(base * 0.006f))
+                drawCircle(violet, ringR * 0.5f, Offset(cx, cy), alpha = 0.20f * glow, style = Stroke(base * 0.008f))
+            }
+
+            // 4. The luminous main ring — rotating sweep, drawn 3× for a bloom.
             rotate(spin, Offset(cx, cy)) {
                 drawCircle(sweep, ringR, Offset(cx, cy), alpha = 0.22f * glow, style = Stroke(stroke * 2.4f))
                 drawCircle(sweep, ringR, Offset(cx, cy), alpha = 0.5f * glow, style = Stroke(stroke * 1.4f))
                 drawCircle(sweep, ringR, Offset(cx, cy), alpha = 0.95f, style = Stroke(stroke * 0.7f))
             }
 
-            // 4. Neural particles in the ring band, gently twinkling
-            particles.forEach { p ->
+            // 5. Neural particles + connection lines (a living network). Precompute
+            //    positions, link near pairs with faint glowing threads, then draw nodes.
+            val pts = particles.map { p ->
                 val pr = ringR * p.radiusFrac
-                val px = cx + cos(p.angle) * pr
-                val py = cy + sin(p.angle) * pr
+                Triple(cx + cos(p.angle) * pr, cy + sin(p.angle) * pr, p)
+            }
+            val linkDist = base * 0.26f
+            for (i in pts.indices) {
+                for (j in i + 1 until pts.size) {
+                    val dx = pts[i].first - pts[j].first
+                    val dy = pts[i].second - pts[j].second
+                    val d = kotlin.math.hypot(dx, dy)
+                    if (d < linkDist) {
+                        val a = (1f - d / linkDist) * 0.28f * glow
+                        drawLine(accent.copy(alpha = a), Offset(pts[i].first, pts[i].second), Offset(pts[j].first, pts[j].second), strokeWidth = base * 0.004f)
+                    }
+                }
+            }
+            pts.forEach { (px, py, p) ->
                 val tw = 0.35f + 0.65f * ((sin(twinkle + p.phase) + 1f) / 2f)
                 val ps = base * p.sizeFrac
-                drawCircle(accent.copy(alpha = 0.9f * tw), ps, Offset(px, py))
-                drawCircle(accent.copy(alpha = 0.25f * tw), ps * 2.4f, Offset(px, py)) // soft glow
+                drawCircle(Color.White.copy(alpha = 0.9f * tw), ps, Offset(px, py))
+                drawCircle(accent.copy(alpha = 0.30f * tw), ps * 2.6f, Offset(px, py)) // soft glow
             }
 
-            // 5. Reflection ripples below the core — concentric flattened arcs
+            // 6. Reflection ripples below the core — concentric flattened arcs
             repeat(3) { i ->
                 val rr = ringR * (0.9f + i * 0.34f)
                 val a = (0.18f - i * 0.05f) * glow
                 drawArc(
                     color = accent.copy(alpha = a),
                     startAngle = 18f, sweepAngle = 144f, useCenter = false,
-                    topLeft = Offset(cx - rr, cy + ringR * 0.55f - rr * 0.18f),
+                    topLeft = Offset(cx - rr, cy + ringR * 0.58f - rr * 0.18f),
                     size = Size(rr * 2f, rr * 0.36f),
                     style = Stroke(width = base * 0.012f),
                 )

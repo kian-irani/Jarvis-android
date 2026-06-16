@@ -50,8 +50,9 @@ object VisionColors {
     val DangerRed     = Color(0xFFFF3B6B)
 
     // Surfaces — set per theme
-    var Background    by mutableStateOf(Color(0xFF03060F))
-    var BackgroundAlt by mutableStateOf(Color(0xFF070B1C))
+    var Background    by mutableStateOf(Color(0xFF081120))
+    var BackgroundAlt by mutableStateOf(Color(0xFF102040))
+    var BackgroundGlow by mutableStateOf(Color(0xFF182B5A))
     var Surface       by mutableStateOf(Color(0xFF0A1024))
     var SurfaceGlass  by mutableStateOf(Color(0xCC0C1330))
     var Border        by mutableStateOf(Color(0x3322F5FF))
@@ -75,11 +76,13 @@ object VisionColors {
 
     // Reusable gradients — getters so each read recomputes from current state. ---
 
-    /** Full-screen ambient backdrop — wallpaper colour, else void plasma core. */
+    /** Full-screen ambient backdrop — wallpaper colour, else a deep azure→blue
+     *  vertical gradient (dark top → lighter blue toward the bottom) so the orb
+     *  reads as a glowing core lifted off the surface (Vision OS redesign). */
     val ScreenBackdrop: Brush
         get() = wallpaper?.let { w ->
             Brush.verticalGradient(listOf(w, w.darken(0.7f), w.darken(0.45f)))
-        } ?: Brush.verticalGradient(0f to Background, 0.55f to BackgroundAlt, 1f to Background)
+        } ?: Brush.verticalGradient(0f to Background, 0.55f to BackgroundAlt, 1f to BackgroundGlow)
 
     /** Plasma sweep used for orbs, primary buttons and active rails. */
     val PlasmaSweep: Brush
@@ -102,7 +105,7 @@ object VisionColors {
         Violet = p.violet; VioletDeep = p.violetDeep; Magenta = p.magenta
         MagentaGlow = p.magenta.copy(alpha = 0.25f)
         BlueDeep = p.blueDeep; BlueAccent = p.blueAccent; BlueMid = p.blueMid
-        Background = p.background; BackgroundAlt = p.backgroundAlt
+        Background = p.background; BackgroundAlt = p.backgroundAlt; BackgroundGlow = p.backgroundGlow
         Surface = p.surface; SurfaceGlass = p.surfaceGlass
         BorderViolet = p.violet.copy(alpha = 0.20f)
         TextPrimary = p.textPrimary; TextSecondary = p.textSecondary; TextDim = p.textDim
@@ -131,6 +134,7 @@ typealias JarvisColors = VisionColors
 data class Palette(
     val background: Color,
     val backgroundAlt: Color,
+    val backgroundGlow: Color,
     val surface: Color,
     val surfaceGlass: Color,
     val textPrimary: Color,
@@ -157,20 +161,22 @@ object VisionThemes {
 
     val names = listOf("DEEP SPACE", "AURORA DARK", "LIGHT FUTURE")
 
-    /** Default void — azure→violet signal on near-black (orb-launcher reference). */
+    /** Vision OS deep azure — a blue space gradient (#081120→#102040→#182B5A)
+     *  with a blue→violet→cyan signal, and semi-transparent glass that lets the
+     *  background depth read through (2035 AI-OS redesign). */
     val deepSpace = Palette(
-        background = Color(0xFF04060E), backgroundAlt = Color(0xFF080B1A),
-        surface = Color(0xFF0C1124), surfaceGlass = Color(0xCC0E1430),
-        textPrimary = Color(0xFFEAF0FF), textSecondary = Color(0xFFAEB9D6), textDim = Color(0xFF5C6788),
+        background = Color(0xFF081120), backgroundAlt = Color(0xFF102040), backgroundGlow = Color(0xFF182B5A),
+        surface = Color(0xFF122046), surfaceGlass = Color(0xB316285C),
+        textPrimary = Color(0xFFEAF0FF), textSecondary = Color(0xFFB6C2E0), textDim = Color(0xFF7385AC),
         violet = Color(0xFF8B5CF6), violetDeep = Color(0xFF4A1FB8), magenta = Color(0xFFB45CFF),
-        blueDeep = Color(0xFF2D6BFF), blueAccent = Color(0xFF16245C), blueMid = Color(0xFF0A1138),
-        glassTop = Color(0xE6101840), glassBot = Color(0xF2070B1E), sheen = Color(0x1AFFFFFF),
-        defaultAccent = Color(0xFF4F8CFF), isLight = false,
+        blueDeep = Color(0xFF2D6BFF), blueAccent = Color(0xFF1B2E66), blueMid = Color(0xFF0E1B44),
+        glassTop = Color(0xB31A2E62), glassBot = Color(0xCC0E1A3C), sheen = Color(0x26FFFFFF),
+        defaultAccent = Color(0xFF5B8CFF), isLight = false,
     )
 
     /** Purple nebula — magenta signal on a deep violet-black. */
     val auroraDark = Palette(
-        background = Color(0xFF0B0518), backgroundAlt = Color(0xFF150A30),
+        background = Color(0xFF0B0518), backgroundAlt = Color(0xFF150A30), backgroundGlow = Color(0xFF2A1456),
         surface = Color(0xFF1A0F38), surfaceGlass = Color(0xCC1C123E),
         textPrimary = Color(0xFFF4ECFF), textSecondary = Color(0xFFC9B3E6), textDim = Color(0xFF7A6699),
         violet = Color(0xFF9D6BFF), violetDeep = Color(0xFF5A23C8), magenta = Color(0xFFE05BFF),
@@ -181,7 +187,7 @@ object VisionThemes {
 
     /** Daylight HUD — dark ink on light surfaces; accent darkened for AA contrast. */
     val lightFuture = Palette(
-        background = Color(0xFFECF1F8), backgroundAlt = Color(0xFFE0E7F2),
+        background = Color(0xFFECF1F8), backgroundAlt = Color(0xFFE0E7F2), backgroundGlow = Color(0xFFCEDDF4),
         surface = Color(0xFFFFFFFF), surfaceGlass = Color(0xF2FFFFFF),
         textPrimary = Color(0xFF0B1530), textSecondary = Color(0xFF2E4668), textDim = Color(0xFF5B6B85),
         violet = Color(0xFF6D28D9), violetDeep = Color(0xFF4C1D95), magenta = Color(0xFFB5179E),
