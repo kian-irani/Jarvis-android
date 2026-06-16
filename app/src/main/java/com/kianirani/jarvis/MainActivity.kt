@@ -13,17 +13,28 @@ import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.NavigationRail
 import androidx.compose.material3.NavigationRailItem
 import androidx.compose.material3.Icon
@@ -213,26 +224,111 @@ private fun handleQuickAction(qa: QuickAction, ctx: Context, onNavigate: (Vision
     }
 }
 
+/**
+ * Floating Vision dock (RD3, 2026-06-16) — rebuilt to the orb-launcher reference:
+ * a glass pill that floats above the gesture bar with Phone · Messages · **Vision**
+ * (a larger, glowing plasma orb, raised above the rail) · Camera · Apps. Phone /
+ * Messages / Camera open the system default apps; Vision returns Home; Apps opens
+ * the drawer. Glass + glow read the state-backed [VisionColors] so it recolours
+ * with the theme. (Tablet keeps the [VisionNavRail] for the in-app hubs.)
+ */
 @Composable
 private fun VisionBottomBar(route: VisionRoute, onNavigate: (VisionRoute) -> Unit) {
-    NavigationBar(containerColor = VisionColors.Surface.copy(alpha = 0.92f), tonalElevation = 0.dp) {
-        NAV_ITEMS.forEach { item ->
-            NavigationBarItem(
-                selected = route == item.route,
-                onClick = { onNavigate(item.route) },
-                icon = { Icon(item.icon, contentDescription = item.label) },
-                label = { Text(item.label, style = MaterialTheme.typography.labelSmall) },
-                colors = NavigationBarItemDefaults.colors(
-                    selectedIconColor = VisionColors.CyanPrimary,
-                    selectedTextColor = VisionColors.CyanPrimary,
-                    unselectedIconColor = VisionColors.TextDim,
-                    unselectedTextColor = VisionColors.TextDim,
-                    indicatorColor = VisionColors.CyanFaint,
-                ),
-            )
+    val ctx = LocalContext.current
+    Box(
+        Modifier.fillMaxWidth().navigationBarsPadding().padding(horizontal = 22.dp, vertical = 10.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Row(
+            Modifier.fillMaxWidth()
+                .drawBehind {
+                    // soft ambient halo under the floating pill
+                    drawRoundRect(
+                        color = VisionColors.CyanGlow,
+                        topLeft = Offset(-6f, 2f),
+                        size = androidx.compose.ui.geometry.Size(size.width + 12f, size.height + 8f),
+                        cornerRadius = androidx.compose.ui.geometry.CornerRadius(34.dp.toPx()),
+                        alpha = 0.30f,
+                    )
+                }
+                .clip(RoundedCornerShape(30.dp))
+                .background(VisionColors.GlassPanel)
+                .border(1.dp, VisionColors.Border, RoundedCornerShape(30.dp))
+                .padding(horizontal = 10.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            DockItem(VisionIcons.Phone, "Phone", Modifier.weight(1f)) { launchDial(ctx) }
+            DockItem(VisionIcons.Messages, "Messages", Modifier.weight(1f)) { launchMessaging(ctx) }
+            DockVision(selected = route == VisionRoute.HOME, modifier = Modifier.weight(1f)) { onNavigate(VisionRoute.HOME) }
+            DockItem(VisionIcons.Camera, "Camera", Modifier.weight(1f)) { launchCamera(ctx) }
+            DockItem(VisionIcons.Apps, "Apps", Modifier.weight(1f), selected = route == VisionRoute.APPS) { onNavigate(VisionRoute.APPS) }
         }
     }
 }
+
+/** A standard dock slot — a 56dp tappable column with a single vector glyph. */
+@Composable
+private fun DockItem(
+    icon: ImageVector,
+    label: String,
+    modifier: Modifier = Modifier,
+    selected: Boolean = false,
+    onClick: () -> Unit,
+) {
+    Box(
+        modifier.height(56.dp).clip(RoundedCornerShape(18.dp)).clickable(onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(
+            icon, contentDescription = label,
+            tint = if (selected) VisionColors.CyanPrimary else VisionColors.TextSecondary,
+            modifier = Modifier.size(26.dp),
+        )
+    }
+}
+
+/** The centre Vision slot — a larger plasma orb that pops above the dock rail. */
+@Composable
+private fun DockVision(selected: Boolean, modifier: Modifier = Modifier, onClick: () -> Unit) {
+    Box(modifier.height(56.dp), contentAlignment = Alignment.Center) {
+        Box(
+            Modifier.offset(y = (-14).dp).size(58.dp)
+                .drawBehind {
+                    drawCircle(
+                        color = if (selected) VisionColors.CyanPrimary else VisionColors.Violet,
+                        radius = size.minDimension * 0.72f,
+                        alpha = 0.40f,
+                    )
+                }
+                .clip(CircleShape)
+                .background(VisionColors.PlasmaSweep)
+                .border(1.5.dp, VisionColors.TextPrimary.copy(alpha = 0.35f), CircleShape)
+                .clickable(onClick = onClick),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(VisionIcons.Spark, "Vision", tint = VisionColors.Background, modifier = Modifier.size(28.dp))
+        }
+    }
+}
+
+private fun launchDial(ctx: Context) = runCatching {
+    ctx.startActivity(Intent(Intent.ACTION_DIAL).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+}.onFailure { Toast.makeText(ctx, "No dialer app", Toast.LENGTH_SHORT).show() }
+
+private fun launchMessaging(ctx: Context) = runCatching {
+    ctx.startActivity(
+        Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_APP_MESSAGING)
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+    )
+}.onFailure { Toast.makeText(ctx, "No messaging app", Toast.LENGTH_SHORT).show() }
+
+private fun launchCamera(ctx: Context) = runCatching {
+    ctx.startActivity(
+        Intent(android.provider.MediaStore.INTENT_ACTION_STILL_IMAGE_CAMERA)
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+    )
+}.onFailure { Toast.makeText(ctx, "No camera app", Toast.LENGTH_SHORT).show() }
 
 @Composable
 private fun VisionNavRail(route: VisionRoute, onNavigate: (VisionRoute) -> Unit) {

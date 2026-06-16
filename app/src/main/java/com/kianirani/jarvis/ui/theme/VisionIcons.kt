@@ -5,6 +5,8 @@ import androidx.compose.material.icons.rounded.ArrowUpward
 import androidx.compose.material.icons.rounded.AutoAwesome
 import androidx.compose.material.icons.rounded.BatteryFull
 import androidx.compose.material.icons.rounded.Bolt
+import androidx.compose.material.icons.rounded.Call
+import androidx.compose.material.icons.rounded.ChatBubble
 import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.Code
 import androidx.compose.material.icons.rounded.Dashboard
@@ -16,6 +18,7 @@ import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.Language
 import androidx.compose.material.icons.rounded.Memory
 import androidx.compose.material.icons.rounded.MoreHoriz
+import androidx.compose.material.icons.rounded.PhotoCamera
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.Smartphone
@@ -53,6 +56,11 @@ object VisionIcons {
     val Cpu: ImageVector = Icons.Rounded.DeveloperBoard
     val Ram: ImageVector = Icons.Rounded.Memory
     val Battery: ImageVector = Icons.Rounded.BatteryFull
+
+    // Floating dock (orb-launcher reference): Phone · Messages · Vision · Camera · Apps.
+    val Phone: ImageVector = Icons.Rounded.Call
+    val Messages: ImageVector = Icons.Rounded.ChatBubble
+    val Camera: ImageVector = Icons.Rounded.PhotoCamera
 
     /** Icon for a home quick-action tile. */
     fun forAction(a: QuickAction): ImageVector = when (a) {
