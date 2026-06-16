@@ -202,8 +202,13 @@ private fun WorkspacePage(
                         Box(Modifier.weight(1f).fillMaxHeight(), contentAlignment = Alignment.Center) {
                             if (item != null) {
                                 // The picked-up tile dims in place while it floats under the finger.
+                                val preview = if (item.type == ItemType.FOLDER) {
+                                    layout.folderChildren(item.id).take(4).map { visualFor(it.packageName) }
+                                } else {
+                                    emptyList()
+                                }
                                 Box(Modifier.fillMaxSize().alpha(if (item.id == dragging?.id) 0.3f else 1f), contentAlignment = Alignment.Center) {
-                                    WorkspaceCell(item, visualFor, onLaunch, onOpenFolder)
+                                    WorkspaceCell(item, visualFor, preview, onLaunch, onOpenFolder)
                                 }
                             }
                         }
@@ -256,11 +261,12 @@ private fun WorkspacePage(
 private fun WorkspaceCell(
     item: LauncherItem,
     visualFor: (String?) -> AppVisual?,
+    folderPreview: List<AppVisual?>,
     onLaunch: (String) -> Unit,
     onOpenFolder: (String) -> Unit,
 ) {
     when (item.type) {
-        ItemType.FOLDER -> FolderTile(item, visualFor, onClick = { onOpenFolder(item.id) })
+        ItemType.FOLDER -> FolderTile(item, folderPreview, onClick = { onOpenFolder(item.id) })
         else -> {
             val v = visualFor(item.packageName)
             AppTile(
@@ -301,7 +307,7 @@ private fun AppTile(label: String, icon: AppVisual?, onClick: () -> Unit) {
 
 /** A folder cell: a glass tile with a 2×2 preview of the first child icons + title. */
 @Composable
-private fun FolderTile(item: LauncherItem, visualFor: (String?) -> AppVisual?, onClick: () -> Unit) {
+private fun FolderTile(item: LauncherItem, preview: List<AppVisual?>, onClick: () -> Unit) {
     Column(
         Modifier.fillMaxSize().clip(RoundedCornerShape(16.dp)).clickable(onClick = onClick)
             .padding(vertical = 4.dp),
@@ -309,11 +315,26 @@ private fun FolderTile(item: LauncherItem, visualFor: (String?) -> AppVisual?, o
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         Box(
-            Modifier.size(52.dp).clip(RoundedCornerShape(15.dp)).glassPanel(radius = 15.dp).padding(6.dp),
+            Modifier.size(52.dp).clip(RoundedCornerShape(15.dp)).glassPanel(radius = 15.dp).padding(7.dp),
             contentAlignment = Alignment.Center,
         ) {
-            // Empty preview is fine for an empty folder — still a real, openable folder.
-            Icon(VisionIcons.Apps, item.title, tint = VisionColors.CyanPrimary, modifier = Modifier.size(22.dp))
+            if (preview.isEmpty()) {
+                Icon(VisionIcons.Apps, item.title, tint = VisionColors.CyanPrimary, modifier = Modifier.size(22.dp))
+            } else {
+                // 2×2 mini-grid of the first child icons (the real folder preview).
+                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    for (r in 0 until 2) {
+                        Row(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+                            for (c in 0 until 2) {
+                                val v = preview.getOrNull(r * 2 + c)
+                                Box(Modifier.size(15.dp).clip(RoundedCornerShape(5.dp)), contentAlignment = Alignment.Center) {
+                                    if (v != null) Image(v.icon, contentDescription = null, modifier = Modifier.fillMaxSize())
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
         Text(
             item.title ?: "Folder", style = MaterialTheme.typography.labelSmall, color = VisionColors.TextPrimary,

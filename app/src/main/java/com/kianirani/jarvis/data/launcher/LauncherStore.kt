@@ -95,22 +95,18 @@ class LauncherStore @Inject constructor(@ApplicationContext context: Context) {
     }
 
     /**
-     * Seed a sensible first-run layout from the installed apps: the dock filled
-     * with the first [LauncherLayout.dockCount]−1 apps (centre slot reserved for
-     * Vision), the rest flowing onto page-0 cells row-major. Only runs when empty.
+     * Seed a sensible first-run layout from the installed apps: every app flows
+     * onto the workspace grid row-major, adding pages as each fills, so nothing is
+     * hidden. The dock (hotseat) is left for the user to populate (LR6). Only runs
+     * when empty.
      */
     fun seedDefault(apps: List<AppRef>) {
         if (!isEmpty || apps.isEmpty()) return
         var l = LauncherLayout()
-        val dockSlots = (l.dockCount - 1).coerceAtLeast(0) // reserve centre for Vision
-        apps.take(dockSlots).forEachIndexed { i, a ->
-            l = LauncherOps.add(l, item(a, Container.HOTSEAT, 0, i, 0))
-        }
-        val rest = apps.drop(dockSlots)
-        var x = 0; var y = 0
-        for (a in rest) {
-            if (y >= l.gridRows) break
-            l = LauncherOps.add(l, item(a, Container.WORKSPACE, 0, x, y))
+        var page = 0; var x = 0; var y = 0
+        for (a in apps) {
+            if (y >= l.gridRows) { l = LauncherOps.addPage(l); page++; x = 0; y = 0 }
+            l = LauncherOps.add(l, item(a, Container.WORKSPACE, page, x, y))
             x++; if (x >= l.gridCols) { x = 0; y++ }
         }
         update(l)
