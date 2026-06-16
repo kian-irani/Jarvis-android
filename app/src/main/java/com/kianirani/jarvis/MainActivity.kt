@@ -210,7 +210,13 @@ private fun RouteContent(route: VisionRoute, homeWide: Boolean, onNavigate: (Vis
                     }
                 }
             } else {
-                homeContent(false)
+                // LR2: a real launcher home — page 0 is the AI-core orb home, the
+                // rest are workspace app grids rendered from the persisted layout.
+                val launcher: com.kianirani.jarvis.ui.screen.workspace.LauncherViewModel = hiltViewModel()
+                com.kianirani.jarvis.ui.screen.workspace.WorkspaceHomePager(
+                    vm = launcher,
+                    homePage = { homeContent(false) },
+                )
             }
         }
         VisionRoute.AGENTS -> AgentsScreen(showBack = false)
