@@ -2,15 +2,20 @@ package com.kianirani.jarvis.ui.theme
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ArrowUpward
+import androidx.compose.material.icons.rounded.AutoAwesome
+import androidx.compose.material.icons.rounded.BatteryFull
 import androidx.compose.material.icons.rounded.Bolt
 import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.Code
+import androidx.compose.material.icons.rounded.Dashboard
+import androidx.compose.material.icons.rounded.DeveloperBoard
 import androidx.compose.material.icons.rounded.Folder
 import androidx.compose.material.icons.rounded.GraphicEq
 import androidx.compose.material.icons.rounded.GridView
 import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.Language
 import androidx.compose.material.icons.rounded.Memory
+import androidx.compose.material.icons.rounded.MoreHoriz
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.Smartphone
@@ -37,6 +42,17 @@ object VisionIcons {
     val Weather: ImageVector = Icons.Rounded.WbSunny
     val Tasks: ImageVector = Icons.Rounded.CheckCircle
     val Devices: ImageVector = Icons.Rounded.Smartphone
+
+    // Orb satellites + quick access + AI-status metrics (orb-launcher reference).
+    val Spark: ImageVector = Icons.Rounded.AutoAwesome
+    val Projects: ImageVector = Icons.Rounded.Dashboard
+    val Automation: ImageVector = Icons.Rounded.Bolt
+    val Files: ImageVector = Icons.Rounded.Folder
+    val Browser: ImageVector = Icons.Rounded.Language
+    val More: ImageVector = Icons.Rounded.MoreHoriz
+    val Cpu: ImageVector = Icons.Rounded.DeveloperBoard
+    val Ram: ImageVector = Icons.Rounded.Memory
+    val Battery: ImageVector = Icons.Rounded.BatteryFull
 
     /** Icon for a home quick-action tile. */
     fun forAction(a: QuickAction): ImageVector = when (a) {

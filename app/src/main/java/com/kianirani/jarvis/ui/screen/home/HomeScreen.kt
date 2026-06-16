@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.provider.Settings
 import android.widget.Toast
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -15,8 +16,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
@@ -31,8 +34,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.ui.graphics.vector.ImageVector
-import com.kianirani.jarvis.ui.theme.VisionIcons
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -41,11 +42,18 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.kianirani.jarvis.data.agent.AgentState
@@ -55,16 +63,25 @@ import com.kianirani.jarvis.service.VisionAccessibilityService
 import com.kianirani.jarvis.ui.screen.hud.HudViewModel
 import com.kianirani.jarvis.ui.theme.JarvisColors
 import com.kianirani.jarvis.ui.theme.VisionColors
+import com.kianirani.jarvis.ui.theme.VisionIcons
 import com.kianirani.jarvis.ui.theme.glassPanel
 import com.kianirani.jarvis.ui.theme.visionEnter
 import java.util.Calendar
 
 /**
- * HOME (v12 reskin, 2026-06-14) — the orb-launcher home from the design
- * reference: greeting bar → glowing [VisionOrb] → "Ask Vision…" command bar →
- * stats → quick-actions grid → Active Agents card → device/widgets card. Reuses
- * [HudViewModel] for clock/command/voice and [HomeViewModel] for agents + stats.
- * Bottom navigation lives in MainActivity.
+ * HOME (RD2, 2026-06-16) — rebuilt screen-for-screen against the orb-launcher
+ * reference in `Example/`:
+ *
+ *   VISION OS header → greeting + weather → AI-core [VisionOrb] ringed by four
+ *   floating satellite chips (Memory · Projects · Agents · Automation) →
+ *   "What would you like to do today?" command bar → single-row Quick Access →
+ *   Today's Overview card → AI Status card (donut + CPU/RAM/Battery) →
+ *   Active Agents + Connected Devices two-up.
+ *
+ * Reuses [HudViewModel] for clock/command/voice and [HomeViewModel] for agents +
+ * device stats. Bottom navigation lives in MainActivity. Everything reads the
+ * state-backed [VisionColors] so theme/accent recolour live; entrances honour the
+ * global animation toggle via [visionEnter] (reduced-motion safe).
  */
 @Composable
 fun HomeScreen(
@@ -93,29 +110,28 @@ fun HomeScreen(
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 16.dp),
     ) {
-        GreetingTopBar(name = name, time = s.currentTime, brainOnline = s.brainOnline, onOpenSettings = onOpenSettings)
-        Spacer(Modifier.height(8.dp))
-        VisionOrb(
+        VisionOsHeader(brainOnline = s.brainOnline, onOpenSettings = onOpenSettings)
+        Spacer(Modifier.height(10.dp))
+        GreetingRow(name = name)
+        Spacer(Modifier.height(4.dp))
+
+        OrbCluster(
             listening = s.isListening,
-            modifier = Modifier.fillMaxWidth().aspectRatio(1.15f).visionEnter(0)
-                // Tap → talk. Swipe up → open the REAL system recent-apps switcher
-                // (GLOBAL_ACTION_RECENTS via accessibility) — the only way a 3rd-party
-                // launcher can reach Overview, since the hardware button can't be rebound.
-                .pointerInput(Unit) { detectTapGestures(onTap = { hud.toggleListening() }) }
-                .pointerInput(Unit) {
-                    var dy = 0f
-                    detectVerticalDragGestures(
-                        onDragEnd = { if (dy < -80f) openSystemRecents(ctx); dy = 0f },
-                        onVerticalDrag = { _, amount -> dy += amount },
-                    )
-                },
+            onTalk = hud::toggleListening,
+            onRecents = { openSystemRecents(ctx) },
+            onMemory = onOpenMemory,
+            onProjects = { onQuickAction(QuickAction.TASKS) },
+            onAgents = onOpenAgents,
+            onAutomation = { onQuickAction(QuickAction.AUTOMATION) },
+            modifier = Modifier.fillMaxWidth().visionEnter(0),
         )
         Text(
-            if (s.isListening) "● LISTENING — speak now" else "tap the orb to talk · swipe up for recent apps",
+            if (s.isListening) "LISTENING — speak now" else "tap the orb to talk · swipe up for recent apps",
             style = MaterialTheme.typography.labelMedium,
             color = if (s.isListening) JarvisColors.NeonGreen else JarvisColors.TextDim,
-            modifier = Modifier.align(Alignment.CenterHorizontally).padding(bottom = 10.dp),
+            modifier = Modifier.align(Alignment.CenterHorizontally).padding(bottom = 12.dp),
         )
+
         CommandBar(s.inputText, hud::onInputChange, hud::sendChat, Modifier.fillMaxWidth().visionEnter(1))
         if (s.jarvisOutput.isNotBlank()) {
             Text(
@@ -126,58 +142,153 @@ fun HomeScreen(
                 modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
             )
         }
+        Spacer(Modifier.height(16.dp))
+
+        QuickAccessRow(order, home.quickActions::move, home.quickActions::reset, onQuickAction, Modifier.fillMaxWidth().visionEnter(2))
         Spacer(Modifier.height(14.dp))
-        StatsRow(activeAgents, stats.tasks, s.nodesOnline, Modifier.fillMaxWidth().visionEnter(2))
+
+        OverviewCard(stats, agents, onOpenMemory, Modifier.fillMaxWidth().visionEnter(3))
         Spacer(Modifier.height(14.dp))
-        QuickActionsGrid(order, home.quickActions::move, home.quickActions::reset, onQuickAction, Modifier.fillMaxWidth().visionEnter(3))
+
+        AiStatusCard(stats, s.nodesOnline, s.brainOnline, Modifier.fillMaxWidth().visionEnter(4))
         Spacer(Modifier.height(14.dp))
+
         if (!showSidePanels) {
-            AgentsPanel(agents, onOpenAgents, Modifier.fillMaxWidth().visionEnter(4))
-            Spacer(Modifier.height(14.dp))
-            WidgetsCard(stats, onOpenMemory, Modifier.fillMaxWidth().visionEnter(5))
-            Spacer(Modifier.height(20.dp))
+            Row(Modifier.fillMaxWidth().visionEnter(5), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                ActiveAgentsCard(agents, activeAgents, onOpenAgents, Modifier.weight(1f))
+                ConnectedDevicesCard(s.nodesOnline, Modifier.weight(1f))
+            }
+            Spacer(Modifier.height(22.dp))
         }
     }
 }
 
+/** Centered "VISION OS / AI-NATIVE LAUNCHER" wordmark with a ghost settings gear. */
 @Composable
-fun GreetingTopBar(name: String, time: String, brainOnline: Boolean, onOpenSettings: () -> Unit) {
+private fun VisionOsHeader(brainOnline: Boolean, onOpenSettings: () -> Unit) {
+    Box(Modifier.fillMaxWidth().height(52.dp), contentAlignment = Alignment.Center) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(
+                "VISION OS",
+                style = MaterialTheme.typography.titleLarge,
+                color = JarvisColors.TextPrimary,
+            )
+            Text(
+                "AI-NATIVE LAUNCHER",
+                style = MaterialTheme.typography.labelSmall,
+                color = JarvisColors.TextDim,
+            )
+        }
+        // Brain heartbeat dot (left) + settings (right) tucked into the header rail.
+        Box(
+            Modifier.align(Alignment.CenterStart).size(8.dp)
+                .background(if (brainOnline) JarvisColors.NeonGreen else JarvisColors.DangerRed, CircleShape),
+        )
+        Box(
+            Modifier.align(Alignment.CenterEnd).size(40.dp).clip(CircleShape)
+                .background(JarvisColors.CyanFaint)
+                .border(1.dp, JarvisColors.CyanSecondary.copy(alpha = 0.5f), CircleShape)
+                .clickable(onClick = onOpenSettings),
+            contentAlignment = Alignment.Center,
+        ) { Icon(VisionIcons.Settings, "Settings", tint = JarvisColors.CyanPrimary, modifier = Modifier.size(20.dp)) }
+    }
+}
+
+/** Greeting on the left, a glass weather chip on the right (static until weather phase). */
+@Composable
+private fun GreetingRow(name: String) {
     val greeting = when (Calendar.getInstance().get(Calendar.HOUR_OF_DAY)) {
-        in 5..11 -> "Morning"; in 12..16 -> "Afternoon"; in 17..21 -> "Evening"; else -> "Night"
+        in 5..11 -> "Good Morning"; in 12..16 -> "Good Afternoon"; in 17..21 -> "Good Evening"; else -> "Good Night"
     }
     Row(
-        Modifier.fillMaxWidth().height(56.dp),
+        Modifier.fillMaxWidth().padding(top = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
-        Column {
-            Text("$greeting,", style = MaterialTheme.typography.bodySmall, color = JarvisColors.TextDim)
-            Text(name.ifBlank { "VISION" }, style = MaterialTheme.typography.titleLarge, color = JarvisColors.TextPrimary)
+        Column(Modifier.weight(1f)) {
+            Text("$greeting,", style = MaterialTheme.typography.bodyMedium, color = JarvisColors.TextDim)
+            Text(name.ifBlank { "Vision" }, style = MaterialTheme.typography.headlineLarge, color = JarvisColors.TextPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text("Vision is ready to assist you", style = MaterialTheme.typography.bodySmall, color = JarvisColors.TextSecondary)
         }
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            // Static weather chip (real weather lands in a later phase).
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(3.dp)) {
-                Text("22°", style = MaterialTheme.typography.titleMedium, color = JarvisColors.TextPrimary)
-                Icon(VisionIcons.Weather, contentDescription = "Weather", tint = JarvisColors.WarningAmber, modifier = Modifier.size(18.dp))
+        Spacer(Modifier.width(12.dp))
+        Row(
+            Modifier.glassPanel(radius = 18.dp).padding(horizontal = 14.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Icon(VisionIcons.Weather, "Weather", tint = JarvisColors.WarningAmber, modifier = Modifier.size(22.dp))
+            Column(horizontalAlignment = Alignment.End) {
+                Text("24°", style = MaterialTheme.typography.titleMedium, color = JarvisColors.TextPrimary)
+                Text("Mostly Cloudy", style = MaterialTheme.typography.labelSmall, color = JarvisColors.TextDim)
             }
-            Text(time, style = MaterialTheme.typography.labelLarge, color = JarvisColors.CyanPrimary)
-            Box(Modifier.size(7.dp).background(if (brainOnline) JarvisColors.NeonGreen else JarvisColors.DangerRed, CircleShape))
-            Box(
-                Modifier.size(40.dp).background(JarvisColors.CyanFaint, CircleShape)
-                    .border(1.dp, JarvisColors.CyanSecondary.copy(alpha = 0.6f), CircleShape)
-                    .clickable(onClick = onOpenSettings),
-                contentAlignment = Alignment.Center,
-            ) { Icon(VisionIcons.Settings, contentDescription = "Settings", tint = JarvisColors.CyanPrimary, modifier = Modifier.size(20.dp)) }
         }
+    }
+}
+
+/**
+ * The AI-core hero: the [VisionOrb] centred in a square box, ringed by four glass
+ * satellite chips at the corners (Memory · Projects · Agents · Automation), each a
+ * tappable shortcut. Tap the orb to talk; swipe up opens system recents.
+ */
+@Composable
+private fun OrbCluster(
+    listening: Boolean,
+    onTalk: () -> Unit,
+    onRecents: () -> Unit,
+    onMemory: () -> Unit,
+    onProjects: () -> Unit,
+    onAgents: () -> Unit,
+    onAutomation: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Box(modifier.aspectRatio(1f), contentAlignment = Alignment.Center) {
+        VisionOrb(
+            listening = listening,
+            modifier = Modifier.fillMaxSize().padding(34.dp)
+                .pointerInput(Unit) { detectTapGestures(onTap = { onTalk() }) }
+                .pointerInput(Unit) {
+                    var dy = 0f
+                    detectVerticalDragGestures(
+                        onDragEnd = { if (dy < -80f) onRecents(); dy = 0f },
+                        onVerticalDrag = { _, amount -> dy += amount },
+                    )
+                },
+        )
+        SatelliteNode(VisionIcons.Memory, "Memory", onMemory, Modifier.align(Alignment.TopStart).offset(x = 4.dp, y = 12.dp))
+        SatelliteNode(VisionIcons.Projects, "Projects", onProjects, Modifier.align(Alignment.TopEnd).offset(x = (-4).dp, y = 12.dp))
+        SatelliteNode(VisionIcons.Agents, "Agents", onAgents, Modifier.align(Alignment.BottomStart).offset(x = 4.dp, y = (-12).dp))
+        SatelliteNode(VisionIcons.Automation, "Automation", onAutomation, Modifier.align(Alignment.BottomEnd).offset(x = (-4).dp, y = (-12).dp))
+    }
+}
+
+/** A small glass chip orbiting the orb — circular icon badge + label. */
+@Composable
+private fun SatelliteNode(icon: ImageVector, label: String, onClick: () -> Unit, modifier: Modifier) {
+    Row(
+        modifier.clip(RoundedCornerShape(20.dp)).clickable(onClick = onClick)
+            .glassPanel(radius = 20.dp).padding(start = 6.dp, end = 12.dp, top = 6.dp, bottom = 6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(7.dp),
+    ) {
+        Box(
+            Modifier.size(28.dp).background(JarvisColors.CyanFaint, CircleShape),
+            contentAlignment = Alignment.Center,
+        ) { Icon(icon, label, tint = JarvisColors.CyanPrimary, modifier = Modifier.size(16.dp)) }
+        Text(label, style = MaterialTheme.typography.labelMedium, color = JarvisColors.TextPrimary, maxLines = 1)
     }
 }
 
 @Composable
 private fun CommandBar(value: String, onChange: (String) -> Unit, onSend: () -> Unit, modifier: Modifier) {
     Row(
-        modifier.glassPanel(radius = 26.dp).padding(start = 18.dp, end = 8.dp, top = 6.dp, bottom = 6.dp),
+        modifier.glassPanel(radius = 28.dp).padding(start = 8.dp, end = 8.dp, top = 6.dp, bottom = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
+        Box(
+            Modifier.size(36.dp).background(VisionColors.PlasmaSweep, CircleShape),
+            contentAlignment = Alignment.Center,
+        ) { Icon(VisionIcons.Spark, "Vision", tint = VisionColors.Background, modifier = Modifier.size(18.dp)) }
+        Spacer(Modifier.width(10.dp))
         BasicTextField(
             value = value, onValueChange = onChange, singleLine = true,
             textStyle = MaterialTheme.typography.bodyLarge.copy(color = JarvisColors.TextPrimary),
@@ -186,49 +297,23 @@ private fun CommandBar(value: String, onChange: (String) -> Unit, onSend: () -> 
             keyboardActions = KeyboardActions(onSend = { onSend() }),
             modifier = Modifier.weight(1f).padding(vertical = 10.dp),
             decorationBox = { inner ->
-                if (value.isEmpty()) Text("Ask Vision…", style = MaterialTheme.typography.bodyLarge, color = JarvisColors.TextDim)
+                if (value.isEmpty()) Text("What would you like to do today?", style = MaterialTheme.typography.bodyLarge, color = JarvisColors.TextDim, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 inner()
             },
         )
+        Spacer(Modifier.width(6.dp))
         Box(
-            Modifier.size(40.dp).background(VisionColors.PlasmaSweep, CircleShape).clickable(onClick = onSend),
+            Modifier.size(40.dp).background(JarvisColors.CyanFaint, CircleShape)
+                .border(1.dp, JarvisColors.CyanSecondary.copy(alpha = 0.5f), CircleShape)
+                .clickable(onClick = onSend),
             contentAlignment = Alignment.Center,
-        ) { Icon(VisionIcons.Send, contentDescription = "Send", tint = VisionColors.Background, modifier = Modifier.size(20.dp)) }
+        ) { Icon(VisionIcons.Send, "Send", tint = JarvisColors.CyanPrimary, modifier = Modifier.size(18.dp)) }
     }
 }
 
+/** Single-row Quick Access (reference): six compact glass tiles + edit/reorder. */
 @Composable
-private fun StatsRow(agents: Int, tasks: Int, devices: Int, modifier: Modifier) {
-    Row(
-        modifier.glassPanel(radius = 18.dp).padding(vertical = 14.dp),
-        horizontalArrangement = Arrangement.SpaceEvenly,
-    ) {
-        Stat(VisionIcons.Agents, agents, "Agents")
-        StatDivider()
-        Stat(VisionIcons.Tasks, tasks, "Tasks")
-        StatDivider()
-        Stat(VisionIcons.Devices, devices, "Devices")
-    }
-}
-
-@Composable
-private fun Stat(icon: ImageVector, value: Int, label: String) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            Icon(icon, contentDescription = null, tint = JarvisColors.CyanPrimary, modifier = Modifier.size(18.dp))
-            Text("$value", style = MaterialTheme.typography.titleLarge, color = JarvisColors.TextPrimary)
-        }
-        Text(label, style = MaterialTheme.typography.labelSmall, color = JarvisColors.TextDim)
-    }
-}
-
-@Composable
-private fun StatDivider() {
-    Box(Modifier.width(1.dp).height(28.dp).background(JarvisColors.GridLine))
-}
-
-@Composable
-private fun QuickActionsGrid(
+private fun QuickAccessRow(
     order: List<QuickAction>,
     onMove: (QuickAction, Int) -> Unit,
     onReset: () -> Unit,
@@ -237,8 +322,8 @@ private fun QuickActionsGrid(
 ) {
     var edit by remember { mutableStateOf(false) }
     Column(modifier) {
-        Row(Modifier.fillMaxWidth().padding(bottom = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text("QUICK ACTIONS", style = MaterialTheme.typography.labelSmall, color = JarvisColors.CyanSecondary)
+        Row(Modifier.fillMaxWidth().padding(bottom = 10.dp), verticalAlignment = Alignment.CenterVertically) {
+            Text("Quick Access", style = MaterialTheme.typography.titleMedium, color = JarvisColors.TextPrimary)
             Spacer(Modifier.weight(1f))
             if (edit) {
                 Text("RESET", style = MaterialTheme.typography.labelSmall, color = JarvisColors.DangerRed,
@@ -247,15 +332,9 @@ private fun QuickActionsGrid(
             Text(if (edit) "DONE" else "EDIT", style = MaterialTheme.typography.labelSmall, color = JarvisColors.CyanPrimary,
                 modifier = Modifier.clickable { edit = !edit }.padding(start = 4.dp))
         }
-        // Two rows of three for a clean phone grid.
-        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            order.chunked(3).forEach { rowItems ->
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    rowItems.forEach { qa ->
-                        QuickTile(qa, edit, { onMove(qa, -1) }, { onMove(qa, 1) }, { onAction(qa) }, Modifier.weight(1f))
-                    }
-                    repeat(3 - rowItems.size) { Spacer(Modifier.weight(1f)) }
-                }
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            order.forEach { qa ->
+                QuickTile(qa, edit, { onMove(qa, -1) }, { onMove(qa, 1) }, { onAction(qa) }, Modifier.weight(1f))
             }
         }
     }
@@ -271,87 +350,152 @@ private fun QuickTile(
     modifier: Modifier,
 ) {
     Column(
-        modifier
-            .glassPanel(radius = 16.dp)
-            .clickable(enabled = !edit, onClick = onClick)
-            .padding(vertical = 14.dp),
+        modifier.clip(RoundedCornerShape(16.dp)).clickable(enabled = !edit, onClick = onClick)
+            .glassPanel(radius = 16.dp).padding(vertical = 12.dp, horizontal = 4.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         Box(
-            Modifier.size(46.dp).background(JarvisColors.CyanFaint, CircleShape)
-                .border(1.dp, JarvisColors.CyanSecondary.copy(alpha = 0.45f), CircleShape),
+            Modifier.size(40.dp).background(JarvisColors.CyanFaint, CircleShape)
+                .border(1.dp, JarvisColors.CyanSecondary.copy(alpha = 0.4f), CircleShape),
             contentAlignment = Alignment.Center,
-        ) { Icon(VisionIcons.forAction(qa), contentDescription = qa.label, tint = JarvisColors.CyanPrimary, modifier = Modifier.size(22.dp)) }
-        Text(qa.label, style = MaterialTheme.typography.bodySmall, color = JarvisColors.TextPrimary, maxLines = 1)
+        ) { Icon(VisionIcons.forAction(qa), qa.label, tint = JarvisColors.CyanPrimary, modifier = Modifier.size(20.dp)) }
+        Text(qa.label, style = MaterialTheme.typography.labelSmall, color = JarvisColors.TextSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis, textAlign = TextAlign.Center)
         if (edit) {
-            Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-                Text("‹", style = MaterialTheme.typography.titleLarge, color = JarvisColors.CyanPrimary, modifier = Modifier.clickable(onClick = onLeft))
-                Text("›", style = MaterialTheme.typography.titleLarge, color = JarvisColors.CyanPrimary, modifier = Modifier.clickable(onClick = onRight))
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                Text("‹", style = MaterialTheme.typography.titleMedium, color = JarvisColors.CyanPrimary, modifier = Modifier.clickable(onClick = onLeft))
+                Text("›", style = MaterialTheme.typography.titleMedium, color = JarvisColors.CyanPrimary, modifier = Modifier.clickable(onClick = onRight))
             }
         }
     }
 }
 
+/** "Today's Overview" — a few live activity rows synthesised from stats + agents. */
 @Composable
-fun AgentsPanel(agents: List<AgentState>, onOpenAgents: () -> Unit, modifier: Modifier) {
-    Column(modifier.glassPanel(radius = 18.dp).padding(16.dp)) {
+private fun OverviewCard(stats: HomeStats, agents: List<AgentState>, onOpenMemory: () -> Unit, modifier: Modifier) {
+    val working = agents.firstOrNull { it.status == AgentStatus.WORKING || it.status == AgentStatus.ACTIVE }
+    Column(modifier.glassPanel(radius = 20.dp).padding(16.dp)) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            Text("Active Agents", style = MaterialTheme.typography.titleMedium, color = JarvisColors.TextPrimary)
+            Text("Today's Overview", style = MaterialTheme.typography.titleMedium, color = JarvisColors.TextPrimary)
             Spacer(Modifier.weight(1f))
-            Text("MANAGE ›", style = MaterialTheme.typography.labelSmall, color = JarvisColors.CyanPrimary,
-                modifier = Modifier.clickable(onClick = onOpenAgents))
+            Text("View all ›", style = MaterialTheme.typography.labelSmall, color = JarvisColors.CyanPrimary,
+                modifier = Modifier.clickable(onClick = onOpenMemory))
         }
-        Spacer(Modifier.height(10.dp))
-        agents.forEach { a ->
-            Row(
-                Modifier.fillMaxWidth().padding(vertical = 7.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Box(
-                    Modifier.size(30.dp).background(JarvisColors.CyanFaint, RoundedCornerShape(8.dp)),
-                    contentAlignment = Alignment.Center,
-                ) { Icon(VisionIcons.forAgent(a.id), contentDescription = a.id.display, tint = JarvisColors.CyanPrimary, modifier = Modifier.size(18.dp)) }
-                Spacer(Modifier.width(12.dp))
-                Text(a.id.display, style = MaterialTheme.typography.bodyLarge, color = JarvisColors.TextPrimary)
-                Spacer(Modifier.weight(1f))
-                Text(a.status.name, style = MaterialTheme.typography.labelSmall, color = statusColor(a.status))
-                Spacer(Modifier.width(8.dp))
-                Box(Modifier.size(9.dp).background(statusColor(a.status), CircleShape))
+        Spacer(Modifier.height(12.dp))
+        OverviewItem(VisionIcons.Tasks, "Pending tasks", if (stats.tasks > 0) "${stats.tasks} to review" else "all clear", stats.recentTask?.takeIf { stats.tasks > 0 } ?: "now")
+        OverviewItem(VisionIcons.Agents, "Agent activity", working?.let { it.id.display } ?: "idle", working?.status?.name ?: "—")
+        OverviewItem(VisionIcons.Memory, "Memory", "${stats.memories} stored", "synced")
+    }
+}
+
+@Composable
+private fun OverviewItem(icon: ImageVector, title: String, subtitle: String, trailing: String) {
+    Row(Modifier.fillMaxWidth().padding(vertical = 7.dp), verticalAlignment = Alignment.CenterVertically) {
+        Box(
+            Modifier.size(34.dp).background(JarvisColors.CyanFaint, RoundedCornerShape(10.dp)),
+            contentAlignment = Alignment.Center,
+        ) { Icon(icon, null, tint = JarvisColors.CyanPrimary, modifier = Modifier.size(18.dp)) }
+        Spacer(Modifier.width(12.dp))
+        Column(Modifier.weight(1f)) {
+            Text(title, style = MaterialTheme.typography.bodyLarge, color = JarvisColors.TextPrimary, maxLines = 1)
+            Text(subtitle, style = MaterialTheme.typography.bodySmall, color = JarvisColors.TextDim, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        }
+        Text(trailing, style = MaterialTheme.typography.labelSmall, color = JarvisColors.TextSecondary, maxLines = 1)
+    }
+}
+
+/** "AI Status" — operational banner + CPU/RAM/Battery metrics with a donut gauge. */
+@Composable
+private fun AiStatusCard(stats: HomeStats, nodesOnline: Int, brainOnline: Boolean, modifier: Modifier) {
+    // No real CPU read; derive a calm "load" from agents-implied work is out of scope,
+    // so show RAM (live), Battery (live), and Nodes online. The donut tracks battery.
+    val battery = stats.battery.coerceIn(0, 100)
+    Column(modifier.glassPanel(radius = 20.dp).padding(16.dp)) {
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Text("AI Status", style = MaterialTheme.typography.titleMedium, color = JarvisColors.TextPrimary)
+            Spacer(Modifier.width(10.dp))
+            Box(Modifier.size(8.dp).background(if (brainOnline) JarvisColors.NeonGreen else JarvisColors.WarningAmber, CircleShape))
+            Spacer(Modifier.width(6.dp))
+            Text(if (brainOnline) "All systems operational" else "Local-only mode",
+                style = MaterialTheme.typography.bodySmall, color = JarvisColors.TextSecondary)
+        }
+        Spacer(Modifier.height(14.dp))
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Metric(VisionIcons.Ram, "RAM", if (stats.freeRamMb >= 0) "${stats.freeRamMb} MB free" else "n/a")
+                Metric(VisionIcons.Cpu, "Nodes", if (nodesOnline > 0) "$nodesOnline online" else "device only")
+                Metric(VisionIcons.Battery, "Battery", if (stats.battery in 0..100) "${stats.battery}%" else "n/a")
             }
+            Spacer(Modifier.width(12.dp))
+            DonutGauge(percent = if (stats.battery in 0..100) battery / 100f else 0f, label = if (stats.battery in 0..100) "$battery%" else "—")
         }
     }
 }
 
 @Composable
-private fun WidgetsCard(stats: HomeStats, onOpenMemory: () -> Unit, modifier: Modifier) {
-    Column(modifier.glassPanel(radius = 18.dp).padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        WidgetRow("Recent task", stats.recentTask ?: "no pending tasks")
-        WidgetRow(
-            "Device",
-            buildString {
-                append(if (stats.battery in 0..100) "${stats.battery}% battery" else "battery n/a")
-                if (stats.freeRamMb >= 0) append(" · ${stats.freeRamMb}MB free")
-            },
-        )
-        WidgetRow("Memory", "${stats.memories} stored")
-        Row(
-            Modifier.fillMaxWidth().clickable(onClick = onOpenMemory).padding(top = 2.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text("Smart suggestion", style = MaterialTheme.typography.bodySmall, color = JarvisColors.TextDim)
-            Spacer(Modifier.weight(1f))
-            Text("Review your memory workspace ›", style = MaterialTheme.typography.bodySmall, color = JarvisColors.CyanPrimary)
-        }
-    }
-}
-
-@Composable
-private fun WidgetRow(label: String, value: String) {
-    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+private fun Metric(icon: ImageVector, label: String, value: String) {
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Icon(icon, null, tint = JarvisColors.CyanPrimary, modifier = Modifier.size(18.dp))
         Text(label, style = MaterialTheme.typography.bodyMedium, color = JarvisColors.TextDim)
         Spacer(Modifier.weight(1f))
-        Text(value, style = MaterialTheme.typography.bodyMedium, color = JarvisColors.TextPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        Text(value, style = MaterialTheme.typography.bodyMedium, color = JarvisColors.TextPrimary)
+    }
+}
+
+/** Small plasma-stroked progress ring with a centred value label. */
+@Composable
+private fun DonutGauge(percent: Float, label: String) {
+    Box(Modifier.size(78.dp), contentAlignment = Alignment.Center) {
+        val track = JarvisColors.GridLine
+        val sweep = VisionColors.PlasmaSweep
+        Canvas(Modifier.fillMaxSize()) {
+            val w = size.minDimension * 0.12f
+            val inset = w / 2f
+            val arcSize = Size(size.width - w, size.height - w)
+            val topLeft = Offset(inset, inset)
+            drawArc(track, 0f, 360f, false, topLeft, arcSize, style = Stroke(w, cap = StrokeCap.Round))
+            drawArc(sweep, -90f, 360f * percent.coerceIn(0f, 1f), false, topLeft, arcSize, style = Stroke(w, cap = StrokeCap.Round))
+        }
+        Text(label, style = MaterialTheme.typography.titleMedium, color = JarvisColors.TextPrimary)
+    }
+}
+
+/** Compact "Active Agents" summary card (left of the two-up row). */
+@Composable
+private fun ActiveAgentsCard(agents: List<AgentState>, activeCount: Int, onOpenAgents: () -> Unit, modifier: Modifier) {
+    Column(
+        modifier.clip(RoundedCornerShape(18.dp)).clickable(onClick = onOpenAgents).glassPanel(radius = 18.dp).padding(14.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        Text("Active Agents", style = MaterialTheme.typography.bodyMedium, color = JarvisColors.TextDim)
+        Text("$activeCount running", style = MaterialTheme.typography.titleLarge, color = JarvisColors.TextPrimary)
+        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            agents.take(4).forEach { a ->
+                Box(
+                    Modifier.size(26.dp).background(JarvisColors.CyanFaint, CircleShape)
+                        .border(1.dp, statusColor(a.status).copy(alpha = 0.7f), CircleShape),
+                    contentAlignment = Alignment.Center,
+                ) { Icon(VisionIcons.forAgent(a.id), a.id.display, tint = JarvisColors.CyanPrimary, modifier = Modifier.size(14.dp)) }
+            }
+        }
+    }
+}
+
+/** Compact "Connected Devices" summary card (right of the two-up row). */
+@Composable
+private fun ConnectedDevicesCard(nodesOnline: Int, modifier: Modifier) {
+    Column(
+        modifier.glassPanel(radius = 18.dp).padding(14.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        Text("Connected Devices", style = MaterialTheme.typography.bodyMedium, color = JarvisColors.TextDim)
+        Text("${nodesOnline + 1} connected", style = MaterialTheme.typography.titleLarge, color = JarvisColors.TextPrimary)
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Icon(VisionIcons.Devices, "This device", tint = JarvisColors.CyanPrimary, modifier = Modifier.size(20.dp))
+            repeat(nodesOnline.coerceAtMost(3)) {
+                Icon(VisionIcons.Cpu, "Node", tint = JarvisColors.CyanSecondary, modifier = Modifier.size(20.dp))
+            }
+        }
     }
 }
 
