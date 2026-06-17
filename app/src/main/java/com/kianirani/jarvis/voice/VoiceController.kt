@@ -17,6 +17,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import java.io.File
 import java.util.Locale
@@ -35,9 +38,13 @@ import java.util.Locale
  */
 interface VoiceController {
     val available: Boolean
+    /** True while a reply is being spoken (BUG-2) — drives the command-bar Stop state. */
+    val isSpeaking: StateFlow<Boolean>
     fun startListening(onResult: (String) -> Unit, onEnd: () -> Unit)
     fun stopListening()
     fun speak(text: String)
+    /** Interrupt any in-flight speech immediately (BUG-2 stop / barge-in). */
+    fun stopSpeaking()
     /** Installed voices for a language ("fa", "en", …) for the settings picker. */
     fun voicesFor(language: String): List<VoiceOption>
     /** Speak a short sample in [language] using the current/best voice (TEST VOICE). */
@@ -74,6 +81,9 @@ class AndroidVoiceController(
     // Sequential code-switch queue: (locale, text) spoken one after another so
     // each segment's language is applied before that segment plays.
     private val queue = ArrayDeque<Pair<Locale, String>>()
+
+    private val _isSpeaking = MutableStateFlow(false)
+    override val isSpeaking: StateFlow<Boolean> = _isSpeaking.asStateFlow()
 
     override val available: Boolean
         get() = SpeechRecognizer.isRecognitionAvailable(context)
@@ -152,7 +162,25 @@ class AndroidVoiceController(
     override fun speak(text: String) {
         if (text.isBlank()) return
         stopAudio()
-        if (settings?.neuralVoice?.value == true && isOnline()) speakNeural(text) else speakOnDevice(text)
+        _isSpeaking.value = true
+        // BUG-4: Persian replies auto-use the neural voice; see [VoiceRouting].
+        val useNeural = VoiceRouting.useNeural(
+            language = settings?.language?.value,
+            neuralEnabled = settings?.neuralVoice?.value == true,
+            online = isOnline(),
+        )
+        if (useNeural) speakNeural(text) else speakOnDevice(text)
+    }
+
+    /** BUG-2: interrupt any in-flight speech immediately (Stop button / orb tap / barge-in). */
+    override fun stopSpeaking() {
+        neuralJob?.cancel(); neuralJob = null
+        main.post {
+            releasePlayer()
+            tts?.stop()
+            queue.clear()
+        }
+        _isSpeaking.value = false
     }
 
     /** On-device code-switch path: split into per-script runs and speak in order. */
@@ -189,7 +217,7 @@ class AndroidVoiceController(
                 releasePlayer()
                 val mp = MediaPlayer()
                 mp.setOnPreparedListener { it.start() }
-                mp.setOnCompletionListener { it.release(); if (player === it) player = null }
+                mp.setOnCompletionListener { it.release(); if (player === it) player = null; _isSpeaking.value = false }
                 mp.setOnErrorListener { p, _, _ -> p.release(); if (player === p) player = null; onError(); true }
                 runCatching { mp.setDataSource(file.path); mp.prepareAsync(); player = mp }
                     .onFailure { mp.release(); onError() }
@@ -214,7 +242,8 @@ class AndroidVoiceController(
 
     private var segCounter = 0
     private fun speakNext(flush: Boolean) {
-        val (locale, text) = queue.removeFirstOrNull() ?: return
+        // Queue fully drained → speech is done (BUG-2 isSpeaking lifecycle).
+        val (locale, text) = queue.removeFirstOrNull() ?: run { _isSpeaking.value = false; return }
         if (text.isBlank()) { speakNext(flush); return } // skip empties, keep ordering
         applyVoice(locale)
         tts?.speak(text, if (flush) TextToSpeech.QUEUE_FLUSH else TextToSpeech.QUEUE_ADD, null, "seg${segCounter++}")
@@ -320,6 +349,7 @@ class AndroidVoiceController(
 
     override fun release() {
         neuralJob?.cancel()
+        _isSpeaking.value = false
         runCatching { scope.cancel() }
         runCatching { edge.close() }
         main.post {
