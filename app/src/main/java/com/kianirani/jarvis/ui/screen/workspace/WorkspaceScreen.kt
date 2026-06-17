@@ -79,6 +79,7 @@ fun WorkspaceHomePager(
     val totalPages = (1 + layout.pageCount).coerceAtLeast(1)
     val pagerState = rememberPagerState(pageCount = { totalPages })
     var openFolder by remember { mutableStateOf<String?>(null) }
+    var showEdit by remember { mutableStateOf(false) }
     val ctx = androidx.compose.ui.platform.LocalContext.current
     val openAppInfo: (String) -> Unit = { pkg ->
         runCatching {
@@ -106,6 +107,7 @@ fun WorkspaceHomePager(
                     onAddToFolder = { folderId, itemId -> vm.store.addToFolder(folderId, itemId) },
                     onRemove = { id -> vm.store.remove(id) },
                     onAppInfo = openAppInfo,
+                    onEditHome = { showEdit = true },
                     modifier = Modifier.fillMaxSize(),
                 )
             }
@@ -133,6 +135,26 @@ fun WorkspaceHomePager(
             onDismiss = { openFolder = null },
         )
     }
+
+    if (showEdit) {
+        val workspacePage = (pagerState.currentPage - 1).coerceAtLeast(0)
+        HomeEditSheet(
+            canRemovePage = layout.pageCount > 1,
+            onWallpaper = {
+                runCatching {
+                    ctx.startActivity(
+                        android.content.Intent.createChooser(
+                            android.content.Intent(android.content.Intent.ACTION_SET_WALLPAPER), "Wallpaper",
+                        ).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK),
+                    )
+                }
+                showEdit = false
+            },
+            onAddPage = { vm.store.addPage(); showEdit = false },
+            onRemovePage = { vm.store.removePage(workspacePage); showEdit = false },
+            onDismiss = { showEdit = false },
+        )
+    }
 }
 
 /**
@@ -157,6 +179,7 @@ private fun WorkspacePage(
     onAddToFolder: (folderId: String, itemId: String) -> Unit,
     onRemove: (id: String) -> Unit,
     onAppInfo: (pkg: String) -> Unit,
+    onEditHome: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val cols = layout.gridCols
@@ -192,7 +215,10 @@ private fun WorkspacePage(
                     },
                     onDragEnd = {
                         val d = dragging
-                        if (d != null && gridSize.width > 0) {
+                        if (d == null && !movedFar) {
+                            // Long-press on empty space → home edit sheet (Neo-style).
+                            onEditHome()
+                        } else if (d != null && gridSize.width > 0) {
                             if (!movedFar) {
                                 // A long-press that didn't move → open the icon menu.
                                 menuFor = d; menuPos = dragPos
@@ -294,6 +320,30 @@ private fun WorkspacePage(
                 }
                 IconMenuItem(VisionIcons.Close, "Remove from home", danger = true) { onRemove(item.id); menuFor = null }
             }
+        }
+    }
+}
+
+/** Neo-style home edit sheet — long-press empty space → wallpaper / pages. */
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+@Composable
+private fun HomeEditSheet(
+    canRemovePage: Boolean,
+    onWallpaper: () -> Unit,
+    onAddPage: () -> Unit,
+    onRemovePage: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    androidx.compose.material3.ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        containerColor = VisionColors.Surface,
+    ) {
+        Column(Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp)) {
+            Text("Edit home", style = MaterialTheme.typography.titleMedium, color = VisionColors.TextPrimary, modifier = Modifier.padding(start = 16.dp, bottom = 8.dp))
+            IconMenuItem(VisionIcons.Weather, "Wallpaper", onClick = onWallpaper)
+            IconMenuItem(VisionIcons.Apps, "Add a page", onClick = onAddPage)
+            if (canRemovePage) IconMenuItem(VisionIcons.Close, "Remove this page", danger = true, onClick = onRemovePage)
+            Spacer(Modifier.navigationBarsPadding())
         }
     }
 }
