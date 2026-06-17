@@ -140,10 +140,12 @@ fun SettingsHubScreen(
         }
         Section("PERSONA", 2) {
             val personaName by s.personaName.collectAsStateWithLifecycle()
+            val userName by s.userName.collectAsStateWithLifecycle()
             val humor by s.humorLevel.collectAsStateWithLifecycle()
             val formality by s.formalityLevel.collectAsStateWithLifecycle()
             val respLen by s.responseLength.collectAsStateWithLifecycle()
             val lang by s.language.collectAsStateWithLifecycle()
+            PersonaNameRow(userName, label = "Your name", placeholder = "Your name") { s.setUserName(it) }
             PersonaNameRow(personaName) { s.setPersonaName(it) }
             LanguageRow(lang) {
                 s.setLanguage(it)
@@ -340,9 +342,9 @@ private fun ActivationRow(store: ActivationStore) {
 }
 
 @Composable
-private fun PersonaNameRow(name: String, onChange: (String) -> Unit) {
+private fun PersonaNameRow(name: String, label: String = "AI name", placeholder: String = "VISION", onChange: (String) -> Unit) {
     Row(Modifier.fillMaxWidth().padding(vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
-        Text("AI name", style = MaterialTheme.typography.bodyMedium, color = JarvisColors.TextPrimary, modifier = Modifier.weight(1f))
+        Text(label, style = MaterialTheme.typography.bodyMedium, color = JarvisColors.TextPrimary, modifier = Modifier.weight(1f))
         BasicTextField(
             value = name,
             onValueChange = onChange,
@@ -352,7 +354,7 @@ private fun PersonaNameRow(name: String, onChange: (String) -> Unit) {
             modifier = Modifier.width(140.dp),
             decorationBox = { inner ->
                 Box {
-                    if (name.isEmpty()) Text("VISION", style = MaterialTheme.typography.bodyMedium, color = JarvisColors.TextDim, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.End)
+                    if (name.isEmpty()) Text(placeholder, style = MaterialTheme.typography.bodyMedium, color = JarvisColors.TextDim, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.End)
                     inner()
                 }
             },

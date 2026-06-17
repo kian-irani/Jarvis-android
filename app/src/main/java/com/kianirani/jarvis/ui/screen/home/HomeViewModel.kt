@@ -48,6 +48,9 @@ class HomeViewModel @Inject constructor(
     val agentStates = agents.states
     val personaName: StateFlow<String> = settings.personaName
 
+    /** The user's own name for the greeting (NOT the assistant's name). */
+    val userName: StateFlow<String> = settings.userName
+
     private val _stats = MutableStateFlow(HomeStats())
     val stats: StateFlow<HomeStats> = _stats.asStateFlow()
 

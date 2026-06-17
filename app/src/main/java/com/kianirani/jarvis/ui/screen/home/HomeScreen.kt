@@ -95,7 +95,9 @@ fun HomeScreen(
     val stats by home.stats.collectAsStateWithLifecycle()
     val agents by home.agentStates.collectAsStateWithLifecycle()
     val order by home.quickActions.order.collectAsStateWithLifecycle()
-    val name by home.personaName.collectAsStateWithLifecycle()
+    // Greet the USER by their own name — not the assistant's name (bug fix).
+    val name by home.userName.collectAsStateWithLifecycle()
+    val assistantName by home.personaName.collectAsStateWithLifecycle()
     val ctx = LocalContext.current
     androidx.compose.runtime.LaunchedEffect(Unit) { home.refresh() }
 
@@ -108,7 +110,7 @@ fun HomeScreen(
             .padding(horizontal = 20.dp),
     ) {
         Spacer(Modifier.height(6.dp))
-        GreetingRow(name = name, onOpenSettings = onOpenSettings)
+        GreetingRow(name = name, assistantName = assistantName, onOpenSettings = onOpenSettings)
 
         // ── The hero: the AI core, dominating the screen ──────────────────────
         OrbCluster(
@@ -160,7 +162,7 @@ fun HomeScreen(
 
 /** Greeting on the left, a glass weather chip + a small settings button on the right. */
 @Composable
-private fun GreetingRow(name: String, onOpenSettings: () -> Unit) {
+private fun GreetingRow(name: String, assistantName: String, onOpenSettings: () -> Unit) {
     val ctx = LocalContext.current
     val greeting = when (Calendar.getInstance().get(Calendar.HOUR_OF_DAY)) {
         in 5..11 -> "Good Morning"; in 12..16 -> "Good Afternoon"; in 17..21 -> "Good Evening"; else -> "Good Night"
@@ -178,9 +180,13 @@ private fun GreetingRow(name: String, onOpenSettings: () -> Unit) {
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(Modifier.weight(1f)) {
-            Text(greeting, style = MaterialTheme.typography.bodyMedium, color = JarvisColors.TextDim)
-            Text(name.ifBlank { "Mohamad" }, style = MaterialTheme.typography.displaySmall, color = JarvisColors.TextPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            Text("Vision is ready to assist you", style = MaterialTheme.typography.bodySmall, color = JarvisColors.TextSecondary)
+            // Greet the user by their own name; if unset, greet without a name
+            // (never the assistant's name — that was the reported bug).
+            Text(if (name.isBlank()) greeting else "$greeting,", style = MaterialTheme.typography.bodyMedium, color = JarvisColors.TextDim)
+            if (name.isNotBlank()) {
+                Text(name, style = MaterialTheme.typography.displaySmall, color = JarvisColors.TextPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            }
+            Text("${assistantName.ifBlank { "Vision" }} is ready to assist you", style = MaterialTheme.typography.bodySmall, color = JarvisColors.TextSecondary)
         }
         Spacer(Modifier.width(12.dp))
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {

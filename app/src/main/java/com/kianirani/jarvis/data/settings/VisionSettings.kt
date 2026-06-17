@@ -69,10 +69,14 @@ class VisionSettings @Inject constructor(@ApplicationContext context: Context) {
     // P7 persona: identity + answer-style sliders (0..10) the cloud system
     // prompt is built from. Kept here so both TTS and CloudChatRouter read one source.
     private val _personaName = MutableStateFlow(prefs.getString(KEY_PERSONA, "VISION") ?: "VISION")
+    private val _userName = MutableStateFlow(prefs.getString(KEY_USER_NAME, "") ?: "")
     private val _humor = MutableStateFlow(prefs.getFloat(KEY_HUMOR, 5f))
     private val _formality = MutableStateFlow(prefs.getFloat(KEY_FORMALITY, 5f))
     private val _responseLength = MutableStateFlow(prefs.getFloat(KEY_RESP_LEN, 5f))
+    /** What Vision answers to (assistant name). */
     val personaName: StateFlow<String> = _personaName
+    /** The user's own name — used to greet them on the home screen. */
+    val userName: StateFlow<String> = _userName
     val humorLevel: StateFlow<Float> = _humor
     val formalityLevel: StateFlow<Float> = _formality
     val responseLength: StateFlow<Float> = _responseLength
@@ -80,6 +84,11 @@ class VisionSettings @Inject constructor(@ApplicationContext context: Context) {
     fun setPersonaName(v: String) {
         val n = v.take(24)
         prefs.edit().putString(KEY_PERSONA, n).apply(); _personaName.value = n
+    }
+
+    fun setUserName(v: String) {
+        val n = v.take(24)
+        prefs.edit().putString(KEY_USER_NAME, n).apply(); _userName.value = n
     }
     // Language: "auto" follows the device + the language the user types/speaks;
     // "fa"/"en" pin replies. Read by CloudChatRouter (prompt) and VoiceController (TTS/STT).
@@ -127,6 +136,7 @@ class VisionSettings @Inject constructor(@ApplicationContext context: Context) {
         const val KEY_VOICE_FA = "voice_name_fa"
         const val KEY_VOICE_EN = "voice_name_en"
         const val KEY_PERSONA = "persona_name"
+        const val KEY_USER_NAME = "user_name"
         const val KEY_HUMOR = "persona_humor"
         const val KEY_FORMALITY = "persona_formality"
         const val KEY_RESP_LEN = "persona_resp_len"
