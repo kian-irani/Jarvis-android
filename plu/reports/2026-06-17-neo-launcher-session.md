@@ -49,3 +49,15 @@ status: open (draft) · CI green
 - **NEO8 (LR6)**: تصمیمِ ادغامِ داکِ نَو با hotseat.
 - **NEO9 (LR8)**: ویجت‌های `AppWidgetHost` (تستِ دستگاه).
 - جزئیاتِ بقیه در `plu/PLAN.md` بخشِ NEO.
+
+## 📚 به‌روزرسانیِ داک‌ها + انتشار (2026-06-17، بعد از v48)
+- **README.md**: بَج‌ها v2/v16 → v48؛ بخشِ Status از ۴ جدولِ مفصل به یک خلاصه‌ی فشرده + لینک به PLAN/ROADMAP/CHANGELOG **تمیز شد** (به‌خواستِ کاربر، چون با ROADMAP تکراری بود)؛ «NOT a launcher» → «AI-native launcher روی لایه‌ی هوش»؛ Tech Stack به as-built بازنویسی شد؛ نیازمندی‌های همکاری (QAِ دستگاه #۱).
+- **ROADMAP.md**: Progress Snapshotِ ۲۰۲۶-۰۶-۱۷ + اصلاحِ North Star.
+- **CHANGELOG.md**: ورودی‌های v20/v21/v48.
+- **CONTRIBUTING.md**: جدولِ نیازمندی‌ها هماهنگ شد.
+- **docs/ARCHITECTURE.md**: بخشِ «As-built (v48)» با نگاشتِ واقعیِ ماژول‌ها؛ بقیه = target.
+- **docs/VISION-CAPABILITIES.md**: مقدمه اصلاح + یادداشتِ وضعیتِ v48.
+- **انتشار:** PR #7 به `main` مرج شد → `build.yml` نسخه‌ی **v48** را به‌صورت GitHub Release منتشر می‌کند.
+
+## فایلِ سینکِ ورک‌اسپیس
+- پرامپتِ آماده برای Claude Code (CLI) جهتِ به‌روزرسانیِ کپیِ پروژه در ورک‌اسپیسِ کاربر: `plu/reports/2026-06-17-workspace-sync-prompt.md`.

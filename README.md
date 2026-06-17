@@ -29,46 +29,19 @@
 ---
 
 
-## 📊 Status — what's actually built (updated 2026-06-17, build v48)
+## 📊 Status — build v48 (2026-06-17)
 
-### 🧠 VISION BRAIN — cognitive multi-model router (✅ shipped, v13–v21)
-| Area | Status | Where |
-|---|---|---|
-| Orchestrator + Capability Router + Model Registry | ✅ DONE | `app/.../router/orchestrator/`, `router/capability/`, `router/registry/` |
-| Availability Graph (latency/error EWMA + circuit-breaker + Retry-After) | ✅ DONE | `app/.../router/health/` |
-| Smart Substitution chain + Adaptive Cost Controller | ✅ DONE | `app/.../router/substitution/`, `router/cost/` |
-| Token Pool (per-key health, secret-safe rotation) + Backend adapters | ✅ DONE | `app/.../data/ai/TokenPool.kt`, `router/backend/` |
-| Decision telemetry in the HUD (which model / why) | ✅ DONE | `app/.../ui/screen/hud/` |
-| Agent engine · Task planner · ToolCaller (function-calling) | ✅ DONE | `app/.../core/agent/`, `core/planner/` |
-| On-device local model catalog + on-demand download (resume, SHA-pin) | ✅ DONE | `app/.../router/local/` |
+**Shipped:** 🧠 **VISION BRAIN** cognitive router (orchestrator · capability · availability graph · smart
+substitution · cost · token pool · agent engine + tool-calling · on-device local model) · 📱 **real
+launcher** (grid + pages, drag & drop, folders, icon menu, edit-home sheet, grid presets, app drawer +
+A–Z, layout backup/restore) with the **Vision Orb** as the home hero · 🎙️ **voice** (code-switch TTS +
+per-language picker + free Edge neural Persian, opt-in) · 🧩 **distributed brain** (Brain-Lite Ktor
+server, discovery/pairing, multi-token providers, Brain-Full FastAPI).
 
-### 📱 REAL LAUNCHER + Vision OS redesign (✅ shipped, v22–v48)
-| Area | Status | Where |
-|---|---|---|
-| Launcher layout model + pure ops + JSON persistence | ✅ DONE | `app/.../data/launcher/` |
-| Workspace grid + pages (`HorizontalPager`, page dots), orb as hero | ✅ DONE | `app/.../ui/screen/workspace/` |
-| Drag & drop (move / make folder / add to folder / remove) | ✅ DONE | `WorkspaceScreen.kt` + `LauncherGeometry.kt` |
-| Folders (create / open / rename / 2×2 preview / pull-out) | ✅ DONE | `WorkspaceScreen.kt` |
-| Long-press icon menu (App info / Remove) + Edit-Home sheet | ✅ DONE | `WorkspaceScreen.kt` |
-| Grid-density presets (safe reflow) + layout backup/restore/reset | ✅ DONE | `LauncherOps.kt`, `SettingsHubScreen.kt` |
-| App drawer (QUERY_ALL_PACKAGES) + search + categories + A–Z index | ✅ DONE | `app/.../ui/screen/drawer/` |
-| Vision OS visual redesign (orb, glass, azure→violet, font picker) | ✅ DONE | `app/.../ui/theme/`, `ui/screen/home/` |
+📋 **Full, up-to-date detail lives in the task list and roadmap — not duplicated here:**
+[`plu/PLAN.md`](plu/PLAN.md) (live tasks) · [ROADMAP.md](ROADMAP.md) (phases) · [CHANGELOG.md](CHANGELOG.md) (releases).
 
-### 🎙️ VOICE — code-switch + free neural Persian (✅ shipped, v34/v41)
-| Area | Status | Where |
-|---|---|---|
-| Code-switch segmenter — Persian/English spoken each in its own voice | ✅ DONE | `app/.../voice/VoiceSegmenter.kt` |
-| Best-installed-voice selection + per-language voice picker + TEST | ✅ DONE | `voice/VoiceController.kt`, `SettingsHubScreen.kt` |
-| Free **Edge neural** Persian TTS (opt-in, fallback) | ⚙️ needs on-device confirm | `voice/EdgeTtsProtocol.kt`, `voice/EdgeTtsClient.kt` |
-
-### 🧩 Distributed Brain + foundation (✅ shipped, M0–M2)
-| Area | Status | Where |
-|---|---|---|
-| Brain-Lite server (10 REST endpoints, Ktor on :7799) + Room + election/failover | ✅ DONE | `app/.../brain/` |
-| Discovery (`vision://join` + mDNS) · Setup Wizard · QR pairing (+ CameraX scanner) | ✅ DONE | `app/.../brain/discovery/`, `ui/screen/setup/` |
-| Multi-token AI providers (encrypted slots) · Brain-Full (FastAPI, CI) · Temporal | ✅ DONE | `app/.../data/ai/`, `brain/`, `docker-compose.yml` |
-
-> **Where is the Android code?** In [`/app`](app) (`com.kianirani.jarvis`). The `android/` folder is only a pointer/module map. Full task plan lives in [`plu/PLAN.md`](plu/PLAN.md); roadmap in [ROADMAP.md](ROADMAP.md).
+> **Where is the Android code?** In [`/app`](app) (`com.kianirani.jarvis`). The `android/` folder is only a pointer/module map.
 
 
 ## What is Vision?
