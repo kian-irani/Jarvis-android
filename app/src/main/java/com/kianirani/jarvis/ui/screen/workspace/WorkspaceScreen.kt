@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
@@ -78,6 +79,16 @@ fun WorkspaceHomePager(
     val totalPages = (1 + layout.pageCount).coerceAtLeast(1)
     val pagerState = rememberPagerState(pageCount = { totalPages })
     var openFolder by remember { mutableStateOf<String?>(null) }
+    val ctx = androidx.compose.ui.platform.LocalContext.current
+    val openAppInfo: (String) -> Unit = { pkg ->
+        runCatching {
+            ctx.startActivity(
+                android.content.Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                    .setData(android.net.Uri.parse("package:$pkg"))
+                    .addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK),
+            )
+        }
+    }
 
     Box(modifier.fillMaxSize()) {
         HorizontalPager(state = pagerState, modifier = Modifier.fillMaxSize()) { page ->
@@ -94,6 +105,7 @@ fun WorkspaceHomePager(
                     onMakeFolder = { targetId, draggedId -> vm.store.createFolder(targetId, draggedId) },
                     onAddToFolder = { folderId, itemId -> vm.store.addToFolder(folderId, itemId) },
                     onRemove = { id -> vm.store.remove(id) },
+                    onAppInfo = openAppInfo,
                     modifier = Modifier.fillMaxSize(),
                 )
             }
@@ -144,6 +156,7 @@ private fun WorkspacePage(
     onMakeFolder: (targetId: String, draggedId: String) -> Unit,
     onAddToFolder: (folderId: String, itemId: String) -> Unit,
     onRemove: (id: String) -> Unit,
+    onAppInfo: (pkg: String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val cols = layout.gridCols
@@ -153,8 +166,12 @@ private fun WorkspacePage(
     var gridSize by remember { mutableStateOf(IntSize.Zero) }
     var dragging by remember { mutableStateOf<LauncherItem?>(null) }
     var dragPos by remember { mutableStateOf(Offset.Zero) }
-    // Drop strip at the top removes the dragged item from home (shares this Box's
-    // coordinate space with the gesture, so a hit-test on dragPos.y is exact).
+    var dragStart by remember { mutableStateOf(Offset.Zero) }
+    var movedFar by remember { mutableStateOf(false) }
+    // Long-press without dragging opens a Neo/Pixel-style icon menu for this item.
+    var menuFor by remember { mutableStateOf<LauncherItem?>(null) }
+    var menuPos by remember { mutableStateOf(Offset.Zero) }
+    val moveThresholdPx = with(androidx.compose.ui.platform.LocalDensity.current) { 24.dp.toPx() }
     val removeStripPx = with(androidx.compose.ui.platform.LocalDensity.current) { 64.dp.toPx() }
 
     Box(
@@ -166,21 +183,27 @@ private fun WorkspacePage(
                         if (gridSize.width > 0 && gridSize.height > 0) {
                             val (cx, cy) = LauncherGeometry.cellAt(off.x, off.y, gridSize.width.toFloat(), gridSize.height.toFloat(), cols, rows)
                             dragging = byPos[cy * cols + cx]
-                            dragPos = off
+                            dragPos = off; dragStart = off; movedFar = false
                         }
                     },
-                    onDrag = { change, amount -> change.consume(); dragPos += amount },
+                    onDrag = { change, amount ->
+                        change.consume(); dragPos += amount
+                        if ((dragPos - dragStart).getDistance() > moveThresholdPx) movedFar = true
+                    },
                     onDragEnd = {
                         val d = dragging
                         if (d != null && gridSize.width > 0) {
-                            if (dragPos.y <= removeStripPx) {
+                            if (!movedFar) {
+                                // A long-press that didn't move → open the icon menu.
+                                menuFor = d; menuPos = dragPos
+                            } else if (dragPos.y <= removeStripPx) {
                                 onRemove(d.id)
                             } else {
                                 val (tx, ty) = LauncherGeometry.cellAt(dragPos.x, dragPos.y, gridSize.width.toFloat(), gridSize.height.toFloat(), cols, rows)
                                 val target = byPos[ty * cols + tx]
                                 when {
                                     target == null -> onMove(d.id, tx, ty)
-                                    target.id == d.id -> Unit // dropped back on itself
+                                    target.id == d.id -> Unit
                                     target.type == ItemType.FOLDER && d.type == ItemType.APP -> onAddToFolder(target.id, d.id)
                                     target.type == ItemType.APP && d.type == ItemType.APP -> onMakeFolder(target.id, d.id)
                                     else -> onMove(d.id, tx, ty)
@@ -255,6 +278,37 @@ private fun WorkspacePage(
                 }
             }
         }
+
+        // Neo/Pixel-style icon menu (long-press without dragging).
+        menuFor?.let { item ->
+            // Tap-anywhere scrim to dismiss.
+            Box(Modifier.fillMaxSize().clickable(interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }, indication = null) { menuFor = null })
+            Column(
+                Modifier.offset {
+                    val maxX = (gridSize.width - with(this) { 200.dp.toPx() }).coerceAtLeast(0f)
+                    IntOffset(menuPos.x.coerceIn(0f, maxX).toInt(), menuPos.y.toInt())
+                }.width(200.dp).clip(RoundedCornerShape(16.dp)).glassPanel(radius = 16.dp).padding(vertical = 6.dp),
+            ) {
+                if (item.type == ItemType.APP && item.packageName != null) {
+                    IconMenuItem(VisionIcons.Search, "App info") { onAppInfo(item.packageName); menuFor = null }
+                }
+                IconMenuItem(VisionIcons.Close, "Remove from home", danger = true) { onRemove(item.id); menuFor = null }
+            }
+        }
+    }
+}
+
+/** A single row in the long-press icon menu. */
+@Composable
+private fun IconMenuItem(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String, danger: Boolean = false, onClick: () -> Unit) {
+    val tint = if (danger) VisionColors.DangerRed else VisionColors.CyanPrimary
+    Row(
+        Modifier.fillMaxWidth().clickable(onClick = onClick).padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Icon(icon, label, tint = tint, modifier = Modifier.size(20.dp))
+        Text(label, style = MaterialTheme.typography.bodyMedium, color = if (danger) VisionColors.DangerRed else VisionColors.TextPrimary)
     }
 }
 
