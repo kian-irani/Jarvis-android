@@ -49,6 +49,7 @@ import com.kianirani.jarvis.data.ai.AiProvider
 import com.kianirani.jarvis.data.ai.AiUsageStore
 import com.kianirani.jarvis.data.ai.ChatHistoryStore
 import com.kianirani.jarvis.data.settings.ActivationStore
+import com.kianirani.jarvis.data.settings.NeuralVoiceMode
 import com.kianirani.jarvis.data.settings.VisionSettings
 import com.kianirani.jarvis.ui.theme.FontCatalog
 import com.kianirani.jarvis.ui.theme.FontStore
@@ -127,8 +128,8 @@ fun SettingsHubScreen(
         Section("VOICE", 1) {
             ToggleRow("Voice input", "wake Vision with the mic", voice) { s.set(VisionSettings.KEY_VOICE, it) }
             ToggleRow("Spoken replies (TTS)", "Vision reads answers aloud", tts) { s.set(VisionSettings.KEY_TTS, it) }
-            val neural by s.neuralVoice.collectAsStateWithLifecycle()
-            ToggleRow("Neural voice (online)", "fluent free Persian via Edge neural — falls back offline", neural) { s.set(VisionSettings.KEY_NEURAL_VOICE, it) }
+            val neuralMode by s.neuralVoiceMode.collectAsStateWithLifecycle()
+            NeuralVoiceRow(neuralMode) { s.setNeuralVoiceMode(it) }
             val rate by s.speechRate.collectAsStateWithLifecycle()
             val pitch by s.voicePitch.collectAsStateWithLifecycle()
             StepperRow("Speech rate", rate, 0.1f) { s.setSpeechRate(it) }
@@ -403,6 +404,35 @@ private fun LanguageRow(lang: String, onChange: (String) -> Unit) {
                     .padding(horizontal = 10.dp, vertical = 5.dp),
             )
         }
+    }
+}
+
+/**
+ * v51 — neural-voice mode selector (Auto / On / Off). Lets a Persian user opt out
+ * of the online Edge neural voice (data) without changing their reply language.
+ */
+@Composable
+private fun NeuralVoiceRow(mode: NeuralVoiceMode, onChange: (NeuralVoiceMode) -> Unit) {
+    Column(Modifier.fillMaxWidth().padding(vertical = 6.dp)) {
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Text("Neural voice", style = MaterialTheme.typography.bodyMedium, color = JarvisColors.TextPrimary, modifier = Modifier.weight(1f))
+            listOf(NeuralVoiceMode.AUTO to "Auto", NeuralVoiceMode.ON to "On", NeuralVoiceMode.OFF to "Off").forEach { (m, label) ->
+                val sel = mode == m
+                Text(
+                    label,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = if (sel) JarvisColors.CyanPrimary else JarvisColors.TextDim,
+                    modifier = Modifier.clickable { onChange(m) }
+                        .border(1.dp, if (sel) JarvisColors.CyanPrimary else JarvisColors.Border, RoundedCornerShape(4.dp))
+                        .padding(horizontal = 10.dp, vertical = 5.dp),
+                )
+            }
+        }
+        Text(
+            "Online Edge neural voice — free, fluent Persian. Auto = on for Persian only; falls back offline.",
+            style = MaterialTheme.typography.labelSmall, color = JarvisColors.TextDim,
+            modifier = Modifier.padding(top = 4.dp),
+        )
     }
 }
 

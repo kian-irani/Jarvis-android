@@ -163,10 +163,11 @@ class AndroidVoiceController(
         if (text.isBlank()) return
         stopAudio()
         _isSpeaking.value = true
-        // BUG-4: Persian replies auto-use the neural voice; see [VoiceRouting].
+        // BUG-4 / v51: route per the user's neural-voice mode; see [VoiceRouting].
         val useNeural = VoiceRouting.useNeural(
             language = settings?.language?.value,
-            neuralEnabled = settings?.neuralVoice?.value == true,
+            mode = settings?.neuralVoiceMode?.value
+                ?: com.kianirani.jarvis.data.settings.NeuralVoiceMode.AUTO,
             online = isOnline(),
         )
         if (useNeural) speakNeural(text) else speakOnDevice(text)

@@ -8,6 +8,15 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
+ * Neural (Edge online) TTS preference (v51). Replaces the old on/off toggle so a
+ * Persian user can opt OUT of online neural voice (data) without changing their
+ * reply language.
+ * - [AUTO] neural for Persian when online (stock on-device Persian TTS is poor), on-device otherwise
+ * - [ON] always neural when online · [OFF] always on-device
+ */
+enum class NeuralVoiceMode { AUTO, ON, OFF }
+
+/**
  * General Vision settings (USER DIRECTIVE 2026-06-12: organized, fully
  * configurable settings sections). Plain prefs — nothing here is secret.
  */
@@ -19,16 +28,33 @@ class VisionSettings @Inject constructor(@ApplicationContext context: Context) {
 
     private val _voiceEnabled = flow(KEY_VOICE, true)
     private val _ttsEnabled = flow(KEY_TTS, true)
-    private val _neuralVoice = flow(KEY_NEURAL_VOICE, false)
     private val _scanLine = flow(KEY_SCANLINE, true)
     private val _aurora = flow(KEY_AURORA, true)
 
     val voiceEnabled: StateFlow<Boolean> = _voiceEnabled
     val ttsEnabled: StateFlow<Boolean> = _ttsEnabled
-    /** Use Microsoft Edge neural voices (online, free) for fluent Persian TTS. */
-    val neuralVoice: StateFlow<Boolean> = _neuralVoice
     val scanLine: StateFlow<Boolean> = _scanLine
     val aurora: StateFlow<Boolean> = _aurora
+
+    /** Edge neural-voice mode (v51) — see [NeuralVoiceMode]. Migrates from the old boolean toggle. */
+    private val _neuralVoiceMode = MutableStateFlow(readNeuralMode())
+    val neuralVoiceMode: StateFlow<NeuralVoiceMode> = _neuralVoiceMode
+
+    private fun readNeuralMode(): NeuralVoiceMode {
+        prefs.getString(KEY_NEURAL_MODE, null)?.let {
+            return runCatching { NeuralVoiceMode.valueOf(it) }.getOrDefault(NeuralVoiceMode.AUTO)
+        }
+        // One-time migration from the legacy boolean toggle, only if the user set it.
+        if (prefs.contains(KEY_NEURAL_VOICE)) {
+            return if (prefs.getBoolean(KEY_NEURAL_VOICE, false)) NeuralVoiceMode.ON else NeuralVoiceMode.OFF
+        }
+        return NeuralVoiceMode.AUTO
+    }
+
+    fun setNeuralVoiceMode(mode: NeuralVoiceMode) {
+        prefs.edit().putString(KEY_NEURAL_MODE, mode.name).apply()
+        _neuralVoiceMode.value = mode
+    }
 
     // P7 voice persona: TTS delivery style.
     private val _speechRate = MutableStateFlow(prefs.getFloat(KEY_RATE, 1.0f))
@@ -118,7 +144,6 @@ class VisionSettings @Inject constructor(@ApplicationContext context: Context) {
         when (key) {
             KEY_VOICE -> _voiceEnabled.value = value
             KEY_TTS -> _ttsEnabled.value = value
-            KEY_NEURAL_VOICE -> _neuralVoice.value = value
             KEY_SCANLINE -> _scanLine.value = value
             KEY_AURORA -> _aurora.value = value
         }
@@ -127,7 +152,8 @@ class VisionSettings @Inject constructor(@ApplicationContext context: Context) {
     companion object {
         const val KEY_VOICE = "voice_enabled"
         const val KEY_TTS = "tts_enabled"
-        const val KEY_NEURAL_VOICE = "neural_voice_enabled"
+        const val KEY_NEURAL_VOICE = "neural_voice_enabled" // legacy boolean (migration source)
+        const val KEY_NEURAL_MODE = "neural_voice_mode"
         const val KEY_SCANLINE = "fx_scanline"
         const val KEY_AURORA = "fx_aurora"
         const val KEY_TRUST = "trust_level"

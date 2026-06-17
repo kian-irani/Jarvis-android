@@ -473,7 +473,7 @@ private val AuroraMagentaColors = listOf(VisionColors.Magenta.copy(alpha = 0.16f
 
 @Composable fun TypewriterPanel(text: String, modifier: Modifier) {
     val cur by rememberInfiniteTransition(label="cur").animateFloat(0f,1f,infiniteRepeatable(tween(800),RepeatMode.Reverse),label="c")
-    HudCard(modifier) { Column(Modifier.padding(12.dp)) { Text("VISION OUTPUT", style=MaterialTheme.typography.labelSmall, color=JarvisColors.TextDim, modifier=Modifier.padding(bottom=6.dp)); Row { Text(">> ", style=MaterialTheme.typography.bodyMedium, color=JarvisColors.CyanPrimary); Text(text, style=MaterialTheme.typography.bodyMedium, color=JarvisColors.TextPrimary, maxLines=3, overflow=TextOverflow.Ellipsis); Text("|", style=MaterialTheme.typography.bodyMedium, color=JarvisColors.CyanPrimary.copy(alpha=cur)) } } }
+    HudCard(modifier) { Column(Modifier.padding(12.dp)) { Text("VISION OUTPUT", style=MaterialTheme.typography.labelSmall, color=JarvisColors.TextDim, modifier=Modifier.padding(bottom=6.dp)); Row { Text(">> ", style=MaterialTheme.typography.bodyMedium, color=JarvisColors.CyanPrimary); Text(text, style=MaterialTheme.typography.bodyMedium, color=JarvisColors.TextPrimary, modifier=Modifier.weight(1f, fill=false)); Text("|", style=MaterialTheme.typography.bodyMedium, color=JarvisColors.CyanPrimary.copy(alpha=cur)) } } }
 }
 
 @Composable fun NodeCard(n: NodeInfo, modifier: Modifier) {
