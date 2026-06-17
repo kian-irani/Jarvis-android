@@ -8,7 +8,7 @@ project: 05-vision
 
 # 🗂️ PLAN — Vision OS
 > منبع کامل: `repo/ROADMAP.md` + `repo/docs/VISION-CAPABILITIES.md` (تعریفِ Agent OS، ۲۴ قابلیت).
-> ریپو: `kian-irani/Jarvis-android` · آخرین نسخه: **v21** (CallTool/SmsTool واقعی).
+> ریپو: `kian-irani/Jarvis-android` · آخرین نسخه: **v49** (PRD v2.0 سیستم مکالمه: BUG-1…BUG-5).
 > **راهنمای ساختار:** بخش ۱ = اولویت‌های فعالِ بعدی (به ترتیب) · بخش ۲ = VISION BRAIN · بخش ۳ = FULL PROGRAM (همه‌ی فازها) · بخش ۴ = Agent-OS + WAN Mesh · بخش ۵ = مرجع و تاریخچه‌ی انجام‌شده.
 > وضعیت: `[x]` انجام‌شده · `[~]` نیمه · `[ ]` باز.
 > **نکته‌ی اولویت (به‌روزرسانی 2026-06-15):** هسته‌ی VISION BRAIN (VB1–VB9) کامل و منتشر شد (v15–v19)؛ پس اکنون **طراحیِ بصری (RD/FNT) اولِ کارِ باز است** (خواست کاربر)، سپس رفعِ باگ‌های باقی‌مانده‌ی v20، سپس موتورِ Agent (CF)، سپس قابلیت‌های Proactive/Agentic.
@@ -16,6 +16,15 @@ project: 05-vision
 ---
 
 # بخش ۱ — اولویت‌های فعالِ بعدی (به ترتیب)
+
+## 🗣️ PRD v2.0 — سیستم مکالمه (BUG-1…BUG-5) — انجام‌شده (v49، 2026-06-17)
+> طبقِ PRD v2.0 (Part 2 — Conversation System). build سبز: `compileDebugKotlin` + `testDebugUnitTest` (**۲۲۳ تست، ۷ تستِ جدید**). منطقِ خالص با TDD، Android/UI دورِ آن. design طبقِ `ui-ux-pro-max` (truncation→expand، state-clarity، interruptible، رنگ‌تنها نه).
+- [x] **BUG-1 خروجیِ بازشونده (بدونِ truncate)** — `VisionOutput` در HomeScreen: متن دیگر `maxLines=4` بریده نمی‌شود؛ collapsed تا ۱۳۲dp اسکرول، «Show more/less» برای پاسخ‌های بلند (>۲۸۰ کاراکتر). `HudUiState.isOutputExpanded` + `HudViewModel.toggleOutputExpanded` (با هر پاسخِ جدید جمع می‌شود).
+- [x] **BUG-2 دکمه‌ی Stop + interrupt گفتار** — `VoiceController.isSpeaking: StateFlow` + `stopSpeaking()`؛ دکمه‌ی command-bar سه‌حالته (Mic/Send/**Stop قرمز**) با منطقِ خالصِ `commandBarMode` (۳ تست)؛ تپ روی گوی هنگامِ صحبت = قطع؛ barge-in (شروعِ شنیدن گفتار را قطع می‌کند).
+- [x] **BUG-3 حافظه‌ی مکالمه + پاکسازی** — ⚠️ حافظه **از قبل** در مسیرِ واقعی وصل بود (`CloudChatRouter.chatWith`→`history.recent(6)` + appendِ دوطرف، از طریقِ `CloudBackend`)؛ ادعای PRD مبنی بر «وصل‌نبودن» منسوخ بود. بخشِ مفقود **Clear** اضافه شد: `HudViewModel.clearConversation()` (پاکِ `ChatHistoryStore` + خروجی) + کنترلِ discreetِ Clear در `VisionOutput`.
+- [x] **BUG-4 صدای نورونیِ فارسی پیش‌فرض** — `VoiceRouting.useNeural(language,neuralEnabled,online)` خالص (۴ تست): فارسیِ online → نورونی حتی بدونِ توگل؛ offline → on-device؛ غیرفارسی بدونِ توگل → on-device.
+- [x] **BUG-5 مرزِ پیامِ TOOL_PROTOCOL** — قانونِ مرزِ پیام در پرامپت: فقط متنِ گفتنی در args (نه کلِ جمله)، مثال‌های FA/EN، پرسشِ شفاف‌سازی هنگامِ ابهام، نگاشتِ روابطِ فارسی (مامان/بابا/خاله/…)؛ **بدونِ تغییرِ schemaِ `{"tool","args"}`** (سازگار با `ToolCaller`/`CommandInterpreter`).
+> **نیازِ تأییدِ روی دستگاه (به NEO7 وصل):** ظاهرِ خروجیِ بازشونده، رفتارِ دکمه‌ی Stop/barge-in، و کیفیتِ صدای نورونیِ فارسی روی دستگاهِ واقعی.
 
 ## 🚀 اولویت ۰ — LR: لانچرِ واقعیِ اندروید (REAL LAUNCHER)
 > **دستور کاربر (2026-06-16): «بس کن mockup ساختن — Vision باید یک لانچرِ واقعی باشد مثل Pixel/Nova/Nothing.»**
