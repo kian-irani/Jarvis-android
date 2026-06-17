@@ -377,6 +377,7 @@ private fun VisionOutput(
     if (output.isBlank()) return
     val scroll = rememberScrollState()
     val long = output.length > 280
+    var confirmClear by remember { mutableStateOf(false) }
     Column(modifier.padding(top = 10.dp)) {
         Box(
             Modifier.fillMaxWidth()
@@ -398,14 +399,34 @@ private fun VisionOutput(
                 }
             }
             Spacer(Modifier.weight(1f))
-            Row(
-                Modifier.clip(RoundedCornerShape(10.dp)).clickable(onClick = onClear)
-                    .padding(horizontal = 8.dp, vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
-            ) {
-                Icon(VisionIcons.Clear, "Clear conversation", tint = JarvisColors.TextDim, modifier = Modifier.size(18.dp))
-                Text("Clear", style = MaterialTheme.typography.labelMedium, color = JarvisColors.TextDim)
+            // Clearing wipes Vision's short-term memory of the chat, so confirm first
+            // (inline two-step — matches the app's dialog-free, in-style controls).
+            if (confirmClear) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text("Clear chat?", style = MaterialTheme.typography.labelMedium, color = JarvisColors.TextSecondary)
+                    Text(
+                        "Clear", style = MaterialTheme.typography.labelMedium, color = JarvisColors.DangerRed,
+                        modifier = Modifier.clip(RoundedCornerShape(10.dp))
+                            .clickable { confirmClear = false; onClear() }
+                            .padding(horizontal = 10.dp, vertical = 8.dp),
+                    )
+                    Text(
+                        "Cancel", style = MaterialTheme.typography.labelMedium, color = JarvisColors.CyanPrimary,
+                        modifier = Modifier.clip(RoundedCornerShape(10.dp))
+                            .clickable { confirmClear = false }
+                            .padding(horizontal = 10.dp, vertical = 8.dp),
+                    )
+                }
+            } else {
+                Row(
+                    Modifier.clip(RoundedCornerShape(10.dp)).clickable { confirmClear = true }
+                        .padding(horizontal = 8.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                ) {
+                    Icon(VisionIcons.Clear, "Clear conversation", tint = JarvisColors.TextDim, modifier = Modifier.size(18.dp))
+                    Text("Clear", style = MaterialTheme.typography.labelMedium, color = JarvisColors.TextDim)
+                }
             }
         }
     }

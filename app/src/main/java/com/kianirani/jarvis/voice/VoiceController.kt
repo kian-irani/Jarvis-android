@@ -106,6 +106,12 @@ class AndroidVoiceController(
                         tts?.language = Locale.US
                     }
                     pendingSpeech?.let { speak(it) }; pendingSpeech = null
+                } else {
+                    // Engine failed to initialise — it will never speak, so drop any
+                    // queued reply and clear the speaking flag (else Stop sticks on).
+                    Log.w(TAG, "TTS init failed (status=$status)")
+                    pendingSpeech = null
+                    _isSpeaking.value = false
                 }
             }
         }
