@@ -8,7 +8,7 @@ project: 05-vision
 
 # 🗂️ PLAN — Vision OS
 > منبع کامل: `repo/ROADMAP.md` + `repo/docs/VISION-CAPABILITIES.md` (تعریفِ Agent OS، ۲۴ قابلیت).
-> ریپو: `kian-irani/Jarvis-android` · آخرین نسخه: **v49** (PRD v2.0 سیستم مکالمه: BUG-1…BUG-5).
+> ریپو: `kian-irani/Jarvis-android` · آخرین نسخه: **v51** (audit fixes: HudScreen truncation + neural ۳-حالته).
 > **راهنمای ساختار:** بخش ۱ = اولویت‌های فعالِ بعدی (به ترتیب) · بخش ۲ = VISION BRAIN · بخش ۳ = FULL PROGRAM (همه‌ی فازها) · بخش ۴ = Agent-OS + WAN Mesh · بخش ۵ = مرجع و تاریخچه‌ی انجام‌شده.
 > وضعیت: `[x]` انجام‌شده · `[~]` نیمه · `[ ]` باز.
 > **نکته‌ی اولویت (به‌روزرسانی 2026-06-15):** هسته‌ی VISION BRAIN (VB1–VB9) کامل و منتشر شد (v15–v19)؛ پس اکنون **طراحیِ بصری (RD/FNT) اولِ کارِ باز است** (خواست کاربر)، سپس رفعِ باگ‌های باقی‌مانده‌ی v20، سپس موتورِ Agent (CF)، سپس قابلیت‌های Proactive/Agentic.
@@ -25,6 +25,10 @@ project: 05-vision
 - [x] **BUG-4 صدای نورونیِ فارسی پیش‌فرض** — `VoiceRouting.useNeural(language,neuralEnabled,online)` خالص (۴ تست): فارسیِ online → نورونی حتی بدونِ توگل؛ offline → on-device؛ غیرفارسی بدونِ توگل → on-device.
 - [x] **BUG-5 مرزِ پیامِ TOOL_PROTOCOL** — قانونِ مرزِ پیام در پرامپت: فقط متنِ گفتنی در args (نه کلِ جمله)، مثال‌های FA/EN، پرسشِ شفاف‌سازی هنگامِ ابهام، نگاشتِ روابطِ فارسی (مامان/بابا/خاله/…)؛ **بدونِ تغییرِ schemaِ `{"tool","args"}`** (سازگار با `ToolCaller`/`CommandInterpreter`).
 > **نیازِ تأییدِ روی دستگاه (به NEO7 وصل):** ظاهرِ خروجیِ بازشونده، رفتارِ دکمه‌ی Stop/barge-in، و کیفیتِ صدای نورونیِ فارسی روی دستگاهِ واقعی.
+
+### 🔧 v51 — رفعِ ممیزی (audit fixes، 2026-06-17)
+- [x] **Fix-1 truncationِ خروجی در `HudScreen.TypewriterPanel`** — `maxLines=3`/ellipsis حذف شد (هم‌کلاسِ BUG-1، روی صفحه‌ی legacyِ HUD که در nav صدا زده نمی‌شود؛ برای جلوگیری از regression اگر دوباره wire شود). متن با `weight(1f, fill=false)` wrap می‌شود.
+- [x] **Fix-2 BUG-4 به ۳-حالته** — `NeuralVoiceMode {AUTO, ON, OFF}` جایگزینِ توگلِ boolean شد: AUTO=نورونی فقط برای فارسیِ online، ON=همیشه نورونی، **OFF=همیشه on-device حتی فارسی** (رفعِ override کردنِ خواستِ کاربرِ data-conscious). migration از کلیدِ قدیمی. UI: `NeuralVoiceRow` (Auto/On/Off). `VoiceRouting.useNeural(language, mode, online)` + ۴ تستِ به‌روز.
 
 ## 🆕 PRD v2.0 — تسک‌های جدید (backlog بعد از v49)
 > از `VISION OS — PRD v2.0` (Parts 3–14, 16) استخراج شد؛ تیرها به‌ترتیبِ اولویتِ PRD. موارد *(موجود)* از قبل در پلن هستند (این‌جا فقط برای ترتیب)؛ بقیه **جدید** و باز. اصول: منطقِ خالص TDD، UI با `ui-ux-pro-max`، هیچ mockup، شکستنِ کارِ سالم ممنوع.
