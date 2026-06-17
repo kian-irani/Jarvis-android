@@ -77,6 +77,8 @@ class SettingsHubViewModel @Inject constructor(
     fun exportLayout(): String = launcher.exportJson()
     fun importLayout(text: String): Boolean = launcher.importJson(text)
     fun resetLayout() = launcher.reset()
+    val launcherLayout = launcher.layout
+    fun setGrid(cols: Int, rows: Int) = launcher.setGridReflow(cols, rows)
 }
 
 /**
@@ -180,6 +182,8 @@ fun SettingsHubScreen(
             NavRow("Clear conversation memory", "forget all chat history") { vm.history.clear() }
         }
         Section("LAUNCHER", 7) {
+            val layout by vm.launcherLayout.collectAsStateWithLifecycle()
+            GridSizeRow(layout.gridCols, layout.gridRows) { c, r -> vm.setGrid(c, r) }
             NavRow("Set as default home", "open Android home settings") {
                 runCatching { ctx.startActivity(Intent(Settings.ACTION_HOME_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
             }
@@ -359,6 +363,28 @@ private fun PersonaNameRow(name: String, label: String = "AI name", placeholder:
                 }
             },
         )
+    }
+}
+
+/** Home grid density presets (re-flows icons safely). */
+@Composable
+private fun GridSizeRow(cols: Int, rows: Int, onChange: (Int, Int) -> Unit) {
+    val presets = listOf(4 to 5, 5 to 5, 5 to 6, 6 to 6)
+    Column(Modifier.fillMaxWidth().padding(vertical = 6.dp)) {
+        Text("Home grid", style = MaterialTheme.typography.bodyMedium, color = JarvisColors.TextPrimary)
+        Row(Modifier.fillMaxWidth().padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            presets.forEach { (c, r) ->
+                val sel = c == cols && r == rows
+                Text(
+                    "$c×$r",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = if (sel) JarvisColors.CyanPrimary else JarvisColors.TextDim,
+                    modifier = Modifier.clickable { onChange(c, r) }
+                        .border(1.dp, if (sel) JarvisColors.CyanPrimary else JarvisColors.Border, RoundedCornerShape(6.dp))
+                        .padding(horizontal = 12.dp, vertical = 6.dp),
+                )
+            }
+        }
     }
 }
 

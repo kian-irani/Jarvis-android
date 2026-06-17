@@ -35,6 +35,28 @@ object LauncherOps {
     fun setGrid(layout: LauncherLayout, cols: Int, rows: Int): LauncherLayout =
         layout.copy(gridCols = cols.coerceIn(3, 8), gridRows = rows.coerceIn(3, 9))
 
+    /**
+     * Change the grid density and re-flow every top-level workspace item into the
+     * new grid (row-major, preserving order, spilling onto fresh pages). Folder
+     * children and dock items keep their place. Page count is recomputed. Pure, so
+     * changing grid size never leaves icons stranded off the new bounds.
+     */
+    fun reflowWorkspace(layout: LauncherLayout, cols: Int, rows: Int): LauncherLayout {
+        val c = cols.coerceIn(3, 8)
+        val r = rows.coerceIn(3, 9)
+        val per = c * r
+        val tops = layout.items
+            .filter { it.parentId == null && it.container == Container.WORKSPACE }
+            .sortedWith(compareBy({ it.page }, { it.cellY }, { it.cellX }))
+        val others = layout.items.filter { !(it.parentId == null && it.container == Container.WORKSPACE) }
+        val replaced = tops.mapIndexed { i, item ->
+            val slot = i % per
+            item.copy(page = i / per, cellX = slot % c, cellY = slot / c)
+        }
+        val pageCount = if (tops.isEmpty()) 1 else (tops.size + per - 1) / per
+        return layout.copy(gridCols = c, gridRows = r, pageCount = pageCount, items = others + replaced)
+    }
+
     fun addPage(layout: LauncherLayout): LauncherLayout =
         layout.copy(pageCount = layout.pageCount + 1)
 

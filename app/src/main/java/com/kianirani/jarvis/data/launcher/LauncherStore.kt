@@ -57,6 +57,8 @@ class LauncherStore @Inject constructor(@ApplicationContext context: Context) {
         update(LauncherOps.move(_layout.value, id, container, page, cellX, cellY))
     fun setDockCount(count: Int) = update(LauncherOps.setDockCount(_layout.value, count))
     fun setGrid(cols: Int, rows: Int) = update(LauncherOps.setGrid(_layout.value, cols, rows))
+    /** Change grid density and re-flow items so none are stranded (LR10). */
+    fun setGridReflow(cols: Int, rows: Int) = update(LauncherOps.reflowWorkspace(_layout.value, cols, rows))
     fun addPage() = update(LauncherOps.addPage(_layout.value))
     fun removePage(page: Int) = update(LauncherOps.removePage(_layout.value, page))
     fun createFolder(targetId: String, draggedId: String, title: String = "Folder") =

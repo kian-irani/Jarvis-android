@@ -32,7 +32,7 @@ project: 05-vision
 - [ ] **LR7 App Drawer Pro**: A-Z fast-scroll index + Recent/Suggested/Pinned/Hidden + search + swipe-up از هوم → drawer (transition واقعی، نه nav route). (روی `AppDrawerScreen` موجود.)
 - [ ] **LR8 Widget Host**: `AppWidgetHost`/`AppWidgetManager` + widget picker + bind/permission + resize + قراردادن روی گرید (span). (نیازِ تست روی دستگاه.)
 - [ ] **LR9 Gestures**: double-tap/swipe-up/swipe-down/two-finger/pinch + نگاشتِ custom action (open drawer/notifications/Vision/app). persist.
-- [ ] **LR10 Launcher Settings screen**: بخش‌های Appearance/Grid/Dock/Gestures/Search/Widgets/Animations/Vision AI/App Drawer/Notifications/Backup/Restore/Developer — همه به `LauncherStore` وصل و live.
+- [~] **LR10 Launcher Settings screen** (v45، 2026-06-17 — پایه): بخشِ LAUNCHERِ Settings حالا **Grid size** زنده دارد — presetهای ۴×۵/۵×۵/۵×۶/۶×۶ که `LauncherOps.reflowWorkspace` (خالص، ۲ تستِ جدید) را صدا می‌زنند تا گرید تغییر کند و همه‌ی آیکن‌ها **بدونِ گم‌شدن** دوباره row-major چیده شوند (سرریز → صفحه‌ی بعد). + Backup/Restore/Reset (v37). [باقی‌مانده: Dock/Gestures/Search/Widgets/Animations زیربخش‌ها.]
 - [x] **LR11 Backup / Restore** (v37، 2026-06-16): در بخشِ LAUNCHERِ Settings سه اکشن اضافه شد — **Back up** (کلِ layout را با `LauncherStore.exportJson` به clipboard کپی می‌کند)، **Restore** (متنِ clipboard را با `importJson` پارس و اعمال می‌کند، fail-safe با Toast)، و **Reset** (`reset()` — همه‌ی pinها پاک، در restartِ بعدی دوباره seed می‌شود). compile+test سبز. **نیازِ تأییدِ روی دستگاه.** [export/import فایلیِ کامل = follow-up.]
 - [ ] **LR12 Vision Assistant integration**: دکمه‌ی مرکزیِ dock → دستیار (voice/text/agent/automation/search/device-actions) — اتصال به ارکستراتورِ موجود.
 

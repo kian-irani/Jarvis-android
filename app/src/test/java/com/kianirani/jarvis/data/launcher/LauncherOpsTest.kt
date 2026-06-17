@@ -22,6 +22,37 @@ class LauncherOpsTest {
     }
 
     @Test
+    fun `reflow re-places items into a denser grid and recomputes pages`() {
+        // 10 apps reflowed into a 3x3 grid (9 per page) → 2 pages; #10 wraps.
+        var l = LauncherLayout(gridCols = 5, gridRows = 5, pageCount = 1)
+        repeat(10) { i -> l = LauncherOps.add(l, app("a$i", p = i / 5, x = i % 5, y = 0)) }
+        l = LauncherOps.reflowWorkspace(l, cols = 3, rows = 3)
+        assertEquals(3, l.gridCols)
+        assertEquals(3, l.gridRows)
+        assertEquals(2, l.pageCount)
+        // The 10th item (index 9) wraps to page 1, cell (0,0).
+        val tenth = l.items.first { it.id == "a9" }
+        assertEquals(1, tenth.page)
+        assertEquals(0, tenth.cellX)
+        assertEquals(0, tenth.cellY)
+        // No two top-level workspace items share a (page,cell).
+        val keys = l.items.filter { it.parentId == null && it.container == Container.WORKSPACE }
+            .map { "${it.page}:${it.cellX}:${it.cellY}" }
+        assertEquals(keys.size, keys.toSet().size)
+    }
+
+    @Test
+    fun `reflow keeps dock items and folder children untouched`() {
+        var l = LauncherLayout(gridCols = 5, gridRows = 5)
+        l = LauncherOps.add(l, app("dock", c = Container.HOTSEAT, x = 0))
+        l = LauncherOps.add(l, app("child").copy(parentId = "f"))
+        l = LauncherOps.add(l, app("w0", x = 0, y = 0))
+        l = LauncherOps.reflowWorkspace(l, cols = 4, rows = 4)
+        assertEquals(Container.HOTSEAT, l.items.first { it.id == "dock" }.container)
+        assertEquals("f", l.items.first { it.id == "child" }.parentId)
+    }
+
+    @Test
     fun `move updates container page and cell and clears parent`() {
         var l = LauncherOps.add(base, app("a").copy(parentId = "f"))
         l = LauncherOps.move(l, "a", Container.HOTSEAT, 0, 2, 0)
