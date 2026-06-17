@@ -19,11 +19,14 @@ class VisionSettings @Inject constructor(@ApplicationContext context: Context) {
 
     private val _voiceEnabled = flow(KEY_VOICE, true)
     private val _ttsEnabled = flow(KEY_TTS, true)
+    private val _neuralVoice = flow(KEY_NEURAL_VOICE, false)
     private val _scanLine = flow(KEY_SCANLINE, true)
     private val _aurora = flow(KEY_AURORA, true)
 
     val voiceEnabled: StateFlow<Boolean> = _voiceEnabled
     val ttsEnabled: StateFlow<Boolean> = _ttsEnabled
+    /** Use Microsoft Edge neural voices (online, free) for fluent Persian TTS. */
+    val neuralVoice: StateFlow<Boolean> = _neuralVoice
     val scanLine: StateFlow<Boolean> = _scanLine
     val aurora: StateFlow<Boolean> = _aurora
 
@@ -106,6 +109,7 @@ class VisionSettings @Inject constructor(@ApplicationContext context: Context) {
         when (key) {
             KEY_VOICE -> _voiceEnabled.value = value
             KEY_TTS -> _ttsEnabled.value = value
+            KEY_NEURAL_VOICE -> _neuralVoice.value = value
             KEY_SCANLINE -> _scanLine.value = value
             KEY_AURORA -> _aurora.value = value
         }
@@ -114,6 +118,7 @@ class VisionSettings @Inject constructor(@ApplicationContext context: Context) {
     companion object {
         const val KEY_VOICE = "voice_enabled"
         const val KEY_TTS = "tts_enabled"
+        const val KEY_NEURAL_VOICE = "neural_voice_enabled"
         const val KEY_SCANLINE = "fx_scanline"
         const val KEY_AURORA = "fx_aurora"
         const val KEY_TRUST = "trust_level"

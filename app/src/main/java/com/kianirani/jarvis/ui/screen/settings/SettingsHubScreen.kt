@@ -125,6 +125,8 @@ fun SettingsHubScreen(
         Section("VOICE", 1) {
             ToggleRow("Voice input", "wake Vision with the mic", voice) { s.set(VisionSettings.KEY_VOICE, it) }
             ToggleRow("Spoken replies (TTS)", "Vision reads answers aloud", tts) { s.set(VisionSettings.KEY_TTS, it) }
+            val neural by s.neuralVoice.collectAsStateWithLifecycle()
+            ToggleRow("Neural voice (online)", "fluent free Persian via Edge neural — falls back offline", neural) { s.set(VisionSettings.KEY_NEURAL_VOICE, it) }
             val rate by s.speechRate.collectAsStateWithLifecycle()
             val pitch by s.voicePitch.collectAsStateWithLifecycle()
             StepperRow("Speech rate", rate, 0.1f) { s.setSpeechRate(it) }

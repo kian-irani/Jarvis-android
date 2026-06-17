@@ -2,6 +2,8 @@ package com.kianirani.jarvis.voice
 
 import android.content.Context
 import android.content.Intent
+import android.media.MediaPlayer
+import android.net.ConnectivityManager
 import android.os.Bundle
 import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
@@ -10,6 +12,13 @@ import android.speech.tts.TextToSpeech
 import android.speech.tts.UtteranceProgressListener
 import android.speech.tts.Voice
 import android.util.Log
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
+import java.io.File
 import java.util.Locale
 
 /**
@@ -55,6 +64,12 @@ class AndroidVoiceController(
     private var tts: TextToSpeech? = null
     private var ttsReady = false
     private var pendingSpeech: String? = null
+
+    // Neural (Edge) voice — opt-in online path, with on-device fallback.
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private val edge by lazy { EdgeTtsClient() }
+    private var neuralJob: Job? = null
+    private var player: MediaPlayer? = null
 
     // Sequential code-switch queue: (locale, text) spoken one after another so
     // each segment's language is applied before that segment plays.
@@ -136,16 +151,65 @@ class AndroidVoiceController(
 
     override fun speak(text: String) {
         if (text.isBlank()) return
+        stopAudio()
+        if (settings?.neuralVoice?.value == true && isOnline()) speakNeural(text) else speakOnDevice(text)
+    }
+
+    /** On-device code-switch path: split into per-script runs and speak in order. */
+    private fun speakOnDevice(text: String) {
         main.post {
             if (!ttsReady) { pendingSpeech = text; return@post }
             settings?.let { tts?.setSpeechRate(it.speechRate.value); tts?.setPitch(it.voicePitch.value) }
-            // Split into per-script runs and speak them in order, each with its
-            // own voice — the heart of the Persian/English code-switch fix.
             queue.clear()
             VoiceSegmenter.segment(text).forEach { seg -> queue.add(localeFor(seg.script) to seg.text) }
             if (queue.isEmpty()) queue.add(localeFor(VoiceSegmenter.Script.NEUTRAL) to text)
             speakNext(flush = true)
         }
+    }
+
+    /**
+     * Online neural path: synthesize one code-switch SSML document with Edge's
+     * free Persian/English neural voices and play it. Any failure falls back to
+     * the on-device path so we are never silent.
+     */
+    private fun speakNeural(text: String) {
+        val rate = (((settings?.speechRate?.value ?: 1f) - 1f) * 100).toInt()
+        val pitch = (((settings?.voicePitch?.value ?: 1f) - 1f) * 100).toInt()
+        neuralJob?.cancel()
+        neuralJob = scope.launch {
+            val bytes = edge.synthesize(text, EdgeTtsProtocol.DEFAULT_FA_VOICE, EdgeTtsProtocol.DEFAULT_EN_VOICE, rate, pitch)
+            if (bytes != null) playMp3(bytes) { speakOnDevice(text) } else main.post { speakOnDevice(text) }
+        }
+    }
+
+    private fun playMp3(bytes: ByteArray, onError: () -> Unit) {
+        runCatching {
+            val file = File(context.cacheDir, "vision_tts.mp3").apply { writeBytes(bytes) }
+            main.post {
+                releasePlayer()
+                val mp = MediaPlayer()
+                mp.setOnPreparedListener { it.start() }
+                mp.setOnCompletionListener { it.release(); if (player === it) player = null }
+                mp.setOnErrorListener { p, _, _ -> p.release(); if (player === p) player = null; onError(); true }
+                runCatching { mp.setDataSource(file.path); mp.prepareAsync(); player = mp }
+                    .onFailure { mp.release(); onError() }
+            }
+        }.onFailure { main.post(onError) }
+    }
+
+    private fun isOnline(): Boolean = runCatching {
+        context.getSystemService(ConnectivityManager::class.java)?.activeNetwork != null
+    }.getOrDefault(false)
+
+    /** Stop any in-flight neural request + audio + on-device speech before a new reply. */
+    private fun stopAudio() {
+        neuralJob?.cancel(); neuralJob = null
+        main.post { releasePlayer(); tts?.stop() }
+    }
+
+    private fun releasePlayer() {
+        runCatching { player?.release() }
+        player = null
     }
 
     private var segCounter = 0
@@ -255,8 +319,12 @@ class AndroidVoiceController(
     }
 
     override fun release() {
+        neuralJob?.cancel()
+        runCatching { scope.cancel() }
+        runCatching { edge.close() }
         main.post {
             stopListeningOnMain()
+            releasePlayer()
             ttsReady = false
             queue.clear()
             tts?.shutdown(); tts = null
