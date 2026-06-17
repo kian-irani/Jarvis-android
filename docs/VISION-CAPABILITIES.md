@@ -1,9 +1,16 @@
 # Vision OS — Capability Catalog v1.0
 
-> **Vision is NOT an AI launcher. Vision is an Agent Operating System.**
-> The user states a *goal*; Vision **understands → plans → executes → monitors → learns → reports.**
+> **Vision is an AI-native launcher AND an Agent Operating System.** The launcher is how you live on the
+> device every day; the agent OS is what makes it smart: the user states a *goal*; Vision
+> **understands → plans → executes → monitors → learns → reports.**
 > This is the canonical capability spec (from the user, 2026-06-15). Every release is measured against it.
-> Build foundation: see `2026-06-15-vision-brain-framework-review.md` (CF1–CF6). Tasks: `PLAN.md`.
+> Build foundation: see `superpowers/specs/2026-06-15-vision-brain-framework-review.md` (CF1–CF6). Live tasks: [`plu/PLAN.md`](../plu/PLAN.md).
+
+> **As-built status (build v48, 2026-06-17):** the *engine* foundations are shipped — VISION BRAIN cognitive
+> router (VB1–VB9), `AgentEngine`/`TaskPlanner`/`ToolCaller` (CF1–CF3, real call/SMS/open-app/settings/nav),
+> on-device local-model catalog, code-switch + neural voice, and the real launcher (LR/NEO). The
+> capability-level features below (Memory/Timeline/Overlay/Browser/Email/Workflow/etc.) are mostly **planned**
+> and build on these engines — see the mapping table and `plu/PLAN.md` (CF/PA/AGT/MON tracks) for status.
 
 ---
 

@@ -108,7 +108,7 @@ into one ecosystem, and gets smarter every day.
 
 ## 🌍 Competitive Edge
 
-| Feature | Microsoft Solara | Google Gemini OS | **Vision v2** |
+| Feature | Microsoft Solara | Google Gemini OS | **Vision v48** |
 |---------|:---:|:---:|:---:|
 | Hardware required | new Badge/Desk | dedicated Android XR | ✅ **any existing device** |
 | Full offline | ❌ | ❌ | ✅ **Local-First** |
@@ -138,7 +138,7 @@ User → «kiancdn» Telegram bot → receive token → enter in app → activat
 
 ---
 
-## ✨ Core Features (v2)
+## ✨ Core Features (v48)
 
 | Area | Capabilities |
 |------|--------------|
@@ -181,23 +181,22 @@ Full 20+ phases: **[ROADMAP.md](ROADMAP.md)** · architecture: **[docs/ARCHITECT
 └────────────────────────────────────────────────────────────────┘
 ```
 
-**Tech Stack v16**
+**Tech Stack (as-built, v48)**
 ```
-Android   : Kotlin 2.0 + Jetpack Compose + Haze 2.0 + AGSL · Clean Arch + MVI · Hilt
-Brain     : Python 3.12 + FastAPI + LangGraph · Hexagonal (Ports & Adapters)
-Workflow  : Temporal Workflow Engine  (replaces n8n)
-Transfer  : VISN Protocol — LZ4 + zstd + XXH3, chunked/resumable
-Data      : Room/SQLite (Lite) · PostgreSQL + Redis + ChromaDB (Full) · CRDT sync
-Voice     : Vosk / faster-whisper (STT) + Coqui XTTS v2 / Piper (TTS)
-Security  : Android Keystore + EncryptedDataStore · Behavioral Baseline
-Quality   : Detekt/ktlint · Ruff/mypy · pytest · GitHub Actions CI/CD · OpenTelemetry
+Android   : Kotlin 2.1 + Jetpack Compose (BOM 2025.01) + Material3 · Hilt · Room · Haze (glass) + Lottie
+AI/Brain  : VISION BRAIN router (orchestrator/capability/health/substitution/cost) · Ktor 3.1 client ·
+            on-device local-model catalog · Brain-Lite Ktor server :7799 · Brain-Full Python 3.12 + FastAPI
+Voice     : Android TextToSpeech/SpeechRecognizer + code-switch segmenter + free Edge neural (opt-in)
+Data      : Room/SQLite · DataStore · EncryptedSharedPreferences (tokens/pairing)
+Workflow  : Temporal Workflow Engine (target) · Transfer: VISN Protocol — LZ4/zstd (target)
+Quality   : ktlint · Ruff/mypy · pytest · GitHub Actions CI (APK build on push to main)
 ```
 
 See the full target tree in **[ROADMAP.md](ROADMAP.md)** and module map in [`android/MODULES.md`](android/MODULES.md) · [`brain/MODULES.md`](brain/MODULES.md).
 
 ---
 
-## 🗺️ Phase Map (v16)
+## 🗺️ Phase Map
 
 | Band | Phases | Focus | Status |
 |------|--------|-------|--------|
