@@ -34,6 +34,7 @@ class HudViewModel @Inject constructor(
     private val settings: com.kianirani.jarvis.data.settings.VisionSettings,
     private val orchestrator: com.kianirani.jarvis.router.orchestrator.VisionOrchestrator,
     private val backendRouter: com.kianirani.jarvis.router.backend.BackendRouter,
+    private val history: com.kianirani.jarvis.data.ai.ChatHistoryStore,
 ) : ViewModel() {
     private val _state = MutableStateFlow(HudUiState())
     val uiState: StateFlow<HudUiState> = _state.asStateFlow()
@@ -42,7 +43,28 @@ class HudViewModel @Inject constructor(
     private var typeJob: Job? = null
     private var idleJob: Job? = null
 
-    init { startClock(); startWaveform(); connectBrain() }
+    init { startClock(); startWaveform(); connectBrain(); observeSpeaking() }
+
+    /** BUG-2: mirror the voice controller's speaking flag into UI state. */
+    private fun observeSpeaking() = viewModelScope.launch {
+        voice.isSpeaking.collect { speaking -> _state.update { it.copy(isSpeaking = speaking) } }
+    }
+
+    /** BUG-1: expand/collapse the (possibly long) AI output. */
+    fun toggleOutputExpanded() = _state.update { it.copy(isOutputExpanded = !it.isOutputExpanded) }
+
+    /** BUG-2: interrupt the spoken reply (Stop button / orb tap). */
+    fun stopSpeaking() = voice.stopSpeaking()
+
+    /** BUG-3: forget the conversation — clears persisted history + the visible output. */
+    fun clearConversation() {
+        history.clear()
+        voice.stopSpeaking()
+        typeJob?.cancel()
+        _state.update { it.copy(jarvisOutput = "", inputText = "", isOutputExpanded = false) }
+        addLog("Conversation cleared", "info")
+        startIdle()
+    }
 
     private fun startClock() = viewModelScope.launch {
         while (isActive) { _state.update { it.copy(currentTime = timeFmt.format(Date())) }; delay(1_000) }
@@ -169,6 +191,7 @@ class HudViewModel @Inject constructor(
         val now = !_state.value.isListening
         _state.update { it.copy(isListening = now) }
         if (now) {
+            voice.stopSpeaking() // BUG-2 barge-in: starting to listen interrupts any reply
             addLog("Voice on", "ok"); typeText("Listening...")
             // Recognizer callbacks may arrive on any thread — hop to Main.immediate
             // before touching state (review finding HIGH-1).
@@ -212,7 +235,7 @@ class HudViewModel @Inject constructor(
         }
     }
 
-    private fun typeText(text: String) { typeJob?.cancel(); typeJob = viewModelScope.launch { _state.update { it.copy(jarvisOutput = "") }; var cur = ""; for (ch in text) { cur += ch; _state.update { it.copy(jarvisOutput = cur) }; delay(28L + (0..18).random()) } } }
+    private fun typeText(text: String) { typeJob?.cancel(); typeJob = viewModelScope.launch { _state.update { it.copy(jarvisOutput = "", isOutputExpanded = false) }; var cur = ""; for (ch in text) { cur += ch; _state.update { it.copy(jarvisOutput = cur) }; delay(28L + (0..18).random()) } } }
     private fun appendText(d: String) = _state.update { it.copy(jarvisOutput = it.jarvisOutput + d) }
     private fun startIdle() { if (idleJob?.isActive == true) return; idleJob = viewModelScope.launch { var i = 0; while (isActive) { typeText(IDLE[i++ % IDLE.size]); delay(4_500) } } }
     private fun stopIdle() { idleJob?.cancel(); idleJob = null }

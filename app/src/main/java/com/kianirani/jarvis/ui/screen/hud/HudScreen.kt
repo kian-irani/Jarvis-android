@@ -31,6 +31,8 @@ data class HudUiState(
     val brainOnline: Boolean = false, val nodesOnline: Int = 0, val groqOnline: Boolean = false,
     val brainCpu: Float = 0f, val brainRam: Float = 0f, val brainNet: Float = 0f, val brainDiskIo: Float = 0f,
     val jarvisOutput: String = "", val inputText: String = "", val isListening: Boolean = false,
+    // BUG-1 expandable output · BUG-2 Vision is speaking (drives Stop affordance).
+    val isOutputExpanded: Boolean = false, val isSpeaking: Boolean = false,
     val waveformAmplitudes: List<Float> = List(40) { 0.05f },
     val currentTime: String = "", val eventLog: List<LogEvent> = emptyList(),
     // VB9 decision telemetry: which model answered and the orchestrator's one-line "why".

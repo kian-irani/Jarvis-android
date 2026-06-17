@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -115,7 +116,8 @@ fun HomeScreen(
         // ── The hero: the AI core, dominating the screen ──────────────────────
         OrbCluster(
             listening = s.isListening,
-            onTalk = hud::toggleListening,
+            // Tapping the core while Vision is speaking interrupts it (BUG-2), else talks.
+            onTalk = { if (s.isSpeaking) hud.stopSpeaking() else hud.toggleListening() },
             onRecents = { openSystemRecents(ctx) },
             onMemory = onOpenMemory,
             onProjects = { onQuickAction(QuickAction.TASKS) },
@@ -130,16 +132,14 @@ fun HomeScreen(
             modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 4.dp, bottom = 16.dp),
         )
 
-        CommandBar(s.inputText, hud::onInputChange, hud::sendChat, s.isListening, hud::toggleListening, Modifier.fillMaxWidth().visionEnter(1))
-        if (s.jarvisOutput.isNotBlank()) {
-            Text(
-                s.jarvisOutput,
-                style = MaterialTheme.typography.bodyMedium,
-                color = JarvisColors.TextSecondary,
-                maxLines = 4, overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.fillMaxWidth().padding(top = 10.dp),
-            )
-        }
+        CommandBar(s.inputText, hud::onInputChange, hud::sendChat, s.isListening, s.isSpeaking, hud::toggleListening, hud::stopSpeaking, Modifier.fillMaxWidth().visionEnter(1))
+        VisionOutput(
+            output = s.jarvisOutput,
+            isExpanded = s.isOutputExpanded,
+            onToggle = hud::toggleOutputExpanded,
+            onClear = hud::clearConversation,
+            modifier = Modifier.fillMaxWidth(),
+        )
         Spacer(Modifier.height(28.dp))
 
         QuickActionsGrid(order, home.quickActions::move, home.quickActions::reset, onQuickAction, Modifier.fillMaxWidth().visionEnter(2))
@@ -289,9 +289,23 @@ private fun NeuralNode(icon: ImageVector, label: String, onClick: () -> Unit, mo
     }
 }
 
-/** The premium command bar — 72dp, 36dp radius, glass + glow, sparkle left, voice right. */
+/**
+ * The premium command bar — 72dp, 36dp radius, glass + glow, sparkle left, a single
+ * multi-state action button on the right. The button is Stop (red) while Vision is
+ * speaking so the user can always interrupt (BUG-2), Send (cyan) when there is text,
+ * else Mic — distinct icon AND colour per state, never colour alone.
+ */
 @Composable
-private fun CommandBar(value: String, onChange: (String) -> Unit, onSend: () -> Unit, listening: Boolean, onVoice: () -> Unit, modifier: Modifier) {
+private fun CommandBar(
+    value: String,
+    onChange: (String) -> Unit,
+    onSend: () -> Unit,
+    listening: Boolean,
+    isSpeaking: Boolean,
+    onVoice: () -> Unit,
+    onStop: () -> Unit,
+    modifier: Modifier,
+) {
     Row(
         modifier.height(72.dp).glassPanel(radius = 36.dp).padding(start = 12.dp, end = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -314,18 +328,85 @@ private fun CommandBar(value: String, onChange: (String) -> Unit, onSend: () -> 
             },
         )
         Spacer(Modifier.width(8.dp))
+        val mode = commandBarMode(isSpeaking = isSpeaking, hasText = value.isNotBlank())
+        val accent = when (mode) {
+            CommandBarMode.STOP -> JarvisColors.DangerRed
+            CommandBarMode.SEND -> JarvisColors.CyanPrimary
+            CommandBarMode.MIC -> if (listening) JarvisColors.NeonGreen else JarvisColors.CyanPrimary
+        }
+        val icon = when (mode) {
+            CommandBarMode.STOP -> VisionIcons.Stop
+            CommandBarMode.SEND -> VisionIcons.Send
+            CommandBarMode.MIC -> VisionIcons.Mic
+        }
+        val desc = when (mode) {
+            CommandBarMode.STOP -> "Stop speaking"
+            CommandBarMode.SEND -> "Send"
+            CommandBarMode.MIC -> "Voice"
+        }
         Box(
             Modifier.size(48.dp).clip(CircleShape)
-                .background(if (listening) JarvisColors.NeonGreen.copy(alpha = 0.2f) else JarvisColors.CyanFaint)
-                .border(1.dp, (if (listening) JarvisColors.NeonGreen else JarvisColors.CyanSecondary).copy(alpha = 0.5f), CircleShape)
-                .clickable { if (value.isBlank()) onVoice() else onSend() },
+                .background(accent.copy(alpha = if (mode == CommandBarMode.MIC && !listening) 0.12f else 0.20f))
+                .border(1.dp, accent.copy(alpha = 0.5f), CircleShape)
+                .clickable {
+                    when (mode) {
+                        CommandBarMode.STOP -> onStop()
+                        CommandBarMode.SEND -> onSend()
+                        CommandBarMode.MIC -> onVoice()
+                    }
+                },
             contentAlignment = Alignment.Center,
+        ) { Icon(icon, desc, tint = accent, modifier = Modifier.size(20.dp)) }
+    }
+}
+
+/**
+ * BUG-1 — Vision's reply, never truncated. Collapsed it is capped at ~132dp and
+ * scrolls; "Show more" expands it (capped taller, still scrolls) for long answers.
+ * A discreet Clear control forgets the conversation (BUG-3). No state rides on
+ * colour alone — each control pairs an icon with its label.
+ */
+@Composable
+private fun VisionOutput(
+    output: String,
+    isExpanded: Boolean,
+    onToggle: () -> Unit,
+    onClear: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    if (output.isBlank()) return
+    val scroll = rememberScrollState()
+    val long = output.length > 280
+    Column(modifier.padding(top = 10.dp)) {
+        Box(
+            Modifier.fillMaxWidth()
+                .heightIn(max = if (isExpanded) 320.dp else 132.dp)
+                .verticalScroll(scroll),
         ) {
-            Icon(
-                if (value.isBlank()) VisionIcons.Mic else VisionIcons.Send,
-                if (value.isBlank()) "Voice" else "Send",
-                tint = if (listening) JarvisColors.NeonGreen else JarvisColors.CyanPrimary, modifier = Modifier.size(20.dp),
-            )
+            Text(output, style = MaterialTheme.typography.bodyMedium, color = JarvisColors.TextSecondary)
+        }
+        Row(Modifier.fillMaxWidth().padding(top = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+            if (long) {
+                Row(
+                    Modifier.clip(RoundedCornerShape(10.dp)).clickable(onClick = onToggle)
+                        .padding(horizontal = 8.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                ) {
+                    Text(if (isExpanded) "Show less" else "Show more", style = MaterialTheme.typography.labelMedium, color = JarvisColors.CyanPrimary)
+                    Icon(if (isExpanded) VisionIcons.ExpandLess else VisionIcons.ExpandMore, null, tint = JarvisColors.CyanPrimary, modifier = Modifier.size(18.dp))
+                }
+            }
+            Spacer(Modifier.weight(1f))
+            Row(
+                Modifier.clip(RoundedCornerShape(10.dp)).clickable(onClick = onClear)
+                    .padding(horizontal = 8.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                Icon(VisionIcons.Clear, "Clear conversation", tint = JarvisColors.TextDim, modifier = Modifier.size(18.dp))
+                Text("Clear", style = MaterialTheme.typography.labelMedium, color = JarvisColors.TextDim)
+            }
         }
     }
 }

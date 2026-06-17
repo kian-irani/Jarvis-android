@@ -11,6 +11,10 @@ import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.ChevronLeft
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Code
+import androidx.compose.material.icons.rounded.DeleteSweep
+import androidx.compose.material.icons.rounded.ExpandLess
+import androidx.compose.material.icons.rounded.ExpandMore
+import androidx.compose.material.icons.rounded.Stop
 import androidx.compose.material.icons.rounded.Dashboard
 import androidx.compose.material.icons.rounded.DeveloperBoard
 import androidx.compose.material.icons.rounded.Folder
@@ -68,6 +72,12 @@ object VisionIcons {
     val Search: ImageVector = Icons.Rounded.Search
     val Back: ImageVector = Icons.Rounded.ChevronLeft
     val Close: ImageVector = Icons.Rounded.Close
+
+    // Conversation controls (BUG-1/BUG-2/BUG-3): interrupt TTS, expand/collapse, clear.
+    val Stop: ImageVector = Icons.Rounded.Stop
+    val ExpandMore: ImageVector = Icons.Rounded.ExpandMore
+    val ExpandLess: ImageVector = Icons.Rounded.ExpandLess
+    val Clear: ImageVector = Icons.Rounded.DeleteSweep
 
     /** Icon for a home quick-action tile. */
     fun forAction(a: QuickAction): ImageVector = when (a) {
