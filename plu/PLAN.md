@@ -63,6 +63,19 @@ project: 05-vision
 - [ ] **TWIN Digital Twin** (PRD Part 14.2): مدلِ ماندگارِ کاربر (preferences/routines/contacts/projects/usage).
 - [ ] **MCP / A2A**: اکوسیستمِ پلاگین + پروتکلِ agent-to-agent.
 
+## 🧩 DS — VISION OS Dual System (Widget + Launcher + Brain) — طرحِ کاربر 2026-06-17
+> طرحِ کامل + معماری + folder structure + pseudo-code + API + stack: **`plu/VISION-DUAL-SYSTEM.md`**.
+> یافته: «Core System (Vision Brain)»ِ این طرح ~۸۰٪ ساخته شده (router/agent/memory/voice/mesh)؛ دو محصولِ واقعاً جدید = **Widget شناور** و **Windows shell**. پس کارِ اصلی = productize + cross-platform، نه greenfield. تصمیمِ stack: **KMP + Compose Multiplatform** تا یک Brainِ Kotlin روی اندروید/ویندوز share شود.
+- [ ] **DS1 brain-core extraction**: انتقالِ router+agent+memory به یک ماژولِ Kotlinِ ساده + facadeِ `VisionBrain` (بدونِ تغییرِ رفتار). پایه‌ی همه.
+- [ ] **DS2 Vision Widget MVP**: `FloatingWidgetService` (overlay orb: drag/states/Ask bar) که in-process به `VisionBrain` وصل است + permission funnel (= PAO، productized).
+- [ ] **DS3 ContextEngine**: اپِ فعلی + نوتیف‌ها به promptِ Brain (PRD 8.2).
+- [ ] **DS4 Widget panels**: reminders/notes/search/quick-actions.
+- [ ] **DS5 Launcher AI grouping + layout suggestions**: فولدرِ هوشمند + پیشنهادِ reflow.
+- [ ] **DS6 CF5 scheduler**: WorkManager automation/triggers.
+- [ ] **DS7 KMP-enable brain-core**: expect/actual (embedder/db/audio) + SQLDelight.
+- [ ] **DS8 Windows shell MVP**: Compose-MP desktop dock + Ask panel + Brain-Lite peer pairing.
+- [ ] **DS9 Window mgmt + snap (Win32/JNA)** · **DS10 cross-device sync** (memory/clipboard/handoff = MX).
+
 ## 🚀 اولویت ۰ — LR: لانچرِ واقعیِ اندروید (REAL LAUNCHER)
 > **دستور کاربر (2026-06-16): «بس کن mockup ساختن — Vision باید یک لانچرِ واقعی باشد مثل Pixel/Nova/Nothing.»**
 > **ممیزی (2026-06-16):** اپ به‌عنوان HOME رجیستر شده (`CATEGORY_HOME`+`QUERY_ALL_PACKAGES`) و drawer اپ‌های واقعی را اجرا می‌کند — اما **هوم یک داشبوردِ اسکرولیِ ثابت است، نه لانچر**. تنها persistence = `QuickActionsStore` (۶ شورتکات). **هیچ‌کدام نیست:** گریدِ قابل‌ویرایش، long-press، **drag&drop**، folder، صفحاتِ متعدد، edit-mode، dockِ پیکربندی‌شدنی، widget host (`AppWidgetHost`)، app-drawerِ pro (A-Z/recent/pinned/hidden)، ژست‌های پیشرفته، و persistenceِ layout.
