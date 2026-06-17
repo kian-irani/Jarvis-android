@@ -11,6 +11,16 @@ import kotlin.math.sqrt
 @Serializable
 data class SearchHit(val id: String, val content: String, val score: Float)
 
+/** Richer hit for [MemoryRepository.searchDetailed] — carries the fields the CF4 MemoryEngine ranks on. */
+data class DetailedHit(
+    val id: String,
+    val content: String,
+    val score: Float,
+    val type: String,
+    val metadata: String,
+    val createdAt: Long,
+)
+
 class MemoryRepository(
     private val dao: MemoryDao,
     private val embed: (List<String>) -> List<FloatArray>,
@@ -50,5 +60,14 @@ class MemoryRepository(
             .map { SearchHit(it.id, it.content, cosine(q, fromBlob(it.embedding!!))) }
             .sortedByDescending { it.score }
             .take(topK)
+    }
+
+    /** Like [search] but returns type/metadata/createdAt so callers can re-rank (CF4 MemoryEngine). */
+    suspend fun searchDetailed(query: String, pool: Int): List<DetailedHit> {
+        val q = embed(listOf(query)).first()
+        return dao.allWithEmbedding()
+            .map { DetailedHit(it.id, it.content, cosine(q, fromBlob(it.embedding!!)), it.type, it.metadata, it.created_at) }
+            .sortedByDescending { it.score }
+            .take(pool)
     }
 }
