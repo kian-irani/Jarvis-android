@@ -11,13 +11,19 @@
 ## ✅ Progress Snapshot — 2026-06-17 (auto-updated)
 
 > **Live task list:** [`plu/PLAN.md`](plu/PLAN.md) · **session reports:** [`plu/reports/`](plu/reports/).
-> Releases auto-publish on push to `main` (`.github/workflows/build.yml`), tag `v<versionName>`. **Current build: v48.**
+> Releases auto-publish on push to `main` (`.github/workflows/build.yml`), tag `v<versionName>`. **Current build: v55.**
 
 **🟣 VISION BRAIN — cognitive multi-model router: COMPLETE (v13–v21).** Orchestrator (intent→capability→ranked candidates) + Capability Router + Model Registry + Availability Graph (latency/error EWMA, circuit-breaker, Retry-After) + Smart Substitution chain + Adaptive Cost Controller + secret-safe Token Pool + Backend adapters + on-device decision telemetry. Agent engine + Task planner + ToolCaller (real function-calling). On-device local-model catalog with resumable, SHA-pinned download. ~90 unit tests across the router.
 
 **🟣 REAL LAUNCHER + Vision OS redesign: IN PROGRESS (v22–v48).** Vision is now a real AI-native launcher: layout model + pure ops + JSON persistence (`LauncherStore`); `HorizontalPager` home (orb on page 1) + workspace grid + pages + page dots; drag & drop (move / folder / add / remove); folders (create/open/rename/2×2 preview/pull-out); long-press icon menu (App info/Remove); Edit-Home sheet (wallpaper/grid/pages/settings); grid-density presets with safe reflow; app drawer with search + categories + A–Z fast-scroll; layout backup/restore/reset; curated first-run home. Full visual redesign (orb, glass, azure→violet palette, font picker). See `plu/PLAN.md` → LR/NEO tracks.
 
-**🎙️ VOICE engine: code-switch + free neural Persian (v34/v41).** `VoiceSegmenter` splits replies into Persian/Latin runs spoken each in its own voice (fixes the mixed-language garble); best-installed-voice selection + per-language voice picker + TEST; free **Edge neural** Persian TTS (opt-in, network-gated, falls back to on-device — *needs on-device confirmation*).
+**🎙️ VOICE engine: code-switch + free neural Persian (v34/v41).** `VoiceSegmenter` splits replies into Persian/Latin runs spoken each in its own voice (fixes the mixed-language garble); best-installed-voice selection + per-language voice picker + TEST; free **Edge neural** Persian TTS (3-state Auto/On/Off since v51, network-gated, falls back to on-device — *needs on-device confirmation*).
+
+**💬 CONVERSATION SYSTEM (PRD v2.0): SHIPPED (v49–v52).** Expandable output (no truncation), 3-state Mic/Send/Stop command button + TTS interrupt/barge-in, Clear-conversation (with confirm), Persian neural auto-routing, message-boundary TOOL_PROTOCOL. Plus the v49 audit fixes (HudScreen truncation, neural 3-state, isSpeaking init-fail, Clear confirm).
+
+**🧠 CF4 MEMORY ENGINE: foundation + wired (v53–v54).** Typed semantic long-term memory (`core/memory/`: `MemoryType`, pure `MemoryScoring` = cosine×importance×recency-decay, `PreferenceLearner` 3-strike, `MemoryEngine`) over the existing on-device MiniLM+cosine store; wired into `CloudChatRouter` (recall→prompt + quality-gated capture). ~20 new tests. *Real activation needs the on-device embedding model (LM track).*
+
+**🧩 DUAL EXPERIENCE (Widget + Launcher + Brain): DESIGN + TASKS (v55).** Full design `plu/VISION-DUAL-SYSTEM.md`; productizes the always-on **Vision Widget** overlay + a **Windows shell** (Compose-Multiplatform), on the shared **Vision Brain** (~80% already built). Phased **DS-F → DS-W → DS-B → DS-L → DS-BG → DS-WIN → DS-C → DS-X** track in `plu/PLAN.md`.
 
 **M0 Foundation: COMPLETE** — CI green (brain ruff/mypy/pytest + android ktlint + APK build), detect-secrets gate, ADR-001..011, JSON structured logging, health probes, n8n→Temporal.
 

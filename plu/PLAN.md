@@ -63,18 +63,61 @@ project: 05-vision
 - [ ] **TWIN Digital Twin** (PRD Part 14.2): مدلِ ماندگارِ کاربر (preferences/routines/contacts/projects/usage).
 - [ ] **MCP / A2A**: اکوسیستمِ پلاگین + پروتکلِ agent-to-agent.
 
-## 🧩 DS — VISION OS Dual System (Widget + Launcher + Brain) — طرحِ کاربر 2026-06-17
-> طرحِ کامل + معماری + folder structure + pseudo-code + API + stack: **`plu/VISION-DUAL-SYSTEM.md`**.
-> یافته: «Core System (Vision Brain)»ِ این طرح ~۸۰٪ ساخته شده (router/agent/memory/voice/mesh)؛ دو محصولِ واقعاً جدید = **Widget شناور** و **Windows shell**. پس کارِ اصلی = productize + cross-platform، نه greenfield. تصمیمِ stack: **KMP + Compose Multiplatform** تا یک Brainِ Kotlin روی اندروید/ویندوز share شود.
-- [ ] **DS1 brain-core extraction**: انتقالِ router+agent+memory به یک ماژولِ Kotlinِ ساده + facadeِ `VisionBrain` (بدونِ تغییرِ رفتار). پایه‌ی همه.
-- [ ] **DS2 Vision Widget MVP**: `FloatingWidgetService` (overlay orb: drag/states/Ask bar) که in-process به `VisionBrain` وصل است + permission funnel (= PAO، productized).
-- [ ] **DS3 ContextEngine**: اپِ فعلی + نوتیف‌ها به promptِ Brain (PRD 8.2).
-- [ ] **DS4 Widget panels**: reminders/notes/search/quick-actions.
-- [ ] **DS5 Launcher AI grouping + layout suggestions**: فولدرِ هوشمند + پیشنهادِ reflow.
-- [ ] **DS6 CF5 scheduler**: WorkManager automation/triggers.
-- [ ] **DS7 KMP-enable brain-core**: expect/actual (embedder/db/audio) + SQLDelight.
-- [ ] **DS8 Windows shell MVP**: Compose-MP desktop dock + Ask panel + Brain-Lite peer pairing.
-- [ ] **DS9 Window mgmt + snap (Win32/JNA)** · **DS10 cross-device sync** (memory/clipboard/handoff = MX).
+## 🧩 DS — VISION OS Dual Experience (Widget + Launcher + Brain) — طرحِ کاربر 2026-06-17
+> طرحِ کامل (PRD/معماری/monorepo/pseudo-code/API/stack): **`plu/VISION-DUAL-SYSTEM.md`** (سندِ full-spec در حالِ تکمیل).
+> **یافته:** «Vision Brain (Core)»ِ این طرح ~۸۰٪ ساخته شده (router/agent/memory/voice/mesh)؛ دو محصولِ واقعاً جدید = **Widget شناور** و **Windows shell**. کارِ اصلی = productize + cross-platform، نه greenfield. stack: **KMP + Compose Multiplatform** (یک Brainِ Kotlin، سه frontend). **هم‌پوشانی:** بعضی آیتم‌ها بلوک‌های موجود را در بر می‌گیرند (PAO→DS-W، CF5→DS-BG2، SRCH→DS-L4، MX→DS-C3، CF4→DS-B3، CTX→DS-B2/DS-W5، ORB→DS-W2). ترتیبِ پیشنهادی: **DS-F → DS-W → DS-B → DS-L → DS-BG → DS-WIN → DS-C → DS-X**.
+
+### DS-F — Foundation & shared (پایه)
+- [ ] **DS-F1 brain-core extraction**: انتقالِ router+agent+memory به ماژولِ Kotlinِ ساده + facadeِ `VisionBrain` (`handle/state/remember/recall`)، بدونِ تغییرِ رفتار. **پایه‌ی همه.**
+- [ ] **DS-F2 vision-protocol**: مدل‌های مشترک (`VisionRequest/Response`, `Intent`, `DeviceContext`, `MemoryDTO`, `VisionEvent`) با kotlinx-serialization، KMP-ready.
+- [ ] **DS-F3 vision-sdk**: کلاینتِ مشترک برای Widget/Launcher/Desktop (آداپترِ in-process + network به Brain).
+- [ ] **DS-F4 monorepo split**: ماژول‌بندیِ Gradle (`vision-widget`، `vision-launcher`، `vision-brain`، `vision-protocol`، `vision-sdk`، `vision-api`، `vision-desktop`) via composite/included builds؛ مهاجرتِ تدریجی (بدونِ شکستنِ اپ).
+
+### DS-W — Vision Widget (overlayِ همیشه‌روشن)  [= PAO، productized]
+- [ ] **DS-W1 FloatingWidgetService**: foreground service + `WindowManager` overlay (`TYPE_APPLICATION_OVERLAY`) + هاستِ `ComposeView` (الحاقِ Lifecycle/SavedState)؛ funnelِ مجوز (overlay/mic/notif).
+- [ ] **DS-W2 Orb state machine UI** [= ORB]: idle breathing / listening wave / thinking pulse / responding glow؛ reduced-motion، ۱۵۰–۳۰۰ms، interruptible.
+- [ ] **DS-W3 Gestures**: tap→quick prompt · long-press→voice · swipe-up→پنلِ گسترده · swipe-side→quick actions · double-tap→تکرارِ آخرین اکشن؛ drag-threshold؛ collapse-to-dot در idle.
+- [ ] **DS-W4 Mini-panels**: Notes (capture→Memory) · Reminders (→scheduler) · Smart Search (DS-L4) · Automation (macro) · Recent-memory (نمای recall).
+- [ ] **DS-W5 Context awareness**: اپِ foreground (Accessibility) + نوتیف‌ها → promptِ Brain (مشترک با DS-B2).
+- [ ] **DS-W6 Battery/low-mem**: notifِ کم‌اولویت، idle-collapse، Doze-safe، wake-word کم‌مصرف، degrade در حافظه‌ی کم.
+
+### DS-L — Vision Launcher (Android، روی LR/NEO)
+- [ ] **DS-L1 AI smart grouping**: خوشه‌بندیِ اپ‌ها بر اساسِ usage+category → فولدرهای زمینه‌ای (Work/Social/Media/Tools).
+- [ ] **DS-L2 Adaptive home**: پیشنهادِ پویای اپ بر اساسِ الگوی استفاده؛ هابِ orb مرکزی.
+- [ ] **DS-L3 Edit-mode AI optimize**: اکشن‌های «clean home»/«optimize productivity» + تاریخچه‌ی undo/redo چیدمان.
+- [ ] **DS-L4 Universal search** [= SRCH]: apps/files/settings/contacts/AI-actions/web/automation در یک لیستِ رتبه‌بندی‌شده‌ی معنایی.
+- [ ] **DS-L5 Usage-based ranking**: رتبه‌بندیِ اپ‌ها/اکشن‌ها.
+
+### DS-B — Vision Brain (تعمیقِ هسته)
+- [ ] **DS-B1 Intent classifier + planner**: کلاسیفایرِ صریحِ intent + plannerِ چندمرحله‌ای (توسعه‌ی `TaskPlanner`).
+- [ ] **DS-B2 ContextEngine** [= CTX]: اپ/نوتیف/ساعت/باتری/شبکه → تزریق به prompt.
+- [ ] **DS-B3 Memory deepen** [CF4 ✅ پایه]: session کوتاه‌مدت + بلندمدتِ معنایی + preference + **summarization engine** (فشرده‌سازیِ نوبت‌های قدیمی).
+- [ ] **DS-B4 Task engine**: workflowِ زنجیره‌ای + retry/fallback (توسعه‌ی `AgentEngine`/`ToolCaller`).
+- [ ] **DS-B5 Event system**: توسعه‌ی `EventBus` با `app_opened`/`user_idle`/`command_received`/`context_changed` + subscriberها.
+
+### DS-BG — Background system
+- [ ] **DS-BG1 Foreground service manager**: یکپارچه‌سازیِ سرویس‌های widget + brain-lite (یک ساختارِ پایدار).
+- [ ] **DS-BG2 Task scheduler** [= CF5]: WorkManager (TIME/CONDITION/APP_OPEN/NOTIFICATION/LOCATION).
+- [ ] **DS-BG3 Notification handler** + event bus (DS-B5).
+- [ ] **DS-BG4 Resource/power optimizer**: اجرای power-aware، Doze، low-memory.
+
+### DS-C — Communication
+- [ ] **DS-C1 In-process plane**: Widget+Launcher ↔ Brain مستقیم (facadeِ `VisionBrain`، هم‌پروسه).
+- [ ] **DS-C2 Network plane**: توسعه‌ی Brain-Lite API — استریمِ توکن WebSocket (`/v1/stream`)؛ ارزیابیِ gRPC برای `vision-api`.
+- [ ] **DS-C3 Cross-device sync** [= MX]: memory/clipboard/handoff روی mesh؛ CRDT برای stateِ چیدمان.
+- [ ] **DS-C4 IPC (گزینه‌ی جدا-اپ)**: AIDL bound-service / Messenger برای Widgetِ cross-process.
+
+### DS-WIN — Windows shell (Compose-MP)
+- [ ] **DS-WIN1 Desktop skeleton**: Compose-MP + pairingِ peerِ Brain-Lite (mDNS/QR/election).
+- [ ] **DS-WIN2 Command palette**: hotkeyِ سراسری سبکِ Spotlight/Copilot.
+- [ ] **DS-WIN3 AI taskbar/dock** (جایگزینِ taskbar).
+- [ ] **DS-WIN4 Window manager + AI snap**: Win32 via JNA (`SetWindowPos`/`EnumWindows`/`MonitorFromWindow`).
+- [ ] **DS-WIN5 Multi-desktop + Focus mode** (پنهان‌کردنِ حواس‌پرتی توسط AI).
+- [ ] **DS-WIN6 Cross-device sync** با stateِ لانچرِ اندروید (DS-C3).
+
+### DS-X — Plugin ecosystem + deployment
+- [ ] **DS-X1 Plugin SDK**: registryِ اکشن + ابزارهای قابل‌توسعه + sandbox (هم‌راستا با MCP).
+- [ ] **DS-X2 Deployment**: CI/CD per-module، signing، packagingِ desktop (MSI/exe)، deployِ brain-server، کانال‌های dev/beta/prod، feature flags.
 
 ## 🚀 اولویت ۰ — LR: لانچرِ واقعیِ اندروید (REAL LAUNCHER)
 > **دستور کاربر (2026-06-16): «بس کن mockup ساختن — Vision باید یک لانچرِ واقعی باشد مثل Pixel/Nova/Nothing.»**
