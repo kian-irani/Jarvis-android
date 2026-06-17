@@ -281,23 +281,65 @@ fun AppDrawerScreen(
             }
         }
 
-        // The 5-column rounded-icon grid (spec: "Grid: 5 Columns, Rounded Icons").
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(5),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = Modifier.fillMaxSize(),
-        ) {
-            if (showExtras && frequent.isNotEmpty()) {
-                header("Recent")
-                items(frequent, key = { "freq_${it.packageName}" }) { app -> AppTile(app.label, app.icon, badges[app.packageName] ?: 0, accent = true, onLongClick = { addToHome(app) }) { vm.launch(app.packageName) } }
-                header("All apps")
+        // The 5-column rounded-icon grid (spec: "Grid: 5 Columns, Rounded Icons")
+        // with a Neo-style A–Z fast-scroll index down the right edge.
+        val gridState = androidx.compose.foundation.lazy.grid.rememberLazyGridState()
+        val scope = androidx.compose.runtime.rememberCoroutineScope()
+        // Lazy items that precede the alphabetical "All apps" list (headers/specials).
+        val leadCount = (if (showExtras && frequent.isNotEmpty()) frequent.size + 2 else 0) + (if (showExtras) 2 else 0)
+        Box(Modifier.fillMaxSize()) {
+            LazyVerticalGrid(
+                state = gridState,
+                columns = GridCells.Fixed(5),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.fillMaxSize(),
+            ) {
+                if (showExtras && frequent.isNotEmpty()) {
+                    header("Recent")
+                    items(frequent, key = { "freq_${it.packageName}" }) { app -> AppTile(app.label, app.icon, badges[app.packageName] ?: 0, accent = true, onLongClick = { addToHome(app) }) { vm.launch(app.packageName) } }
+                    header("All apps")
+                }
+                if (showExtras) {
+                    item(key = "__vision_settings") { SpecialTile(VisionIcons.Settings, "Settings", onOpenSettings) }
+                    item(key = "__vision_hub") { SpecialTile(VisionIcons.Spark, "Vision Hub", onOpenHub) }
+                }
+                items(filtered, key = { it.packageName }) { app -> AppTile(app.label, app.icon, badges[app.packageName] ?: 0, onLongClick = { addToHome(app) }) { vm.launch(app.packageName) } }
             }
-            if (showExtras) {
-                item(key = "__vision_settings") { SpecialTile(VisionIcons.Settings, "Settings", onOpenSettings) }
-                item(key = "__vision_hub") { SpecialTile(VisionIcons.Spark, "Vision Hub", onOpenHub) }
+            if (query.isBlank() && filtered.size > 12) {
+                AzIndex(filtered, Modifier.align(Alignment.CenterEnd)) { idx ->
+                    scope.launch { gridState.animateScrollToItem((leadCount + idx).coerceAtLeast(0)) }
+                }
             }
-            items(filtered, key = { it.packageName }) { app -> AppTile(app.label, app.icon, badges[app.packageName] ?: 0, onLongClick = { addToHome(app) }) { vm.launch(app.packageName) } }
+        }
+    }
+}
+
+/** Neo-style A–Z rail: tap a letter to jump to the first app starting with it. */
+@Composable
+private fun AzIndex(apps: List<AppEntry>, modifier: Modifier = Modifier, onPick: (Int) -> Unit) {
+    val firstIndexFor = remember(apps) {
+        val m = HashMap<Char, Int>()
+        apps.forEachIndexed { i, a ->
+            val c = a.label.firstOrNull()?.uppercaseChar() ?: '#'
+            if (c in 'A'..'Z' && c !in m) m[c] = i
+        }
+        m
+    }
+    Column(
+        modifier.padding(end = 2.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        ('A'..'Z').forEach { letter ->
+            val target = firstIndexFor[letter]
+            Text(
+                letter.toString(),
+                style = MaterialTheme.typography.labelSmall,
+                color = if (target != null) JarvisColors.CyanPrimary else JarvisColors.TextDim.copy(alpha = 0.3f),
+                modifier = Modifier
+                    .clickable(enabled = target != null) { target?.let(onPick) }
+                    .padding(horizontal = 5.dp, vertical = 1.dp),
+            )
         }
     }
 }
