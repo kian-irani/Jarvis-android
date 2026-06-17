@@ -36,6 +36,26 @@ project: 05-vision
 - [x] **LR11 Backup / Restore** (v37، 2026-06-16): در بخشِ LAUNCHERِ Settings سه اکشن اضافه شد — **Back up** (کلِ layout را با `LauncherStore.exportJson` به clipboard کپی می‌کند)، **Restore** (متنِ clipboard را با `importJson` پارس و اعمال می‌کند، fail-safe با Toast)، و **Reset** (`reset()` — همه‌ی pinها پاک، در restartِ بعدی دوباره seed می‌شود). compile+test سبز. **نیازِ تأییدِ روی دستگاه.** [export/import فایلیِ کامل = follow-up.]
 - [ ] **LR12 Vision Assistant integration**: دکمه‌ی مرکزیِ dock → دستیار (voice/text/agent/automation/search/device-actions) — اتصال به ارکستراتورِ موجود.
 
+## 🟣 اولویت ۰.۵ — NEO: برابریِ تجربه با Neo-Launcher (clean-room) + گزارش‌ها
+> **دستور کاربر (2026-06-17):** «از Neo-Launcher (`NeoApplications/Neo-Launcher`) استفاده کن، کدها/منوها/همه‌چیزش را به کار ببر، امکاناتِ خودمان را هم بگذار، گویِ ویژن را نگه دار، دقیقاً ویژن را به آن اضافه کن و پیشرفته‌اش کن.»
+> **تصمیمِ تأییدشده‌ی کاربر (2026-06-17): «بله، clean-room ادامه بده».** ⚠️ **Neo-Launcher = GPL-3.0** (فورکِ Lawnchair/Omega)؛ این ریپو «source-available / Not open source» است. کپیِ مستقیمِ کدِ Neo کلِ اپ را مجبور به GPL-3.0 می‌کند (ناسازگار با انتشارِ بسته/تجاری) و عملاً روی Launcher3 سوار است که در اپِ Compose جا نمی‌شود. **پس به‌جای کپی، تجربه/منوها/امکاناتِ Neo را با کدِ خودمان بازسازی می‌کنیم** و گویِ ویژن + قابلیت‌های AI حفظ می‌شوند. گزارش‌ها در `plu/reports/`.
+> **بازخوردِ کاربر (2026-06-17):** «UI نسخه‌ی اندروید اصلاً خوب نبود و همه‌چی مشکل داشت.» + باگِ اسم (رفع شد v42). **نیازِ بازخوردِ مشخص روی دستگاه برای ادامه‌ی دقیق.**
+
+- [x] **NEO0 تصمیمِ رویکرد (clean-room)** (2026-06-17): تأییدِ کاربر گرفته شد؛ کدِ GPL کپی نمی‌شود، تجربه‌ی Neo با کدِ خودمان بازسازی می‌شود.
+- [x] **NEO1 فیکسِ باگِ اسم** (v42): onboarding «نامِ شما» و «نامِ دستیار» را جدا می‌پرسد؛ صفحه‌ی اصلی با اسمِ خودِ کاربر خوش‌آمد می‌گوید (نه اسمِ ویژن). در Settings هر دو editable.
+- [x] **NEO2 منوی long-pressِ آیکن** (v43): App info + Remove from home (تشخیص drag با آستانه‌ی ۲۴dp).
+- [x] **NEO3 Edit Home sheet** (v44/v46): long-press فضای خالی → Wallpaper · Grid size (۴×۵…۶×۶ با reflow) · Add/Remove page · Launcher settings.
+- [x] **NEO4 Grid density** (v45): `LauncherOps.reflowWorkspace` (۲ تست) + کنترل در Settings.
+- [x] **NEO5 App Drawer A–Z fast-scroll** (v47): ایندکسِ Neo-style روی لبه‌ی راست.
+- [x] **NEO6 هومِ curated** (v48): seedDefault فقط یک صفحه می‌چیند (نه ده‌ها صفحه)؛ بقیه در drawer.
+- [ ] **NEO7 UI quality pass (نیازِ بازخوردِ دستگاه)**: رفعِ مشکلاتِ مشخصِ بصری که کاربر روی نسخه‌ی نصب‌شده گزارش می‌دهد (اسپیسینگ/کنتراست/اسکرول/اندازه‌ی آیکن). تا بازخورد نیاید، حدسی است.
+- [ ] **NEO8 LR6 dock decision + پیاده‌سازی**: تصمیمِ کاربر — ادغامِ داکِ نَوِ شناور (Phone/Messages/Vision/Camera/Apps) با hotseatِ قابل‌ویرایش، یا جدا ماندن. سپس hotseatِ مدل‌محور (تعداد ۴/۵/۶ + reorder + drop به/از dock).
+- [ ] **NEO9 LR8 widgets واقعی**: `AppWidgetHost`/`AppWidgetManager` + picker + bind/permission + resize + قراردادن روی گرید. (نیازِ تستِ دستگاه.)
+- [ ] **NEO10 LR9 gestures**: swipe-up از workspace → drawer (transition واقعی)، double-tap → lock، نگاشتِ custom. (مراقبِ تداخل با long-press drag.)
+- [ ] **NEO11 At-a-Glance + search bar**: نوارِ جستجو/ویجتِ نگاهِ‌سریعِ سبکِ Neo/Pixel بالای هوم (ساعت/تاریخ/هوا) + جستجوی یکپارچه‌ی اپ/مخاطب/وب.
+- [ ] **NEO12 Icon pack + notification dots روی هوم**: پشتیبانی از آیکن‌پک (resolverِ واقعی) + نقطه‌ی نوتیفِ per-app روی آیکن‌های هوم (badge در drawer از قبل هست).
+- [ ] **NEO13 folder open animation + cross-page drag**: انیمیشنِ بازشدنِ فولدر + کشیدنِ آیکن بینِ صفحات و به/از dock (تکمیلِ LR3).
+- [ ] **NEO14 Neural voice follow-up**: تأییدِ Edge neural روی دستگاهِ واقعی + pickerِ صدای neural per-voice + streamingِ chunk-by-chunk + STT چندلوکیلِ خودکار.
 
 > کاربر v12 را نصب کرد: **هر دو طراحی قبلی (HUD) و جدید (v12 orb) رد شد** — «هیچ اثری از طراحی قدیمی نباشد، کاملاً جدید، از عکس‌ها استفاده کن.» + امکان تغییر فونت در اپ + فونت بهترِ پیش‌فرض.
 > **منبعِ طراحی = پوشه‌ی `05-vision/Example/`** (عکس‌های مرجع) + `repo/docs/design/references/vision-*.png|jpg`. طرح کامل: `repo/docs/design/2026-06-14-vision-launcher-redesign-v2.md`. **همه‌ی طراحی با ui-ux-pro-max.**
