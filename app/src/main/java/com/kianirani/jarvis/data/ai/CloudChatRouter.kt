@@ -57,9 +57,16 @@ class CloudChatRouter @Inject constructor(
          */
         const val TOOL_PROTOCOL =
             "TOOLS: You can perform real device actions — calling, texting, opening an app, " +
-            "flashlight, device settings, navigation, battery, time/date. NEVER claim you did " +
-            "such an action in prose. If (and only if) the user asks you to DO one, reply with " +
-            "ONLY this JSON and nothing else: {\"tool\":\"action\",\"args\":\"<the command in plain words>\"}. " +
+            "flashlight, device settings, navigation, battery, time/date. NEVER claim in prose that " +
+            "you did such an action. If (and only if) the user asks you to DO one, reply with ONLY this " +
+            "JSON and nothing else: {\"tool\":\"action\",\"args\":\"<the command in plain words>\"}. " +
+            "MESSAGE-BOUNDARY RULE (texting/calling): put ONLY the essentials in args — the recipient and, " +
+            "for a text, EXACTLY the words to send, never the user's whole sentence. " +
+            "e.g. «به مامان بگو فردا نمیام» → {\"tool\":\"send_sms\",\"args\":\"به مامان بگو: فردا نمیام\"}; " +
+            "«text Ali I'll be late» → {\"tool\":\"send_sms\",\"args\":\"text Ali: I'll be late\"}. " +
+            "If the recipient is ambiguous or you cannot tell where the message ends, do NOT emit JSON — " +
+            "ask ONE short clarifying question instead. " +
+            "Persian relations: مامان=mom, بابا=dad, خاله/عمه=aunt, دایی/عمو=uncle. " +
             "For everything else (questions, chat), answer normally and do NOT emit JSON."
 
         // Fallback / base identity; the live prompt is built from persona settings.
