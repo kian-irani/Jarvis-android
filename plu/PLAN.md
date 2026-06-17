@@ -36,7 +36,9 @@ project: 05-vision
 > از `VISION OS — PRD v2.0` (Parts 3–14, 16) استخراج شد؛ تیرها به‌ترتیبِ اولویتِ PRD. موارد *(موجود)* از قبل در پلن هستند (این‌جا فقط برای ترتیب)؛ بقیه **جدید** و باز. اصول: منطقِ خالص TDD، UI با `ui-ux-pro-max`، هیچ mockup، شکستنِ کارِ سالم ممنوع.
 
 ### 🟠 HIGH — کارِ بازِ بعدی
-- [ ] **CF4 MemoryEngine** (PRD Part 4): ماژولِ `core/memory/` — `MemoryEntry`/`MemoryType` در Room + embedding با `OnnxEmbedder` موجود → `remember()`/`recall()` (cosine top-K) + `buildContextWindow()` تزریق به system prompt + `PreferenceLearner` (۳ rejection = blacklist). **cosine/decay خالص = TDD.**
+- [x] **CF4.1 MemoryEngine — foundation** (v53، 2026-06-17): ماژولِ `core/memory/` ساخته شد روی زیرساختِ موجود (`brain/data/MemoryRepository` = MiniLM embedding + cosine در Room؛ کشفِ audit: زیرساختِ vector-memory از قبل بود، پس دوباره ساخته نشد). `MemoryType` (۷ نوع + `fromName`)، `MemoryScoring` خالص (cosine×importance×recency-decay، ۷ تست)، `PreferenceLearner` خالص (۳-strike blacklist، ۵ تست)، `MemoryEngine` (@Singleton: `remember`/`recall`/`buildContextWindow`/`learnDislike`، graceful وقتی مدلِ embedding دانلود نشده). importance در `metadata` JSON نگه داشته شد (بدونِ Room migration). `MemoryRepository.searchDetailed` افزوده شد (۱ تست). **۱۵ تستِ جدید، build سبز (۲۳۸).** [foundation — هنوز به چتِ زنده وصل نشده.]
+- [ ] **CF4.2 — اتصال + populate**: `buildContextWindow(message)` به system promptِ `CloudChatRouter` تزریق شود (guarded)؛ ثبتِ خاطره‌ی باکیفیت (نه هر پیام؛ اهمیت/نوع را مدل یا heuristic تعیین کند). نیازِ مدلِ embedding (LM2) روی دستگاه.
+- [ ] **CF4.3 — UI + یادگیری ترجیح**: صفحه‌ی Memory (مرور/جستجو/حذف) + اتصالِ `PreferenceLearner` به بازخوردِ طراحی/رد.
 - [ ] **LR6 Configurable Dock (Hotseat)** *(موجود)*: count 4/5/6 + reorder + drop به/از dock + persist؛ دکمه‌ی مرکزیِ Vision همیشه (PRD Part 6.2).
 - [ ] **LR12 Vision Assistant dock button** *(موجود)*: دکمه‌ی مرکزی → دستیار (voice/text/agent/search/device).
 - [ ] **FV4 Wake word** (PRD Part 3.3): «Hey Vision»/«ویژن» با Porcupine یا openWakeWord روی ForegroundServiceِ موجود (Brain-Lite)؛ بودجه‌ی <۱٪ باتری/ساعت → `EventBus` به UI.
