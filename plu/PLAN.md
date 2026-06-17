@@ -26,6 +26,35 @@ project: 05-vision
 - [x] **BUG-5 مرزِ پیامِ TOOL_PROTOCOL** — قانونِ مرزِ پیام در پرامپت: فقط متنِ گفتنی در args (نه کلِ جمله)، مثال‌های FA/EN، پرسشِ شفاف‌سازی هنگامِ ابهام، نگاشتِ روابطِ فارسی (مامان/بابا/خاله/…)؛ **بدونِ تغییرِ schemaِ `{"tool","args"}`** (سازگار با `ToolCaller`/`CommandInterpreter`).
 > **نیازِ تأییدِ روی دستگاه (به NEO7 وصل):** ظاهرِ خروجیِ بازشونده، رفتارِ دکمه‌ی Stop/barge-in، و کیفیتِ صدای نورونیِ فارسی روی دستگاهِ واقعی.
 
+## 🆕 PRD v2.0 — تسک‌های جدید (backlog بعد از v49)
+> از `VISION OS — PRD v2.0` (Parts 3–14, 16) استخراج شد؛ تیرها به‌ترتیبِ اولویتِ PRD. موارد *(موجود)* از قبل در پلن هستند (این‌جا فقط برای ترتیب)؛ بقیه **جدید** و باز. اصول: منطقِ خالص TDD، UI با `ui-ux-pro-max`، هیچ mockup، شکستنِ کارِ سالم ممنوع.
+
+### 🟠 HIGH — کارِ بازِ بعدی
+- [ ] **CF4 MemoryEngine** (PRD Part 4): ماژولِ `core/memory/` — `MemoryEntry`/`MemoryType` در Room + embedding با `OnnxEmbedder` موجود → `remember()`/`recall()` (cosine top-K) + `buildContextWindow()` تزریق به system prompt + `PreferenceLearner` (۳ rejection = blacklist). **cosine/decay خالص = TDD.**
+- [ ] **LR6 Configurable Dock (Hotseat)** *(موجود)*: count 4/5/6 + reorder + drop به/از dock + persist؛ دکمه‌ی مرکزیِ Vision همیشه (PRD Part 6.2).
+- [ ] **LR12 Vision Assistant dock button** *(موجود)*: دکمه‌ی مرکزی → دستیار (voice/text/agent/search/device).
+- [ ] **FV4 Wake word** (PRD Part 3.3): «Hey Vision»/«ویژن» با Porcupine یا openWakeWord روی ForegroundServiceِ موجود (Brain-Lite)؛ بودجه‌ی <۱٪ باتری/ساعت → `EventBus` به UI.
+- [ ] **FV6 Voice provider abstraction** (PRD Part 3.1): اینترفیسِ `TTSEngine` + `VoiceProvider` (Edge/Android فعلی، Piper/ElevenLabs/OpenAI آینده) — تعمیمِ معماریِ صدای v34/v41.
+- [ ] **NEO7 UI quality pass** *(موجود)*: نیازِ بازخوردِ دستگاه روی v49.
+- [ ] **BUG-1b Markdown render**: رندرِ **bold**/`code`/لیست در `VisionOutput` (parser خالصِ TDD یا compose-markdown) — follow-up از v49.
+
+### 🟡 MEDIUM — این هفته
+- [ ] **ORB State Machine** (PRD Part 7): `OrbState` (IDLE/LISTENING/THINKING/SPEAKING/EXECUTING/NOTIFICATION/ERROR/SLEEPING) + انیمیشن/رنگِ هر state در `VisionOrb` (جایگزینِ boolean `listening`؛ از `isSpeaking`/decision تغذیه شود). reduced-motion محترم.
+- [ ] **SAFE Safety & Trust** (PRD Part 12): اجرای trust-level (`ALWAYS_CRITICAL`=sms/call/email/delete/purchase → تأییدِ دستی؛ `ALWAYS_AUTO`=time/battery/open) + `SafetyLayer.checkAction` (خالص، TDD) + قوانینِ ضدِ توهم در system prompt.
+- [ ] **CTX ContextEngine** (PRD Part 8.2): app/نوتیف/ساعت/باتری/شبکه‌ی فعلی → تزریق به prompt (opt-in Accessibility).
+- [ ] **PAO Floating overlay** (PRD Part 8.1): سرویسِ `SYSTEM_ALERT_WINDOW` — گویِ شناور روی همه‌ی اپ‌ها؛ tap=پنل، drag=جابه‌جایی، double-tap=voice.
+- [ ] **CF5 Automation/Scheduler** (PRD Part 10): `AutomationTrigger`/`Workflow` روی WorkManager (TIME/CONDITION/APP_OPEN/NOTIFICATION/LOCATION) → `AgentEngine`.
+- [ ] **SRCH AnySearch** (PRD Part 9): جستجوی معناییِ یکپارچه (MEMORY/APPS/CONTACTS/MESSAGES/FILES/WEB) با embedding + `SearchResult`.
+- [ ] **AGT Agent Society** (PRD Part 5): گسترشِ rosterِ `AgentId` + `AgentDelegate` (واگذاریِ agent→agent) + pipelineِ Planner→Memory→Tools→Feedback.
+- [ ] **LR8 Widget Host** *(موجود)* · **LR9 Gestures** *(موجود)* · **VB9.1 health dots per-provider در UI**.
+
+### 🟢 FUTURE
+- [ ] **MM Multimodal** (PRD Part 11): فهمِ تصویر (مدلِ vision-capable: Claude/GPT-4V/Gemini) — `chatWithImage`.
+- [ ] **MX1–MX4 Mesh** (PRD Part 14): تبادلِ مدل + session handoff + universal clipboard + cross-device search.
+- [ ] **LM On-device inference** *(موجود)*: llama.cpp NDK.
+- [ ] **TWIN Digital Twin** (PRD Part 14.2): مدلِ ماندگارِ کاربر (preferences/routines/contacts/projects/usage).
+- [ ] **MCP / A2A**: اکوسیستمِ پلاگین + پروتکلِ agent-to-agent.
+
 ## 🚀 اولویت ۰ — LR: لانچرِ واقعیِ اندروید (REAL LAUNCHER)
 > **دستور کاربر (2026-06-16): «بس کن mockup ساختن — Vision باید یک لانچرِ واقعی باشد مثل Pixel/Nova/Nothing.»**
 > **ممیزی (2026-06-16):** اپ به‌عنوان HOME رجیستر شده (`CATEGORY_HOME`+`QUERY_ALL_PACKAGES`) و drawer اپ‌های واقعی را اجرا می‌کند — اما **هوم یک داشبوردِ اسکرولیِ ثابت است، نه لانچر**. تنها persistence = `QuickActionsStore` (۶ شورتکات). **هیچ‌کدام نیست:** گریدِ قابل‌ویرایش، long-press، **drag&drop**، folder، صفحاتِ متعدد، edit-mode، dockِ پیکربندی‌شدنی، widget host (`AppWidgetHost`)، app-drawerِ pro (A-Z/recent/pinned/hidden)، ژست‌های پیشرفته، و persistenceِ layout.
