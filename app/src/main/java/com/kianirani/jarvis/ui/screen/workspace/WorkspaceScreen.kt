@@ -72,6 +72,7 @@ import com.kianirani.jarvis.ui.theme.glassPanel
 fun WorkspaceHomePager(
     vm: LauncherViewModel,
     homePage: @Composable () -> Unit,
+    onOpenSettings: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val layout by vm.layout.collectAsStateWithLifecycle()
@@ -139,7 +140,10 @@ fun WorkspaceHomePager(
     if (showEdit) {
         val workspacePage = (pagerState.currentPage - 1).coerceAtLeast(0)
         HomeEditSheet(
+            cols = layout.gridCols,
+            rows = layout.gridRows,
             canRemovePage = layout.pageCount > 1,
+            onSetGrid = { c, r -> vm.store.setGridReflow(c, r) },
             onWallpaper = {
                 runCatching {
                     ctx.startActivity(
@@ -152,6 +156,7 @@ fun WorkspaceHomePager(
             },
             onAddPage = { vm.store.addPage(); showEdit = false },
             onRemovePage = { vm.store.removePage(workspacePage); showEdit = false },
+            onSettings = { showEdit = false; onOpenSettings() },
             onDismiss = { showEdit = false },
         )
     }
@@ -324,14 +329,18 @@ private fun WorkspacePage(
     }
 }
 
-/** Neo-style home edit sheet — long-press empty space → wallpaper / pages. */
+/** Neo-style home edit sheet — long-press empty space → wallpaper / grid / pages. */
 @OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
 private fun HomeEditSheet(
+    cols: Int,
+    rows: Int,
     canRemovePage: Boolean,
+    onSetGrid: (Int, Int) -> Unit,
     onWallpaper: () -> Unit,
     onAddPage: () -> Unit,
     onRemovePage: () -> Unit,
+    onSettings: () -> Unit,
     onDismiss: () -> Unit,
 ) {
     androidx.compose.material3.ModalBottomSheet(
@@ -341,8 +350,25 @@ private fun HomeEditSheet(
         Column(Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp)) {
             Text("Edit home", style = MaterialTheme.typography.titleMedium, color = VisionColors.TextPrimary, modifier = Modifier.padding(start = 16.dp, bottom = 8.dp))
             IconMenuItem(VisionIcons.Weather, "Wallpaper", onClick = onWallpaper)
+            // Inline grid-size presets (re-flow safely).
+            Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
+                Text("Grid size", style = MaterialTheme.typography.bodyMedium, color = VisionColors.TextPrimary)
+                Row(Modifier.fillMaxWidth().padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    listOf(4 to 5, 5 to 5, 5 to 6, 6 to 6).forEach { (c, r) ->
+                        val sel = c == cols && r == rows
+                        Text(
+                            "$c×$r", style = MaterialTheme.typography.labelMedium,
+                            color = if (sel) VisionColors.CyanPrimary else VisionColors.TextDim,
+                            modifier = Modifier.clip(RoundedCornerShape(6.dp)).clickable { onSetGrid(c, r) }
+                                .border(1.dp, if (sel) VisionColors.CyanPrimary else VisionColors.Border, RoundedCornerShape(6.dp))
+                                .padding(horizontal = 12.dp, vertical = 6.dp),
+                        )
+                    }
+                }
+            }
             IconMenuItem(VisionIcons.Apps, "Add a page", onClick = onAddPage)
             if (canRemovePage) IconMenuItem(VisionIcons.Close, "Remove this page", danger = true, onClick = onRemovePage)
+            IconMenuItem(VisionIcons.Settings, "Launcher settings", onClick = onSettings)
             Spacer(Modifier.navigationBarsPadding())
         }
     }

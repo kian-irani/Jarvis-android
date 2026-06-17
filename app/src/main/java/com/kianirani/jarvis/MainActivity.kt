@@ -216,6 +216,7 @@ private fun RouteContent(route: VisionRoute, homeWide: Boolean, onNavigate: (Vis
                 com.kianirani.jarvis.ui.screen.workspace.WorkspaceHomePager(
                     vm = launcher,
                     homePage = { homeContent(false) },
+                    onOpenSettings = { onNavigate(VisionRoute.SETTINGS) },
                 )
             }
         }
