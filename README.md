@@ -1,7 +1,7 @@
 <div align="center">
 
 # ⚡ Vision OS
-### Sovereign Intelligence Edition · v2 · formerly Jarvis-android
+### Sovereign Intelligence Edition · live build v48 · formerly Jarvis-android
 
 ![Vision OS](assets/promo/banner.png)
 
@@ -9,12 +9,12 @@
 *یک لایه‌ی هوش شخصی حاکمیتی — که با تو زندگی می‌کند و هر روز باهوش‌تر می‌شود*
 
 [![License: Source-Available (Proprietary)](https://img.shields.io/badge/License-Source--Available%20(Proprietary)-red.svg?style=for-the-badge)](LICENSE)
-[![Status](https://img.shields.io/badge/status-live%20v2-magenta?style=for-the-badge)](ROADMAP.md)
+[![Status](https://img.shields.io/badge/status-live%20v48-magenta?style=for-the-badge)](ROADMAP.md)
 [![Platform](https://img.shields.io/badge/platform-Android%20·%20Linux%20·%20PC-3DDC84?style=for-the-badge&logo=android&logoColor=white)](https://www.android.com/)
 [![Local-First](https://img.shields.io/badge/AI-Local--First%20·%20Offline-9cf?style=for-the-badge)](ROADMAP.md)
 [![Activation](https://img.shields.io/badge/Activation-via%20kiancdn%20bot-0088cc?style=for-the-badge&logo=telegram)](docs/ACTIVATION.md)
 [![Contribute](https://img.shields.io/badge/Contributors-Welcome%20(CLA)-cyan?style=for-the-badge)](CONTRIBUTING.md)
-[![Download APK](https://img.shields.io/badge/Download-VISION%20v2%20APK-00E5FF?style=for-the-badge&logo=android&logoColor=black)](https://github.com/kian-irani/Jarvis-android/releases/latest)
+[![Download APK](https://img.shields.io/badge/Download-VISION%20v48%20APK-00E5FF?style=for-the-badge&logo=android&logoColor=black)](https://github.com/kian-irani/Jarvis-android/releases/latest)
 
 </div>
 
@@ -29,36 +29,62 @@
 ---
 
 
-## 📊 Status — what's actually built (updated 2026-06-11)
+## 📊 Status — what's actually built (updated 2026-06-17, build v48)
 
+### 🧠 VISION BRAIN — cognitive multi-model router (✅ shipped, v13–v21)
 | Area | Status | Where |
 |---|---|---|
-| Brain-Lite server (10 REST endpoints, Ktor on :7799) | ✅ DONE | `app/src/main/java/com/kianirani/jarvis/brain/server/` |
-| Room DB (memories / nodes / tasks) + repositories | ✅ DONE | `app/.../brain/data/` |
-| Brain Score election + auto-failover | ✅ DONE | `app/.../brain/score/` |
-| Election UI on live node registry (90s freshness) | ✅ DONE | `app/.../ui/screen/election/` |
-| Heartbeats (stable id, 30s client sender) | ✅ DONE | `app/.../brain/data/HeartbeatSender.kt` |
-| Brain Discovery: `vision://join` payload + mDNS advertise/scan | ✅ DONE | `app/.../brain/discovery/` |
-| Setup Wizard: live candidates list + real /health handshake | ✅ DONE | `app/.../ui/screen/setup/` |
-| Pairing persistence (Keystore-encrypted) | ✅ DONE | `BrainSelectionStore.kt` |
-| QR pairing core (zxing generate, round-trip tested) | ✅ DONE | `QrPairing.kt` |
-| QR screens (render + CameraX scanner) | 🔜 next | — |
-| Brain-Full (Python FastAPI: health probes, JSON logging, CI) | ✅ M0 DONE | `brain/` |
-| Temporal workflow engine (replaces n8n) | ✅ DONE | `docker-compose.yml` |
+| Orchestrator + Capability Router + Model Registry | ✅ DONE | `app/.../router/orchestrator/`, `router/capability/`, `router/registry/` |
+| Availability Graph (latency/error EWMA + circuit-breaker + Retry-After) | ✅ DONE | `app/.../router/health/` |
+| Smart Substitution chain + Adaptive Cost Controller | ✅ DONE | `app/.../router/substitution/`, `router/cost/` |
+| Token Pool (per-key health, secret-safe rotation) + Backend adapters | ✅ DONE | `app/.../data/ai/TokenPool.kt`, `router/backend/` |
+| Decision telemetry in the HUD (which model / why) | ✅ DONE | `app/.../ui/screen/hud/` |
+| Agent engine · Task planner · ToolCaller (function-calling) | ✅ DONE | `app/.../core/agent/`, `core/planner/` |
+| On-device local model catalog + on-demand download (resume, SHA-pin) | ✅ DONE | `app/.../router/local/` |
 
-> **Where is the Android code?** In [`/app`](app) (`com.kianirani.jarvis`). The `android/` folder is only a pointer/module map. Full plan: [ROADMAP.md](ROADMAP.md).
+### 📱 REAL LAUNCHER + Vision OS redesign (✅ shipped, v22–v48)
+| Area | Status | Where |
+|---|---|---|
+| Launcher layout model + pure ops + JSON persistence | ✅ DONE | `app/.../data/launcher/` |
+| Workspace grid + pages (`HorizontalPager`, page dots), orb as hero | ✅ DONE | `app/.../ui/screen/workspace/` |
+| Drag & drop (move / make folder / add to folder / remove) | ✅ DONE | `WorkspaceScreen.kt` + `LauncherGeometry.kt` |
+| Folders (create / open / rename / 2×2 preview / pull-out) | ✅ DONE | `WorkspaceScreen.kt` |
+| Long-press icon menu (App info / Remove) + Edit-Home sheet | ✅ DONE | `WorkspaceScreen.kt` |
+| Grid-density presets (safe reflow) + layout backup/restore/reset | ✅ DONE | `LauncherOps.kt`, `SettingsHubScreen.kt` |
+| App drawer (QUERY_ALL_PACKAGES) + search + categories + A–Z index | ✅ DONE | `app/.../ui/screen/drawer/` |
+| Vision OS visual redesign (orb, glass, azure→violet, font picker) | ✅ DONE | `app/.../ui/theme/`, `ui/screen/home/` |
+
+### 🎙️ VOICE — code-switch + free neural Persian (✅ shipped, v34/v41)
+| Area | Status | Where |
+|---|---|---|
+| Code-switch segmenter — Persian/English spoken each in its own voice | ✅ DONE | `app/.../voice/VoiceSegmenter.kt` |
+| Best-installed-voice selection + per-language voice picker + TEST | ✅ DONE | `voice/VoiceController.kt`, `SettingsHubScreen.kt` |
+| Free **Edge neural** Persian TTS (opt-in, fallback) | ⚙️ needs on-device confirm | `voice/EdgeTtsProtocol.kt`, `voice/EdgeTtsClient.kt` |
+
+### 🧩 Distributed Brain + foundation (✅ shipped, M0–M2)
+| Area | Status | Where |
+|---|---|---|
+| Brain-Lite server (10 REST endpoints, Ktor on :7799) + Room + election/failover | ✅ DONE | `app/.../brain/` |
+| Discovery (`vision://join` + mDNS) · Setup Wizard · QR pairing (+ CameraX scanner) | ✅ DONE | `app/.../brain/discovery/`, `ui/screen/setup/` |
+| Multi-token AI providers (encrypted slots) · Brain-Full (FastAPI, CI) · Temporal | ✅ DONE | `app/.../data/ai/`, `brain/`, `docker-compose.yml` |
+
+> **Where is the Android code?** In [`/app`](app) (`com.kianirani.jarvis`). The `android/` folder is only a pointer/module map. Full task plan lives in [`plu/PLAN.md`](plu/PLAN.md); roadmap in [ROADMAP.md](ROADMAP.md).
 
 
 ## What is Vision?
 
-**Vision is NOT a launcher. NOT a chatbot. NOT a single agent.**
+**Vision is an AI-native Android launcher built on a sovereign Personal Intelligence layer** —
+it's how you *live* on your device (home, app grid, folders, dock, drawer, widgets) **and** the
+on-device brain that makes everything smart. It's not a chatbot and not a single agent: you talk
+to Vision and it does the rest, but it's also the real launcher you use all day.
 
-**Vision is a Personal Intelligence Operating Layer** — a sovereign layer that runs on the user's *own*
-hardware, unifies all devices, data, and AI capabilities into one ecosystem, and gets smarter every day.
+The **Vision Orb** is the hero of the home screen — the AI core is page one, your apps are a swipe away.
+A sovereign layer that runs on the user's *own* hardware, unifies all devices, data, and AI capabilities
+into one ecosystem, and gets smarter every day.
 
-You don't operate tools. You talk to Vision, and Vision does the rest.
-
-*ویژن یک لانچر، چت‌بات یا agent منفرد نیست — یک لایه‌ی عاملِ هوش شخصی حاکمیتی است که روی سخت‌افزار خودِ کاربر اجرا می‌شود و هر روز باهوش‌تر می‌شود.*
+*ویژن یک **لانچرِ AI-nativeِ اندروید** است که روی یک لایه‌ی هوشِ شخصیِ حاکمیتی ساخته شده — هم لانچرِ واقعیِ
+هرروزه‌ی شماست (هوم، گرید، فولدر، داک، drawer، ویجت) و هم مغزِ روی‌دستگاه که همه‌چیز را هوشمند می‌کند. گویِ ویژن
+هیروِ صفحه‌ی اول است؛ هسته‌ی AI صفحه‌ی یک، و اپ‌ها یک swipe آن‌طرف‌تر.*
 
 ```
         ┌──────────────────────────────────────────────┐
@@ -116,14 +142,18 @@ User → «kiancdn» Telegram bot → receive token → enter in app → activat
 
 | Area | Capabilities |
 |------|--------------|
+| 📱 **AI-native Launcher** | Real Android launcher — `HorizontalPager` home (orb on page 1), workspace grid + pages, drag & drop, folders, long-press icon menu, edit-home sheet, grid-density presets, app drawer with search + A–Z index, layout backup/restore. **No mockups — everything persists in `LauncherStore`.** |
+| 🧠 **VISION BRAIN (cognitive router)** | Orchestrator that *thinks*: intent → capability → ranked candidates, **Availability Graph** (circuit-breaker), **Smart Substitution** chain, **Adaptive Cost Controller**, secret-safe Token Pool, on-device decision telemetry |
 | 🧠 **Distributed Brain** | Three tiers (Brain-Nano / Lite / Full), auto-election via **Brain Score**, Auto-Failover, full phone operation without a VPS |
 | 🔀 **Multi-Token AI Router** | Unlimited providers (Claude · Gemini · Groq · OpenAI · Grok · OpenRouter · Ollama), < 100 ms switch, Fallback Chain, Cost Dashboard |
+| 🤖 **Agent Engine** | Goal → Plan → Tool → Execute: `TaskPlanner` + `AgentEngine` + `ToolCaller` (real function-calling: call/SMS/open-app/settings/nav), "never claim done without executing" |
+| 🗣️ **Local AI on the phone** | On-device model catalog + on-demand download (resumable, SHA-pinned), hybrid local-first routing in Economy/Privacy modes |
 | ⚡ **VISN Protocol** | Ultra-fast file transfer between nodes (smart LZ4/zstd, chunked, resumable, ≥3× faster) |
 | 🤖 **Agentic Core** | ReAct + LangGraph, Plan DAG, Self-Correction, Agent Pool (Browser/File/Code/Research…), natural-language **Vision Scheduler** |
 | 🔒 **Trust Level System** | Read / Suggest / Auto / Critical — per-agent trust, tamper-evident Audit Trail |
 | 🧪 **Vision Lab** | Dry-run any workflow with mock data before real execution + Chain Visualizer |
 | 🔍 **AnySearch + Timeline + Notes** | Semantic search across all devices, local digital timeline, smart notes wired to Memory |
-| 🎙️ **Voice & Persona** | Custom wake word, Persian STT/TTS + Persona sliders, emotion & context detection |
+| 🎙️ **Voice & Persona** | **Code-switch TTS** (Persian + English each spoken in its own voice), per-language voice picker, free **Edge neural** Persian voice (opt-in), best-installed-voice selection, Persona sliders |
 | 🌐 **Universal Language** | True support for **every language** (3-tier: full Persian → 9 full languages → universal fallback) |
 | 🎨 **Cyberpunk HUD** | Arc Reactor, Glassmorphism (Haze 2.0), AGSL shaders, audio-reactive, < 5% CPU @ 60fps |
 | 🛡️ **Zero-Trust Security** | Secret Vault (Keystore + biometrics), Behavioral Baseline, active **Privacy Threat Monitor** |
@@ -169,15 +199,17 @@ See the full target tree in **[ROADMAP.md](ROADMAP.md)** and module map in [`and
 
 ## 🗺️ Phase Map (v16)
 
-| Band | Phases | Focus |
-|------|--------|-------|
-| 🔴 Foundation | PX · P0 · P1 · P1.5 · P2 | Code Standards, Foundation Fix, Flexible Brain, VISN, Router |
-| 🟠 Product | P3 · P4 · P4.5 · P5 · P5.5 · P6 · P7 · P7.5 | Launcher MVP, Licensing, Trust, Agentic, Lab, Search/Notes, Voice/Language, Capture/A11y |
-| 🟡 Network | P8 → P12 | Device Mesh, Offline, Memory/RAG, OS-Integration, MCP & Plugins |
-| 🔴 Security | P13 | Zero-Trust + Behavioral Baseline + Privacy Monitor |
-| 🟢 Horizon | P14 → P20 | Communication, Health, IoT, Marketplace, Full Vision OS |
+| Band | Phases | Focus | Status |
+|------|--------|-------|--------|
+| 🔴 Foundation | PX · P0 · P1 · P1.5 · P2 | Code Standards, Foundation Fix, Flexible Brain, VISN, Router | ✅ done |
+| 🟠 Product | P3 · P4 · P4.5 · P6 · P7 | Launcher, Licensing, Trust, Search/Notes, Voice/Language | ✅ mostly shipped |
+| 🟣 VISION BRAIN | VB1–VB9 | Cognitive router (orchestrator/capability/health/substitution/cost/telemetry) | ✅ done (v13–v21) |
+| 🟣 Real Launcher | LR1–LR12 · NEO1–14 | Grid+pages, drag&drop, folders, edit-mode, drawer, dock, widgets | 🚧 in progress (v33–v48) |
+| 🟡 Network | P8 → P12 | Device Mesh, Offline, Memory/RAG, OS-Integration, MCP & Plugins | 🟠 partial |
+| 🔴 Security | P13 | Zero-Trust + Behavioral Baseline + Privacy Monitor | 🟠 partial |
+| 🟢 Horizon | P14 → P20 | Communication, Health, IoT, Marketplace, Full Vision OS | ⏳ planned |
 
-**Beta milestone:** end of Phase 7 (week 20) · **M0 Foundation Ready:** day 7
+**Beta milestone:** end of Phase 7 · **Active mission:** the **Real Launcher** rebuild (LR/NEO) — live task list in [`plu/PLAN.md`](plu/PLAN.md).
 
 ---
 
@@ -197,14 +229,19 @@ This repository is **source code**, not a public APK download. For real use:
 
 We're looking for serious developers. Contributions are under the **[CLA](CLA.md)** (the code stays source-available, not open source).
 
+> **Most-wanted right now:** the launcher rebuild ships fast but the build server has **no emulator**, so a lot of UI is marked *"needs on-device confirmation."* **On-device QA and Compose UI polish are the #1 need.**
+
 | Area | Skills | Priority |
 |------|--------|----------|
-| 🧠 Brain Core | Python + FastAPI + LangGraph | 🔴 urgent |
-| 🔀 AI Router | Python + LiteLLM | 🔴 urgent |
-| 🎨 HUD/UI | Kotlin + Compose + AGSL | 🔴 urgent |
-| ⚡ VISN Transfer | Kotlin + Python (LZ4/zstd) | 🟠 high |
+| 📱 Launcher UI + on-device QA | Kotlin + Jetpack Compose (test real builds on a device) | 🔴 urgent |
+| 🧠 Local AI engine | Kotlin/NDK + llama.cpp / MediaPipe LLM (on-device inference) | 🔴 urgent |
+| 🤖 Agentic core | Kotlin (Accessibility automation, tool-calling, scheduler) | 🔴 urgent |
+| 🧠 Brain Core | Python + FastAPI + LangGraph | 🟠 high |
+| 🎙️ Voice/Language | Android TTS/STT + Edge/Azure neural verification, Vosk/Whisper | 🟠 high |
 | 🔒 Security | Android Security + Crypto | 🟠 high |
-| 🎙️ Voice/Language | Vosk + Whisper + Coqui | 🟠 high |
+| ⚡ VISN Transfer / Mesh | Kotlin + Python (LZ4/zstd, mesh model exchange) | 🟢 medium |
+
+> New contributors: start from [`plu/PLAN.md`](plu/PLAN.md) (the live, prioritized task list) — pick the nearest open task, build it green, and open a PR.
 
 👉 Full guide: **[CONTRIBUTING.md](CONTRIBUTING.md)** · contact: [@Kian_irani_t](https://t.me/Kian_irani_t)
 
@@ -214,7 +251,10 @@ We're looking for serious developers. Contributions are under the **[CLA](CLA.md
 
 | File | Content |
 |------|---------|
-| [ROADMAP.md](ROADMAP.md) | Full v16 roadmap — 20+ phases, milestones, ADRs |
+| [`plu/PLAN.md`](plu/PLAN.md) | **Live, prioritized task list** — the work driver (start here to contribute) |
+| [`plu/reports/`](plu/reports/) | Dated shift reports of what shipped each session |
+| [ROADMAP.md](ROADMAP.md) | Full roadmap — 20+ phases, milestones, ADRs |
+| [CHANGELOG.md](CHANGELOG.md) | Release-by-release changes |
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Technical architecture |
 | [docs/ACTIVATION.md](docs/ACTIVATION.md) | Activation flow & kiancdn token service |
 | [docs/SETUP.md](docs/SETUP.md) | Development setup |

@@ -14,6 +14,61 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [48.0.0] — 2026-06-17 — Real launcher (NEO) + free neural Persian voice + name fix
+
+### Added — Real launcher (Neo-style, clean-room; the orb stays the hero)
+- **Workspace home** — `HorizontalPager` where page 1 is the AI-core orb home and the rest are real
+  workspace grids rendered from a persisted `LauncherStore` (layout model + pure ops + JSON), with
+  floating page dots. (LR2)
+- **Drag & drop** — long-press to pick up a tile; drop on empty → move, on an app → folder, on a folder →
+  add; pure `LauncherGeometry` cell-math. (LR3)
+- **Add / remove** — long-press in the drawer to pin an app to home; drag to a red "Remove" strip to unpin. (LR4-lite)
+- **Folders** — create, open, **rename**, 2×2 child preview, and pull an app back out. (LR5)
+- **Long-press icon menu** (App info / Remove) and a **long-press Edit-Home sheet**
+  (Wallpaper · Grid size · Add/Remove page · Launcher settings). (LR4)
+- **Grid-density presets** (4×5…6×6) with a safe re-flow that never strands icons. (LR10)
+- **App drawer A–Z fast-scroll index**; curated first-run home (one clean page, not endless pages). (LR7/seed)
+- **Layout backup / restore / reset** via the clipboard. (LR11)
+
+### Added — Voice engine
+- **Code-switch TTS** (`VoiceSegmenter`) — mixed Persian/English replies are split and each run is spoken
+  in its own voice instead of one voice garbling the other.
+- **Per-language voice picker** + TEST + best-installed-voice auto-selection.
+- **Free Edge neural Persian TTS** (`fa-IR-DilaraNeural`) — opt-in, network-gated, with a full fallback to
+  on-device TTS. *Needs on-device confirmation* (the build sandbox MITM-proxies the endpoint).
+
+### Fixed
+- **Greeting used the assistant's name as the user's name.** Onboarding now asks "Your name" and
+  "Assistant name" separately, and the home greets the user by their own name.
+
+### Notes
+- ~37 new unit tests (`VoiceSegmenter`, `EdgeTtsProtocol`, `LauncherGeometry`, `LauncherOps` reflow).
+- Neo-Launcher is GPL-3.0; its experience/menus are re-implemented **clean-room** (no GPL code copied) to
+  keep Vision source-available. Decision + design north-star recorded in [`plu/PLAN.md`](plu/PLAN.md).
+
+## [21.0.0] — 2026-06-15 — VISION BRAIN: cognitive multi-model router
+
+### Added
+- **Cognitive router (VB1–VB9):** an Orchestrator that classifies intent → capability → ranked model
+  candidates, an **Availability Graph** (latency/error EWMA, circuit-breaker, Retry-After), a **Smart
+  Substitution** chain, an **Adaptive Cost Controller**, a secret-safe **Token Pool** (per-key health,
+  hashed keys), pluggable **Backend** adapters (Cloud/Local/Mesh), and in-HUD **decision telemetry**.
+- **Agent engine** — `TaskPlanner` + `AgentEngine` + `ToolCaller` (real function-calling: call/SMS/
+  open-app/settings/nav). "Never claim done without executing."
+- **On-device local model** — catalog + on-demand, resumable, SHA-pinned downloads; hybrid local-first
+  routing in Economy/Privacy modes.
+
+### Changed
+- Command bar wired to the cognitive path (orchestrator + backend router) instead of brain-first only.
+
+## [20.0.0] — 2026-06-15 — Vision OS visual redesign + typography
+
+### Added
+- Full visual redesign to the orb-launcher reference: rewritten `VisionOrb` (luminous portal ring),
+  azure→violet palette on dark, unified vector icon family (no emoji), floating glass dock, redesigned
+  Home/Drawer/Agents/Memory/Settings.
+- **Typography system** — bundled OFL fonts + state-backed `VisionFonts`/`FontStore` + in-app font picker.
+
 ## [12.0.0] — 2026-06-14 — Orb-Launcher Home Redesign + Agents Layer
 
 ### Added
