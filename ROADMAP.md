@@ -8,7 +8,16 @@
 
 ---
 
-## ✅ Progress Snapshot — 2026-06-12 (auto-updated)
+## ✅ Progress Snapshot — 2026-06-17 (auto-updated)
+
+> **Live task list:** [`plu/PLAN.md`](plu/PLAN.md) · **session reports:** [`plu/reports/`](plu/reports/).
+> Releases auto-publish on push to `main` (`.github/workflows/build.yml`), tag `v<versionName>`. **Current build: v48.**
+
+**🟣 VISION BRAIN — cognitive multi-model router: COMPLETE (v13–v21).** Orchestrator (intent→capability→ranked candidates) + Capability Router + Model Registry + Availability Graph (latency/error EWMA, circuit-breaker, Retry-After) + Smart Substitution chain + Adaptive Cost Controller + secret-safe Token Pool + Backend adapters + on-device decision telemetry. Agent engine + Task planner + ToolCaller (real function-calling). On-device local-model catalog with resumable, SHA-pinned download. ~90 unit tests across the router.
+
+**🟣 REAL LAUNCHER + Vision OS redesign: IN PROGRESS (v22–v48).** Vision is now a real AI-native launcher: layout model + pure ops + JSON persistence (`LauncherStore`); `HorizontalPager` home (orb on page 1) + workspace grid + pages + page dots; drag & drop (move / folder / add / remove); folders (create/open/rename/2×2 preview/pull-out); long-press icon menu (App info/Remove); Edit-Home sheet (wallpaper/grid/pages/settings); grid-density presets with safe reflow; app drawer with search + categories + A–Z fast-scroll; layout backup/restore/reset; curated first-run home. Full visual redesign (orb, glass, azure→violet palette, font picker). See `plu/PLAN.md` → LR/NEO tracks.
+
+**🎙️ VOICE engine: code-switch + free neural Persian (v34/v41).** `VoiceSegmenter` splits replies into Persian/Latin runs spoken each in its own voice (fixes the mixed-language garble); best-installed-voice selection + per-language voice picker + TEST; free **Edge neural** Persian TTS (opt-in, network-gated, falls back to on-device — *needs on-device confirmation*).
 
 **M0 Foundation: COMPLETE** — CI green (brain ruff/mypy/pytest + android ktlint + APK build), detect-secrets gate, ADR-001..011, JSON structured logging, health probes, n8n→Temporal.
 
@@ -35,11 +44,11 @@
 
 ## 🎯 North Star — Vision چیست؟
 
-Vision **یک Launcher نیست.**
-Vision **یک Chatbot نیست.**
-Vision **یک Agent منفرد نیست.**
+Vision **یک لانچرِ AI-nativeِ اندروید است** — اما نه فقط یک لانچر: یک **Chatbot منفرد** یا **Agent تنها** نیست.
 
-**Vision یک Personal Intelligence Operating Layer است** — لایه‌ای حاکمیتی که روی سخت‌افزار خود کاربر اجرا می‌شود، تمام دستگاه‌ها، داده‌ها، و قابلیت‌های AI را در یک اکوسیستم واحد متحد می‌کند، و هر روز هوشمندتر می‌شود.
+**Vision یک لانچرِ واقعیِ اندروید است که روی یک Personal Intelligence Operating Layer ساخته شده** — هم سطحِ هرروزه‌ای که در آن زندگی می‌کنید (هوم، گرید، فولدر، داک، drawer، ویجت)، هم لایه‌ای حاکمیتی که روی سخت‌افزار خودِ کاربر اجرا می‌شود، تمام دستگاه‌ها/داده‌ها/قابلیت‌های AI را در یک اکوسیستم متحد می‌کند، و هر روز هوشمندتر می‌شود. **گویِ ویژن هیروِ صفحه‌ی اول است؛ هوش اول، اپ‌ها دوم.**
+
+> **یادداشتِ جهت‌گیری (2026-06-16/17):** دستورِ کاربر بود که ویژن باید یک **لانچرِ واقعی** (مثل Pixel/Nova/Neo) باشد — پس بازسازیِ لانچر (LR/NEO) اولویتِ فعال است، با حفظِ گوی و هسته‌ی AI. الهام: Neo-Launcher/Lawnchair/Nova (clean-room — کدِ GPL کپی نمی‌شود) + زبانِ بصریِ Vision Pro/Nothing OS/Arc.
 
 > کاربر نباید با ابزارها کار کند. کاربر فقط با Vision صحبت می‌کند، و Vision بقیه کار را انجام می‌دهد.
 

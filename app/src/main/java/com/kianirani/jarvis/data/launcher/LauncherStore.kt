@@ -57,6 +57,8 @@ class LauncherStore @Inject constructor(@ApplicationContext context: Context) {
         update(LauncherOps.move(_layout.value, id, container, page, cellX, cellY))
     fun setDockCount(count: Int) = update(LauncherOps.setDockCount(_layout.value, count))
     fun setGrid(cols: Int, rows: Int) = update(LauncherOps.setGrid(_layout.value, cols, rows))
+    /** Change grid density and re-flow items so none are stranded (LR10). */
+    fun setGridReflow(cols: Int, rows: Int) = update(LauncherOps.reflowWorkspace(_layout.value, cols, rows))
     fun addPage() = update(LauncherOps.addPage(_layout.value))
     fun removePage(page: Int) = update(LauncherOps.removePage(_layout.value, page))
     fun createFolder(targetId: String, draggedId: String, title: String = "Folder") =
@@ -69,21 +71,59 @@ class LauncherStore @Inject constructor(@ApplicationContext context: Context) {
     fun reset() = update(LauncherLayout())
 
     /**
-     * Seed a sensible first-run layout from the installed apps: the dock filled
-     * with the first [LauncherLayout.dockCount]−1 apps (centre slot reserved for
-     * Vision), the rest flowing onto page-0 cells row-major. Only runs when empty.
+     * LR5 — pull a folder child back onto the home workspace at the first free
+     * cell (adds a page if every page is full). False when the id isn't a child.
+     */
+    fun pullFromFolder(itemId: String): Boolean {
+        val l = _layout.value
+        l.items.firstOrNull { it.id == itemId && it.parentId != null } ?: return false
+        for (p in 0 until l.pageCount) {
+            LauncherOps.firstFreeCell(l, Container.WORKSPACE, p)?.let { (x, y) ->
+                update(LauncherOps.removeFromFolder(l, itemId, Container.WORKSPACE, p, x, y)); return true
+            }
+        }
+        val grown = LauncherOps.addPage(l)
+        update(LauncherOps.removeFromFolder(grown, itemId, Container.WORKSPACE, grown.pageCount - 1, 0, 0))
+        return true
+    }
+
+    /** LR11 — serialize the whole layout for backup (clipboard / file). */
+    fun exportJson(): String = json.encodeToString(LauncherLayout.serializer(), _layout.value)
+
+    /** LR11 — restore a layout from a backup string. False when it doesn't parse. */
+    fun importJson(text: String): Boolean =
+        runCatching { json.decodeFromString<LauncherLayout>(text) }.getOrNull()
+            ?.also { update(it) } != null
+
+    /**
+     * Pin an app to the home workspace at the first free cell, scanning pages in
+     * order and adding a fresh page if every page is full. No-op (returns false)
+     * when the app is already pinned on the workspace, so taps don't duplicate it.
+     */
+    fun addAppToHome(app: AppRef): Boolean {
+        val l = _layout.value
+        if (l.items.any { it.parentId == null && it.container == Container.WORKSPACE && it.packageName == app.packageName }) return false
+        for (p in 0 until l.pageCount) {
+            LauncherOps.firstFreeCell(l, Container.WORKSPACE, p)?.let { (x, y) ->
+                addApp(app, Container.WORKSPACE, p, x, y); return true
+            }
+        }
+        update(LauncherOps.addPage(l))
+        addApp(app, Container.WORKSPACE, _layout.value.pageCount - 1, 0, 0)
+        return true
+    }
+
+    /**
+     * Seed a curated first-run home (Neo/Pixel-style): only the first page worth
+     * of apps is pinned to the workspace — the rest live in the app drawer, not on
+     * endless home pages. The dock (hotseat) is left for the user to populate
+     * (LR6). Only runs when empty.
      */
     fun seedDefault(apps: List<AppRef>) {
         if (!isEmpty || apps.isEmpty()) return
         var l = LauncherLayout()
-        val dockSlots = (l.dockCount - 1).coerceAtLeast(0) // reserve centre for Vision
-        apps.take(dockSlots).forEachIndexed { i, a ->
-            l = LauncherOps.add(l, item(a, Container.HOTSEAT, 0, i, 0))
-        }
-        val rest = apps.drop(dockSlots)
         var x = 0; var y = 0
-        for (a in rest) {
-            if (y >= l.gridRows) break
+        for (a in apps.take(l.gridCols * l.gridRows)) {
             l = LauncherOps.add(l, item(a, Container.WORKSPACE, 0, x, y))
             x++; if (x >= l.gridCols) { x = 0; y++ }
         }

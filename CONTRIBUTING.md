@@ -8,14 +8,18 @@
 
 ## 🎯 حوزه‌های مورد نیاز / Where we need help
 
+> **مهم‌ترین نیازِ فعلی:** بازسازیِ لانچر (LR/NEO) سریع شیپ می‌شود اما سرورِ بیلد **امولاتور ندارد**؛ پس خیلی از UI با برچسبِ *«needs on-device confirmation»* است. **QAِ روی دستگاهِ واقعی و پولیشِ Compose اولویتِ شماره‌ی ۱ است.** نقطه‌ی شروع: [`plu/PLAN.md`](plu/PLAN.md) — نزدیک‌ترین تسکِ باز را بردار، build سبز کن، PR بزن.
+
 | حوزه | مهارت | اولویت |
 |------|-------|--------|
-| 🎨 HUD/UI | Kotlin + Jetpack Compose + AGSL | 🔴 فوری |
-| 🤖 AI Integration | Python + LiteLLM + Token Pool | 🔴 فوری |
-| 🔑 Activation/Backend | FastAPI + Telegram Bot (kiancdn) | 🔴 فوری |
+| 📱 Launcher UI + QAِ دستگاه | Kotlin + Jetpack Compose (تستِ بیلدِ واقعی روی دستگاه) | 🔴 فوری |
+| 🧠 Local AI engine | Kotlin/NDK + llama.cpp / MediaPipe LLM (inference روی دستگاه) | 🔴 فوری |
+| 🤖 Agentic core | Kotlin (اتوماسیونِ Accessibility، tool-calling، scheduler) | 🔴 فوری |
+| 🧠 Brain Core | Python + FastAPI + LangGraph | 🟠 زیاد |
+| 🎙️ Voice/Language | Android TTS/STT + تأییدِ Edge/Azure neural، Vosk/Whisper | 🟠 زیاد |
+| 🔑 Activation/Backend | FastAPI + Telegram Bot (kiancdn) | 🟠 زیاد |
 | 🔒 Security | Android Keystore + Crypto | 🟠 زیاد |
-| 🎙️ Voice | Vosk (STT) + Piper (TTS) | 🟠 زیاد |
-| 📁 Skills | Android Storage / SSH / Docker | 🟡 متوسط |
+| ⚡ VISN / Mesh | Kotlin + Python (LZ4/zstd، mesh model exchange) | 🟡 متوسط |
 
 ---
 

@@ -50,6 +50,7 @@ fun OnboardingScreen(
 ) {
     val s = vm.settings
     val name by s.personaName.collectAsState()
+    val userName by s.userName.collectAsState()
     val lang by s.language.collectAsState()
     val voice by s.voiceEnabled.collectAsState()
     val trust by s.trustLevel.collectAsState()
@@ -66,7 +67,24 @@ fun OnboardingScreen(
             style = MaterialTheme.typography.bodyMedium, color = JarvisColors.TextDim,
             modifier = Modifier.visionEnter(1))
 
-        Card("ASSISTANT NAME", 2) {
+        Card("YOUR NAME", 2) {
+            Text("What should Vision call you? (used to greet you)",
+                style = MaterialTheme.typography.bodySmall, color = JarvisColors.TextDim)
+            Spacer(Modifier.height(8.dp))
+            BasicTextField(
+                value = userName,
+                onValueChange = s::setUserName,
+                singleLine = true,
+                textStyle = MaterialTheme.typography.headlineMedium.copy(color = JarvisColors.TextPrimary),
+                cursorBrush = SolidColor(JarvisColors.CyanPrimary),
+                modifier = Modifier.fillMaxWidth(),
+                decorationBox = { inner ->
+                    Box { if (userName.isEmpty()) Text("Your name", style = MaterialTheme.typography.headlineMedium, color = JarvisColors.TextDim); inner() }
+                },
+            )
+        }
+
+        Card("ASSISTANT NAME", 3) {
             Text("What should it answer to? You can call it by this name.",
                 style = MaterialTheme.typography.bodySmall, color = JarvisColors.TextDim)
             Spacer(Modifier.height(8.dp))

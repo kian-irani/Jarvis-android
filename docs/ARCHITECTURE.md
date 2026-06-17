@@ -1,7 +1,8 @@
 # 🏗️ ARCHITECTURE — Vision Agent OS
 
 > مستند معماری فنی · Technical Architecture Document  
-> نسخه: v1.0 · ژوئن ۲۰۲۶
+> نسخه‌ی هدف: v1.0 · **as-built: build v48 (2026-06-17)**  
+> این سند دو بخش دارد: **«آنچه ساخته شده» (پایینِ همین بخش)** = واقعیتِ کدِ فعلی؛ و بلوک‌های بعدی = معماریِ **هدف** (target) که بخشی‌اش هنوز نرسیده. تسک‌های زنده در [`plu/PLAN.md`](../plu/PLAN.md).
 
 ---
 
@@ -32,7 +33,39 @@
 
 ---
 
-## لایه‌های معماری / Architecture Layers
+## ✅ آنچه ساخته شده / As-built (build v48)
+
+> نگاشتِ واقعیِ کدِ امروز. ماژول base: `app/src/main/java/com/kianirani/jarvis/`.
+
+```
+UI (Jetpack Compose, Hilt, single-Activity)
+├── ui/screen/home/         HomeScreen (VisionOrb هیرو + command bar) · HomeViewModel
+├── ui/screen/workspace/    WorkspaceHomePager (HorizontalPager: orb=صفحه۰، گریدها) ·
+│                           WorkspaceScreen (grid/drag&drop/folders/icon-menu/edit-sheet) · LauncherViewModel
+├── ui/screen/drawer/       AppDrawerScreen (QUERY_ALL_PACKAGES + search + categories + A–Z)
+├── ui/screen/agents,memory,settings,hud,onboarding,setup,election,hub
+└── ui/theme/               VisionColors/ThemeStore · VisionFonts/FontStore · VisionIcons · glassPanel/visionEnter
+
+data/launcher/              LauncherModel (LauncherLayout/Item) · LauncherOps (خالص، tested) · LauncherStore (persist)
+router/  (VISION BRAIN)     orchestrator/VisionOrchestrator · capability/CapabilityRouter · registry/ModelRegistry ·
+                            health/AvailabilityGraph · substitution/SubstitutionEngine · cost/CostController ·
+                            backend/BackendRouter(Cloud/Local/Mesh) · local/LocalModel{Catalog,Manager}
+data/ai/                    TokenPool (per-key health, secret-safe) · CloudChatRouter · AiProviderStore
+core/agent/, core/planner/  AgentEngine · ToolCaller (function-calling) · TaskPlanner
+voice/                      VoiceController (Android STT/TTS) · VoiceSegmenter (code-switch) ·
+                            EdgeTtsProtocol/EdgeTtsClient (free neural Persian, opt-in)
+brain/                      Brain-Lite Ktor server :7799 (server/routes → data repos → Room VisionDatabase) ·
+                            discovery (vision://join + mDNS) · score (election) · BrainLiteService
+service/                    VisionAccessibilityService · VisionNotificationService
+```
+
+**Tech (as-built):** Kotlin 2.1 · Jetpack Compose (BOM 2025.01) + Material3 · Hilt · Room · Ktor 3.1 client/server ·
+kotlinx-serialization · DataStore/EncryptedSharedPreferences · Haze (glass) + Lottie · Android TextToSpeech/SpeechRecognizer ·
+Brain-Full: Python 3.12 + FastAPI. No emulator on CI → UI verified by `compileDebugKotlin`; behaviour marked *needs on-device confirmation*.
+
+---
+
+## لایه‌های معماری (هدف) / Architecture Layers (target)
 
 ### 1. UI Layer — رابط کاربری
 

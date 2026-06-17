@@ -19,11 +19,14 @@ class VisionSettings @Inject constructor(@ApplicationContext context: Context) {
 
     private val _voiceEnabled = flow(KEY_VOICE, true)
     private val _ttsEnabled = flow(KEY_TTS, true)
+    private val _neuralVoice = flow(KEY_NEURAL_VOICE, false)
     private val _scanLine = flow(KEY_SCANLINE, true)
     private val _aurora = flow(KEY_AURORA, true)
 
     val voiceEnabled: StateFlow<Boolean> = _voiceEnabled
     val ttsEnabled: StateFlow<Boolean> = _ttsEnabled
+    /** Use Microsoft Edge neural voices (online, free) for fluent Persian TTS. */
+    val neuralVoice: StateFlow<Boolean> = _neuralVoice
     val scanLine: StateFlow<Boolean> = _scanLine
     val aurora: StateFlow<Boolean> = _aurora
 
@@ -38,6 +41,26 @@ class VisionSettings @Inject constructor(@ApplicationContext context: Context) {
         prefs.edit().putFloat(KEY_RATE, r).apply(); _speechRate.value = r
     }
 
+    // FV2 voice picker: a user-pinned TTS voice per language ("" = auto / best).
+    private val _voiceFa = MutableStateFlow(prefs.getString(KEY_VOICE_FA, "") ?: "")
+    private val _voiceEn = MutableStateFlow(prefs.getString(KEY_VOICE_EN, "") ?: "")
+    val voiceNameFa: StateFlow<String> = _voiceFa
+    val voiceNameEn: StateFlow<String> = _voiceEn
+
+    /** The pinned voice id for a language, or null when on auto/best. */
+    fun selectedVoiceName(language: String): String? = when (language) {
+        LANG_FA -> _voiceFa.value
+        else -> _voiceEn.value
+    }.takeIf { it.isNotBlank() }
+
+    fun setVoiceName(language: String, name: String) {
+        if (language == LANG_FA) {
+            prefs.edit().putString(KEY_VOICE_FA, name).apply(); _voiceFa.value = name
+        } else {
+            prefs.edit().putString(KEY_VOICE_EN, name).apply(); _voiceEn.value = name
+        }
+    }
+
     fun setVoicePitch(v: Float) {
         val r = v.coerceIn(0.5f, 1.5f)
         prefs.edit().putFloat(KEY_PITCH, r).apply(); _voicePitch.value = r
@@ -46,10 +69,14 @@ class VisionSettings @Inject constructor(@ApplicationContext context: Context) {
     // P7 persona: identity + answer-style sliders (0..10) the cloud system
     // prompt is built from. Kept here so both TTS and CloudChatRouter read one source.
     private val _personaName = MutableStateFlow(prefs.getString(KEY_PERSONA, "VISION") ?: "VISION")
+    private val _userName = MutableStateFlow(prefs.getString(KEY_USER_NAME, "") ?: "")
     private val _humor = MutableStateFlow(prefs.getFloat(KEY_HUMOR, 5f))
     private val _formality = MutableStateFlow(prefs.getFloat(KEY_FORMALITY, 5f))
     private val _responseLength = MutableStateFlow(prefs.getFloat(KEY_RESP_LEN, 5f))
+    /** What Vision answers to (assistant name). */
     val personaName: StateFlow<String> = _personaName
+    /** The user's own name — used to greet them on the home screen. */
+    val userName: StateFlow<String> = _userName
     val humorLevel: StateFlow<Float> = _humor
     val formalityLevel: StateFlow<Float> = _formality
     val responseLength: StateFlow<Float> = _responseLength
@@ -57,6 +84,11 @@ class VisionSettings @Inject constructor(@ApplicationContext context: Context) {
     fun setPersonaName(v: String) {
         val n = v.take(24)
         prefs.edit().putString(KEY_PERSONA, n).apply(); _personaName.value = n
+    }
+
+    fun setUserName(v: String) {
+        val n = v.take(24)
+        prefs.edit().putString(KEY_USER_NAME, n).apply(); _userName.value = n
     }
     // Language: "auto" follows the device + the language the user types/speaks;
     // "fa"/"en" pin replies. Read by CloudChatRouter (prompt) and VoiceController (TTS/STT).
@@ -86,6 +118,7 @@ class VisionSettings @Inject constructor(@ApplicationContext context: Context) {
         when (key) {
             KEY_VOICE -> _voiceEnabled.value = value
             KEY_TTS -> _ttsEnabled.value = value
+            KEY_NEURAL_VOICE -> _neuralVoice.value = value
             KEY_SCANLINE -> _scanLine.value = value
             KEY_AURORA -> _aurora.value = value
         }
@@ -94,12 +127,16 @@ class VisionSettings @Inject constructor(@ApplicationContext context: Context) {
     companion object {
         const val KEY_VOICE = "voice_enabled"
         const val KEY_TTS = "tts_enabled"
+        const val KEY_NEURAL_VOICE = "neural_voice_enabled"
         const val KEY_SCANLINE = "fx_scanline"
         const val KEY_AURORA = "fx_aurora"
         const val KEY_TRUST = "trust_level"
         const val KEY_RATE = "voice_rate"
         const val KEY_PITCH = "voice_pitch"
+        const val KEY_VOICE_FA = "voice_name_fa"
+        const val KEY_VOICE_EN = "voice_name_en"
         const val KEY_PERSONA = "persona_name"
+        const val KEY_USER_NAME = "user_name"
         const val KEY_HUMOR = "persona_humor"
         const val KEY_FORMALITY = "persona_formality"
         const val KEY_RESP_LEN = "persona_resp_len"

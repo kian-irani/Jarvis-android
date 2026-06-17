@@ -35,6 +35,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.runtime.Composable
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -68,7 +69,17 @@ class SettingsHubViewModel @Inject constructor(
     val activation: ActivationStore,
     val usage: AiUsageStore,
     val history: ChatHistoryStore,
-) : ViewModel()
+    private val voice: com.kianirani.jarvis.voice.VoiceController,
+    private val launcher: com.kianirani.jarvis.data.launcher.LauncherStore,
+) : ViewModel() {
+    fun voicesFor(language: String) = voice.voicesFor(language)
+    fun testVoice(language: String) = voice.speakSample(language)
+    fun exportLayout(): String = launcher.exportJson()
+    fun importLayout(text: String): Boolean = launcher.importJson(text)
+    fun resetLayout() = launcher.reset()
+    val launcherLayout = launcher.layout
+    fun setGrid(cols: Int, rows: Int) = launcher.setGridReflow(cols, rows)
+}
 
 /**
  * SYSTEM CONFIG — the organized settings hub (USER DIRECTIVE 2026-06-12).
@@ -116,17 +127,27 @@ fun SettingsHubScreen(
         Section("VOICE", 1) {
             ToggleRow("Voice input", "wake Vision with the mic", voice) { s.set(VisionSettings.KEY_VOICE, it) }
             ToggleRow("Spoken replies (TTS)", "Vision reads answers aloud", tts) { s.set(VisionSettings.KEY_TTS, it) }
+            val neural by s.neuralVoice.collectAsStateWithLifecycle()
+            ToggleRow("Neural voice (online)", "fluent free Persian via Edge neural — falls back offline", neural) { s.set(VisionSettings.KEY_NEURAL_VOICE, it) }
             val rate by s.speechRate.collectAsStateWithLifecycle()
             val pitch by s.voicePitch.collectAsStateWithLifecycle()
             StepperRow("Speech rate", rate, 0.1f) { s.setSpeechRate(it) }
             StepperRow("Voice pitch", pitch, 0.1f) { s.setVoicePitch(it) }
+            // FV2 — pick the actual Persian / English voice + test it. Code-switch
+            // replies speak each language with its own selected voice.
+            val voiceFa by s.voiceNameFa.collectAsStateWithLifecycle()
+            val voiceEn by s.voiceNameEn.collectAsStateWithLifecycle()
+            VoicePickerRow("Persian voice", VisionSettings.LANG_FA, voiceFa, vm)
+            VoicePickerRow("English voice", VisionSettings.LANG_EN, voiceEn, vm)
         }
         Section("PERSONA", 2) {
             val personaName by s.personaName.collectAsStateWithLifecycle()
+            val userName by s.userName.collectAsStateWithLifecycle()
             val humor by s.humorLevel.collectAsStateWithLifecycle()
             val formality by s.formalityLevel.collectAsStateWithLifecycle()
             val respLen by s.responseLength.collectAsStateWithLifecycle()
             val lang by s.language.collectAsStateWithLifecycle()
+            PersonaNameRow(userName, label = "Your name", placeholder = "Your name") { s.setUserName(it) }
             PersonaNameRow(personaName) { s.setPersonaName(it) }
             LanguageRow(lang) {
                 s.setLanguage(it)
@@ -161,6 +182,8 @@ fun SettingsHubScreen(
             NavRow("Clear conversation memory", "forget all chat history") { vm.history.clear() }
         }
         Section("LAUNCHER", 7) {
+            val layout by vm.launcherLayout.collectAsStateWithLifecycle()
+            GridSizeRow(layout.gridCols, layout.gridRows) { c, r -> vm.setGrid(c, r) }
             NavRow("Set as default home", "open Android home settings") {
                 runCatching { ctx.startActivity(Intent(Settings.ACTION_HOME_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
             }
@@ -169,6 +192,21 @@ fun SettingsHubScreen(
             }
             NavRow("Notification Access", "let Vision read your notifications when asked") {
                 runCatching { ctx.startActivity(Intent("android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
+            }
+            // LR11 — back up / restore the home layout via the clipboard.
+            val clipboard = ctx.getSystemService(android.content.ClipboardManager::class.java)
+            NavRow("Back up home layout", "copy your layout to the clipboard") {
+                clipboard?.setPrimaryClip(android.content.ClipData.newPlainText("Vision layout", vm.exportLayout()))
+                android.widget.Toast.makeText(ctx, "Home layout copied", android.widget.Toast.LENGTH_SHORT).show()
+            }
+            NavRow("Restore home layout", "import a layout from the clipboard") {
+                val text = clipboard?.primaryClip?.getItemAt(0)?.coerceToText(ctx)?.toString().orEmpty()
+                val ok = text.isNotBlank() && vm.importLayout(text)
+                android.widget.Toast.makeText(ctx, if (ok) "Home layout restored" else "No valid layout on the clipboard", android.widget.Toast.LENGTH_SHORT).show()
+            }
+            NavRow("Reset home layout", "remove all pinned apps (re-seeds on restart)") {
+                vm.resetLayout()
+                android.widget.Toast.makeText(ctx, "Home layout cleared", android.widget.Toast.LENGTH_SHORT).show()
             }
         }
         Section("ABOUT", 8) {
@@ -308,9 +346,9 @@ private fun ActivationRow(store: ActivationStore) {
 }
 
 @Composable
-private fun PersonaNameRow(name: String, onChange: (String) -> Unit) {
+private fun PersonaNameRow(name: String, label: String = "AI name", placeholder: String = "VISION", onChange: (String) -> Unit) {
     Row(Modifier.fillMaxWidth().padding(vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
-        Text("AI name", style = MaterialTheme.typography.bodyMedium, color = JarvisColors.TextPrimary, modifier = Modifier.weight(1f))
+        Text(label, style = MaterialTheme.typography.bodyMedium, color = JarvisColors.TextPrimary, modifier = Modifier.weight(1f))
         BasicTextField(
             value = name,
             onValueChange = onChange,
@@ -320,11 +358,33 @@ private fun PersonaNameRow(name: String, onChange: (String) -> Unit) {
             modifier = Modifier.width(140.dp),
             decorationBox = { inner ->
                 Box {
-                    if (name.isEmpty()) Text("VISION", style = MaterialTheme.typography.bodyMedium, color = JarvisColors.TextDim, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.End)
+                    if (name.isEmpty()) Text(placeholder, style = MaterialTheme.typography.bodyMedium, color = JarvisColors.TextDim, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.End)
                     inner()
                 }
             },
         )
+    }
+}
+
+/** Home grid density presets (re-flows icons safely). */
+@Composable
+private fun GridSizeRow(cols: Int, rows: Int, onChange: (Int, Int) -> Unit) {
+    val presets = listOf(4 to 5, 5 to 5, 5 to 6, 6 to 6)
+    Column(Modifier.fillMaxWidth().padding(vertical = 6.dp)) {
+        Text("Home grid", style = MaterialTheme.typography.bodyMedium, color = JarvisColors.TextPrimary)
+        Row(Modifier.fillMaxWidth().padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            presets.forEach { (c, r) ->
+                val sel = c == cols && r == rows
+                Text(
+                    "$c×$r",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = if (sel) JarvisColors.CyanPrimary else JarvisColors.TextDim,
+                    modifier = Modifier.clickable { onChange(c, r) }
+                        .border(1.dp, if (sel) JarvisColors.CyanPrimary else JarvisColors.Border, RoundedCornerShape(6.dp))
+                        .padding(horizontal = 12.dp, vertical = 6.dp),
+                )
+            }
+        }
     }
 }
 
@@ -344,6 +404,57 @@ private fun LanguageRow(lang: String, onChange: (String) -> Unit) {
             )
         }
     }
+}
+
+/**
+ * FV2 voice picker — a labelled row with an "Auto" chip plus one chip per
+ * installed voice for [language], and a TEST button that speaks a sample with the
+ * current selection. Selecting a chip pins that voice; "Auto" clears the pin so
+ * the controller uses the best installed voice.
+ */
+@Composable
+private fun VoicePickerRow(title: String, language: String, selected: String, vm: SettingsHubViewModel) {
+    val voices = remember(language) { vm.voicesFor(language) }
+    Column(Modifier.fillMaxWidth().padding(vertical = 6.dp)) {
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Text(title, style = MaterialTheme.typography.bodyMedium, color = JarvisColors.TextPrimary, modifier = Modifier.weight(1f))
+            Text(
+                "TEST", style = MaterialTheme.typography.labelMedium, color = JarvisColors.CyanPrimary,
+                modifier = Modifier.clickable { vm.testVoice(language) }
+                    .border(1.dp, JarvisColors.CyanPrimary, RoundedCornerShape(4.dp))
+                    .padding(horizontal = 10.dp, vertical = 5.dp),
+            )
+        }
+        if (voices.isEmpty()) {
+            Text(
+                "No installed voices — add one in the system TTS settings",
+                style = MaterialTheme.typography.bodySmall, color = JarvisColors.TextDim,
+                modifier = Modifier.padding(top = 6.dp),
+            )
+        } else {
+            Row(
+                Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(top = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                VoiceChip("Auto", selected.isBlank()) { vm.settings.setVoiceName(language, "") }
+                voices.forEach { v ->
+                    VoiceChip(v.displayName, selected == v.id) { vm.settings.setVoiceName(language, v.id) }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun VoiceChip(label: String, selected: Boolean, onClick: () -> Unit) {
+    Text(
+        label,
+        style = MaterialTheme.typography.labelMedium,
+        color = if (selected) JarvisColors.CyanPrimary else JarvisColors.TextDim,
+        modifier = Modifier.clickable(onClick = onClick)
+            .border(1.dp, if (selected) JarvisColors.CyanPrimary else JarvisColors.Border, RoundedCornerShape(8.dp))
+            .padding(horizontal = 12.dp, vertical = 6.dp),
+    )
 }
 
 @Composable

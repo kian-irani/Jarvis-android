@@ -7,6 +7,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -91,11 +92,16 @@ data class AppEntry(
 class AppDrawerViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
     private val chatHistory: com.kianirani.jarvis.data.ai.ChatHistoryStore,
+    private val launcher: com.kianirani.jarvis.data.launcher.LauncherStore,
 ) : ViewModel() {
     /** P6 AnySearch-lite: the same query also searches conversation memory. */
     fun searchMemory(q: String): List<com.kianirani.jarvis.data.ai.ChatTurn> =
         if (q.length < 3) emptyList()
         else chatHistory.all().filter { it.text.contains(q, ignoreCase = true) }.takeLast(3)
+
+    /** Long-press in the drawer pins the app to the home workspace (LR4-lite). */
+    fun addToHome(app: AppEntry): Boolean =
+        launcher.addAppToHome(com.kianirani.jarvis.data.launcher.AppRef(app.packageName, null, app.label))
 
     // P10 digital-twin-lite: launch counters drive the FREQUENT row + Recent filter.
     private val counts = context.getSharedPreferences("vision_app_usage", Context.MODE_PRIVATE)
@@ -189,6 +195,15 @@ fun AppDrawerScreen(
     val query by vm.query.collectAsStateWithLifecycle()
     val badges by com.kianirani.jarvis.service.VisionNotificationService.badges.collectAsStateWithLifecycle()
     var category by remember { mutableStateOf(AppCategory.ALL) }
+    val ctx = LocalContext.current
+    val addToHome: (AppEntry) -> Unit = { app ->
+        val added = vm.addToHome(app)
+        android.widget.Toast.makeText(
+            ctx,
+            if (added) "${app.label} added to Home" else "${app.label} is already on Home",
+            android.widget.Toast.LENGTH_SHORT,
+        ).show()
+    }
 
     val base = when (category) {
         AppCategory.ALL -> apps
@@ -266,23 +281,65 @@ fun AppDrawerScreen(
             }
         }
 
-        // The 5-column rounded-icon grid (spec: "Grid: 5 Columns, Rounded Icons").
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(5),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = Modifier.fillMaxSize(),
-        ) {
-            if (showExtras && frequent.isNotEmpty()) {
-                header("Recent")
-                items(frequent, key = { "freq_${it.packageName}" }) { app -> AppTile(app.label, app.icon, badges[app.packageName] ?: 0, accent = true) { vm.launch(app.packageName) } }
-                header("All apps")
+        // The 5-column rounded-icon grid (spec: "Grid: 5 Columns, Rounded Icons")
+        // with a Neo-style A–Z fast-scroll index down the right edge.
+        val gridState = androidx.compose.foundation.lazy.grid.rememberLazyGridState()
+        val scope = androidx.compose.runtime.rememberCoroutineScope()
+        // Lazy items that precede the alphabetical "All apps" list (headers/specials).
+        val leadCount = (if (showExtras && frequent.isNotEmpty()) frequent.size + 2 else 0) + (if (showExtras) 2 else 0)
+        Box(Modifier.fillMaxSize()) {
+            LazyVerticalGrid(
+                state = gridState,
+                columns = GridCells.Fixed(5),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.fillMaxSize(),
+            ) {
+                if (showExtras && frequent.isNotEmpty()) {
+                    header("Recent")
+                    items(frequent, key = { "freq_${it.packageName}" }) { app -> AppTile(app.label, app.icon, badges[app.packageName] ?: 0, accent = true, onLongClick = { addToHome(app) }) { vm.launch(app.packageName) } }
+                    header("All apps")
+                }
+                if (showExtras) {
+                    item(key = "__vision_settings") { SpecialTile(VisionIcons.Settings, "Settings", onOpenSettings) }
+                    item(key = "__vision_hub") { SpecialTile(VisionIcons.Spark, "Vision Hub", onOpenHub) }
+                }
+                items(filtered, key = { it.packageName }) { app -> AppTile(app.label, app.icon, badges[app.packageName] ?: 0, onLongClick = { addToHome(app) }) { vm.launch(app.packageName) } }
             }
-            if (showExtras) {
-                item(key = "__vision_settings") { SpecialTile(VisionIcons.Settings, "Settings", onOpenSettings) }
-                item(key = "__vision_hub") { SpecialTile(VisionIcons.Spark, "Vision Hub", onOpenHub) }
+            if (query.isBlank() && filtered.size > 12) {
+                AzIndex(filtered, Modifier.align(Alignment.CenterEnd)) { idx ->
+                    scope.launch { gridState.animateScrollToItem((leadCount + idx).coerceAtLeast(0)) }
+                }
             }
-            items(filtered, key = { it.packageName }) { app -> AppTile(app.label, app.icon, badges[app.packageName] ?: 0) { vm.launch(app.packageName) } }
+        }
+    }
+}
+
+/** Neo-style A–Z rail: tap a letter to jump to the first app starting with it. */
+@Composable
+private fun AzIndex(apps: List<AppEntry>, modifier: Modifier = Modifier, onPick: (Int) -> Unit) {
+    val firstIndexFor = remember(apps) {
+        val m = HashMap<Char, Int>()
+        apps.forEachIndexed { i, a ->
+            val c = a.label.firstOrNull()?.uppercaseChar() ?: '#'
+            if (c in 'A'..'Z' && c !in m) m[c] = i
+        }
+        m
+    }
+    Column(
+        modifier.padding(end = 2.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        ('A'..'Z').forEach { letter ->
+            val target = firstIndexFor[letter]
+            Text(
+                letter.toString(),
+                style = MaterialTheme.typography.labelSmall,
+                color = if (target != null) JarvisColors.CyanPrimary else JarvisColors.TextDim.copy(alpha = 0.3f),
+                modifier = Modifier
+                    .clickable(enabled = target != null) { target?.let(onPick) }
+                    .padding(horizontal = 5.dp, vertical = 1.dp),
+            )
         }
     }
 }
@@ -312,10 +369,12 @@ private fun CategoryChip(label: String, selected: Boolean, onClick: () -> Unit) 
 }
 
 /** One app in the grid — a rounded-icon surface with a label below + notif badge. */
+@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
-private fun AppTile(label: String, icon: ImageBitmap, badge: Int = 0, accent: Boolean = false, onClick: () -> Unit) {
+private fun AppTile(label: String, icon: ImageBitmap, badge: Int = 0, accent: Boolean = false, onLongClick: () -> Unit = {}, onClick: () -> Unit) {
     Column(
-        Modifier.clip(RoundedCornerShape(18.dp)).clickable(onClick = onClick).padding(vertical = 4.dp),
+        Modifier.clip(RoundedCornerShape(18.dp))
+            .combinedClickable(onClick = onClick, onLongClick = onLongClick).padding(vertical = 4.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
