@@ -10,6 +10,11 @@ import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonArray
@@ -35,7 +40,11 @@ class CloudChatRouter @Inject constructor(
     private val usage: AiUsageStore,
     private val settings: com.kianirani.jarvis.data.settings.VisionSettings,
     private val pool: TokenPool,
+    private val memory: com.kianirani.jarvis.core.memory.MemoryEngine,
 ) : java.io.Closeable {
+
+    /** Background scope for fire-and-forget memory capture (CF4.2). */
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     companion object {
         /**
@@ -149,16 +158,19 @@ class CloudChatRouter @Inject constructor(
     suspend fun chatWith(p: AiProvider, message: String): Result<CloudReply> {
         // P9 memory-lite: short context window of prior turns precedes the message.
         val context = history.recent(6)
+        // CF4.2: prepend Vision's long-term memory relevant to this message (graceful "" if none / model not downloaded).
+        val memoryBlock = runCatching { memory.buildContextWindow(message) }.getOrDefault("")
         val keys = store.tokens(p)
         if (keys.isEmpty()) return Result.failure(IllegalStateException("No token for ${p.displayName}"))
         var last: Throwable = IllegalStateException("${p.displayName} failed")
         for (key in pool.order(p, keys)) {
-            runCatching { ask(p, key, message, context) }
+            runCatching { ask(p, key, message, context, memoryBlock) }
                 .onSuccess {
                     pool.recordSuccess(p, key)
                     usage.record(p, success = true)
                     history.append("user", message)
                     history.append("assistant", it)
+                    rememberTurn(message)
                     return Result.success(CloudReply(it, p))
                 }
                 .onFailure {
@@ -170,6 +182,14 @@ class CloudChatRouter @Inject constructor(
         return Result.failure(last)
     }
 
+    /** CF4.2: capture a substantial user message as EPISODIC long-term memory (fire-and-forget, graceful). */
+    private fun rememberTurn(message: String) {
+        if (!com.kianirani.jarvis.core.memory.MemoryPolicy.worthRemembering(message)) return
+        scope.launch {
+            runCatching { memory.remember(message, com.kianirani.jarvis.core.memory.MemoryType.EPISODIC, importance = 0.4f) }
+        }
+    }
+
     /**
      * Validate a single key with a tiny live request. Success = the provider
      * accepted the token and answered — powers the "active ✓" badge shown the
@@ -178,8 +198,8 @@ class CloudChatRouter @Inject constructor(
     suspend fun test(p: AiProvider, token: String): Result<Unit> =
         runCatching { ask(p, token, "ping", emptyList()) }.map { }
 
-    private suspend fun ask(p: AiProvider, token: String, message: String, context: List<ChatTurn>): String {
-      val sys = systemPrompt()
+    private suspend fun ask(p: AiProvider, token: String, message: String, context: List<ChatTurn>, extraSystem: String = ""): String {
+      val sys = systemPrompt() + extraSystem
       val model = store.model(p)
       return when (p) {
         AiProvider.ANTHROPIC -> {
@@ -253,5 +273,5 @@ class CloudChatRouter @Inject constructor(
     private fun parse(text: String): JsonObject = json.decodeFromString(JsonObject.serializer(), text)
 
     /** Process-lifetime singleton; closed by tests or DI teardown (review HIGH-2). */
-    override fun close() { http.close() }
+    override fun close() { http.close(); scope.cancel() }
 }
