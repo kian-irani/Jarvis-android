@@ -63,6 +63,64 @@ project: 05-vision
 - [ ] **TWIN Digital Twin** (PRD Part 14.2): مدلِ ماندگارِ کاربر (preferences/routines/contacts/projects/usage).
 - [ ] **MCP / A2A**: اکوسیستمِ پلاگین + پروتکلِ agent-to-agent.
 
+## 🧠 VCF — Vision Cognitive Framework (فریم‌ورکِ فکر/عمل) — تحقیق 2026-06-18
+> **منبعِ کامل (با راهنما + نمونه‌کد): [`docs/2026-06-18-vision-cognitive-framework-PRD.md`](../docs/2026-06-18-vision-cognitive-framework-PRD.md)** · مطالعه‌ی ریپوها: [`docs/research/2026-06-18-agent-frameworks-study.md`](../docs/research/2026-06-18-agent-frameworks-study.md).
+> **چرا:** برینِ *routing* ما قوی است (VB1–VB9)، اما برینِ *agentic* (CF1–CF4) ابتدایی است — `AgentEngine` فقط یک پلنِ خطیِ ثابت را راه می‌رود، `TaskPlanner` رشته را روی «then/سپس» می‌شکند، `ToolCaller` یک JSONِ regexی می‌خواند، و هیچ pipelineِ تصویر/صوت نیست. از **LangGraph** (گرافِ stateful + checkpoint + interrupt)، **AutoGen** (actor runtime + group-chat + multimodal Image)، **CrewAI** (roles + process + native-FC-with-fallback + guardrails)، **openclaw** (gateway + agent-loop hooks = trust gate + steering + voice split) یاد گرفتیم.
+> **اصلِ کار:** VCF کنترلِ جریان را روی دستگاه نگه می‌دارد؛ مدلِ ابری فقط **یک node** است که از طریقِ routerِ VB صدا زده می‌شود → «خودش تصمیم می‌گیرد، ولی از توکنِ پراوایدرها استفاده می‌کند».
+> **جذب می‌کند (تکراری نسازید):** `CF5`→§10 · `AGT`→§9 · `MM`→§8 · `SAFE`→§7.4 · `DS-B1/B3/B4/B5`→§6/§11/§5/§10 · `FV4/FV6`→§8.2. **VB و CF4 حفظ و مصرف می‌شوند، نه جایگزین.** ترتیب: foundation-first؛ توالی نسبت به LR/DS با کاربر است (VCF موازی با کارِ UI پیش می‌رود).
+
+### VCF-0 — Foundation (پایه‌ی همه؛ بدونِ UI) — §4،§5
+- [x] **VCF-G1 Core contracts** ✅ (v57، 2026-06-18): سه فایلِ پایه در `core/graph/` ساخته شد — `VisionMessage.kt` (`Role` + `sealed ContentPart{Text,Image,Audio,ToolCall,ToolResult}` با برابریِ محتوایی برای ByteArray + helperهای `text()/toolCalls()/hasImage()`)، `GraphState.kt` (`GraphState`/`StateUpdate`/`reduce` با کانال‌های messages=append · plan=replace · obs=append · scratch=merge · steps=bound + `ActionPlan`/`PlanStep`/`Observation`ِ سریالایزبلِ پایه)، و `GraphEvent.kt` (lifecycleِ stream). همه `@Serializable` (پیش‌نیازِ checkpointِ VCF-G3). **۱۶ تستِ جدید** (`GraphStateTest`: reduce per-channel + bound + خلوص + round-tripِ JSONِ چندوجهیِ polymorphic) · build+test سبز **۲۵۹ تست**. [foundation خالص — بدونِ runtime؛ VCF-G2 بعدی.] — اصلِ §4 برای مرجع: نمونه:
+  ```kotlin
+  sealed interface ContentPart { data class Text(val text:String):ContentPart
+      data class Image(val bytes:ByteArray, val mime:String="image/png"):ContentPart /* + Audio,ToolCall,ToolResult */ }
+  fun GraphState.reduce(u:StateUpdate) = copy(messages = messages + u.appendMessages,
+      plan = u.plan ?: plan, remainingSteps = remainingSteps - if(u.spendStep)1 else 0)
+  ```
+  **پذیرش:** تست‌های append/replace/merge + bound. (LangGraph `graph/state.py`).
+- [ ] **VCF-G2 Graph runtime** (§5.1–5.2): `Node`/`NodeResult{Continue,Interrupt}` + `VisionGraph.Builder{addNode/addEdge/addConditionalEdge/setEntry/compile}` + `CompiledGraph.stream(input,threadId): Flow<GraphEvent>` (Pregel-style super-step loop، cancellable، catch→`Failed`). **پذیرش:** گرافِ سیکلیِ `a→b→a` با `remainingSteps` تمام می‌شود؛ ترتیبِ eventها درست؛ با fake nodeها تست. (LangGraph `pregel/_loop.py`).
+- [ ] **VCF-G3 Checkpointer (durable + HIL)** (§5.3): `interface Checkpointer{save/load/loadCursor/history}` + پیاده‌سازیِ Room (`{threadId,seq,cursor,stateJson,ts}`) + `CompiledGraph.resume(threadId,answer)` که از **همان node** ادامه می‌دهد. **پذیرش:** kill وسطِ run → فراخوانیِ دوباره‌ی `stream` ادامه می‌دهد؛ `Interrupt` persist و `resume` می‌شود؛ `history()` برای time-travel (Vision Lab). (LangGraph checkpoint).
+
+### VCF-1 — ReAct loop + Tools + Trust (جایگزینِ `AgentEngine`) — §6،§7
+- [ ] **VCF-A1 ReAct graph** (§6.1): `ReActAgentFactory.build()` = nodeهای `model`/`tools`/`reflect` + conditionalEdge (toolCalls→tools، else END) + `tools→model` (سیکل). **پذیرش:** taskِ ۲-ابزاره model→tools→model→answer می‌چرخد، bounded. (LangGraph `chat_agent_executor.py`).
+- [ ] **VCF-A2 ModelNode** (§6.2): از `VisionOrchestrator` (VB) مدل را می‌گیرد، `CloudChatRouter.complete(chosen,messages,toolSchema)` را صدا می‌زند، خطا→assistantError. **escalation** میان‌اجرا (cheap→strong) با `difficultyHint`. (openclaw `prepareNextTurn`).
+- [ ] **VCF-T1 Tool contract + registry** (§7.1): `ToolSpec(name,description,parameters:JsonObject(JSON-Schema),trust)` + `interface VisionTool{spec; suspend execute(args,ctx)}` + `ToolRegistry{byName, functionSchema(model):JsonArray?}` (با `ToolAllowlist`). مهاجرتِ `data/tools/*` موجود به این قرارداد.
+- [ ] **VCF-T2 Native function-calling + text fallback** (§7.2): در `CloudChatRouter.complete`، اگر `toolSchema!=null` → ارسالِ `tools`/`tool_choice` (OpenAI)، `tools` (Anthropic)، `functionDeclarations` (Gemini) و parse به `ContentPart.ToolCall`؛ اگر مدل FC ندارد → برگشت به `TOOL_PROTOCOL`+`ToolCaller` موجود (حالا fallback، نه تنها مسیر). **پذیرش:** مدلِ FC‌دار structured tool-call می‌دهد؛ مدلِ بدونِ FC با regex کار می‌کند. (CrewAI `convert_tools_to_openai_schema` + text fallback).
+- [ ] **VCF-T3 ToolNode + Trust gate** (§7.3–7.4): اجرای موازیِ ابزارهای read-only؛ ابزارِ mutating → sequential؛ `SafetyLayer.requiresConfirmation` → `NodeResult.Interrupt("confirm_tool:…")` تا کاربر تأیید کند؛ خطا→error observation (failure-as-data). **`SafetyLayer` خالص + TDD** (= `SAFE`). نمونه:
+  ```kotlin
+  val needsOk = calls.firstOrNull{ safety.requiresConfirmation(registry.byName(it.name)?.spec, it) }
+  if (needsOk!=null && !ctx.preApproved(needsOk.id)) return NodeResult.Interrupt("confirm_tool:${needsOk.name}", needsOk.toJson())
+  ```
+  **پذیرش:** ابزارِ `CRITICAL` فقط بعدِ `resume`+approval اجرا می‌شود؛ ابزارِ ناشناخته graceful. (openclaw `beforeToolCall.block`).
+
+### VCF-2 — Perception: تصویر + صوت (خواستِ صریحِ کاربر) — §8
+- [ ] **VCF-M1 Image input + per-provider encoding** (§8.3): توسعه‌ی `CloudChatRouter.ask` برای content-parts — `image_url`(OpenAI/Grok/Groq/OpenRouter)، `source/base64`(Anthropic)، `inline_data`(Gemini) + MIME-sniff از magic-bytes. **پذیرش:** تستِ encode در برابرِ fixture JSON. (AutoGen `_image.py`).
+- [ ] **VCF-M2 Visual perception pipeline** (§8.1): `VisualPerception.seeScreen(prompt,screenshot)` — اگر مدلِ vision در دسترس → Image part؛ وگرنه **OCR (ML Kit) degrade** → متن. منابع: `MediaProjection`/`AccessibilityService.takeScreenshot`، camera، gallery. (نیازِ تأییدِ دستگاه.)
+- [ ] **VCF-M3 Audio pipeline + STT abstraction** (§8.2 = `FV6`): `interface SpeechToText` (Android SpeechRecognizer→Vosk/Whisper→cloud)؛ `AudioPerception.listen()` = STTِ محلی‌اول → reason. جداسازیِ acquisition(محلی)/processing(agent). (openclaw voice split).
+- [ ] **VCF-M4 Wake word** (§8.2 = `FV4`): Porcupine/openWakeWord روی foreground-serviceِ Brain-Lite → `VisionEvent.WakeWord` به gateway؛ بودجه‌ی <۱٪/ساعت، Doze-safe. (نیازِ دستگاه.)
+
+### VCF-3 — Planner + Reflection + Memory deepening — §6.3،§6.4،§11
+- [ ] **VCF-A3 PlannerNode (typed plan + deps)** (§6.3): `ActionPlan{goal, steps:List<PlanStepV2{id,instruction,kind,dependsOn,toolHint}>}` با `completeStructured<ActionPlan>` (JSON schema)؛ `TaskPlanner` موجود = fast-path/fallback. (CrewAI structured tasks). (= `DS-B1`).
+- [ ] **VCF-A4 ReflectNode (self-correction)** (§6.4): نقدِ یک‌باره‌ی پاسخِ آخر (درست/کامل/صادق؟) و اصلاح؛ با `scratch["needsReflection"]` کنترل. (CrewAI/AutoGen reflection).
+- [ ] **VCF-A5 Steering (interrupt/redirect)** (§6.5): `interface SteeringSource.drain()` — پیام‌های کاربر که وسطِ run تایپ/گفته شده تزریق شوند (QueueMode all|one)؛ در UI = «stop/redirect» رویِ Orb هنگامِ THINKING/EXECUTING. (openclaw steering).
+- [ ] **VCF-MEM1 Summarization + store-as-tool** (§11 = `DS-B3`): `ConversationSummarizer.maybeSummarize` (history>۸ → فشرده به SEMANTIC memory)، + اکسپوزِ `remember`/`recall` به‌عنوان tool. روی CF4 `MemoryEngine`. graceful وقتی embedding نیست.
+
+### VCF-4 — Multi-agent Team (= `AGT`) — §9
+- [ ] **VCF-X1 Roles** (§9): `AgentRole{id,role,goal,backstory,tools}` → `systemPrompt()`؛ اتصال به `AgentRegistry` موجود (دادنِ رفتار به اسم‌ها). (CrewAI role/goal/backstory).
+- [ ] **VCF-X2 Crew + Process** (§9): `Crew.run(agents,Process.SEQUENTIAL|HIERARCHICAL,manager,task)` — sequential (خروجی→ورودیِ بعدی) و hierarchical (manager پلن/delegate/validate). (CrewAI process + AutoGen selector/swarm).
+- [ ] **VCF-X3 Agent-as-tool + delegation** (§9): `AgentAsTool(sub:CompiledGraph,spec)` که sub-graph را اجرا و متن برمی‌گرداند؛ `AgentDelegate` برای واگذاریِ agent→agent. (AutoGen `tools/_agent.py`).
+
+### VCF-5 — Runtime / Gateway / Events + Eval — §10،§12
+- [ ] **VCF-R1 VisionGateway (broker)** (§10): `VisionRequest{text,image,audio,channel,sessionId}` → `submit(): Flow<GraphEvent>`؛ `SessionStore` با گرافِ ایزوله per session (main=full-trust، group=allowlist محدود). surfaceها thin. (openclaw gateway).
+- [ ] **VCF-R2 EventBus + triggers** (§10 = `DS-B5`+`CF5`): `EventBus(SharedFlow<VisionEvent>)` + triggerها (`WakeWord/AppOpened/UserIdle/Scheduled`) روی WorkManager → اجرای گراف. (CrewAI Flow `@listen`).
+- [ ] **VCF-R3 Streaming network plane** (§10 = `DS-C2`): افزودنِ `/v1/stream` WebSocket به Brain-Lite Ktor برای استریمِ توکن/eventها به surfaceهای راه‌دور/desktop.
+- [ ] **VCF-E1 Trace + Golden eval** (§12): persist کردنِ `GraphEvent` به‌صورتِ `RunTrace` (نمایش در HUD/VB9) + `EvalHarness`/`FeedbackLog` توسعه‌یافته (plan-quality/tool-correctness/refusal/FA-EN-codeswitch/latency) در CI.
+
+### VCF-6 — Brain-Full (Python) parity — §13
+- [ ] **VCF-B1 Contract mirror**: همان `VisionMessage/ToolSpec/GraphEvent` در `brain/` (pydantic ↔ kotlinx، JSONِ یکسان) + nodeهای سبکِ LangGraph در Python برای tierِ سنگین (VPS/PC). delegation از گوشی به brain و stream برگشت. **پذیرش:** conformance-testِ JSONِ یکسانِ دو طرف.
+
+---
+
 ## 🧩 DS — VISION OS Dual Experience (Widget + Launcher + Brain) — طرحِ کاربر 2026-06-17
 > طرحِ کامل (PRD/معماری/monorepo/pseudo-code/API/stack): **`plu/VISION-DUAL-SYSTEM.md`** (سندِ full-spec در حالِ تکمیل).
 > **یافته:** «Vision Brain (Core)»ِ این طرح ~۸۰٪ ساخته شده (router/agent/memory/voice/mesh)؛ دو محصولِ واقعاً جدید = **Widget شناور** و **Windows shell**. کارِ اصلی = productize + cross-platform، نه greenfield. stack: **KMP + Compose Multiplatform** (یک Brainِ Kotlin، سه frontend). **هم‌پوشانی:** بعضی آیتم‌ها بلوک‌های موجود را در بر می‌گیرند (PAO→DS-W، CF5→DS-BG2، SRCH→DS-L4، MX→DS-C3، CF4→DS-B3، CTX→DS-B2/DS-W5، ORB→DS-W2). ترتیبِ پیشنهادی: **DS-F → DS-W → DS-B → DS-L → DS-BG → DS-WIN → DS-C → DS-X**.
