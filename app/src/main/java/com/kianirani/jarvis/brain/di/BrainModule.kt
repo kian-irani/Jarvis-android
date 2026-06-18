@@ -13,6 +13,7 @@ import com.kianirani.jarvis.brain.data.NodeRepository
 import com.kianirani.jarvis.brain.data.OnnxEmbedder
 import com.kianirani.jarvis.brain.data.TaskRepository
 import com.kianirani.jarvis.brain.data.db.VisionDatabase
+import com.kianirani.jarvis.core.memory.PreferenceLearner
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -54,6 +55,11 @@ object BrainModule {
 
     @Provides @Singleton fun nodeRepo(db: VisionDatabase) = NodeRepository(db.nodeDao())
     @Provides @Singleton fun eventBus() = EventBus()
+
+    // CF4.3 — the preference learner is a process-wide rejection counter shared by
+    // MemoryEngine.learnDislike; persistence of the dislikes themselves is the
+    // PREFERENCE memories it writes.
+    @Provides @Singleton fun preferenceLearner() = PreferenceLearner()
 
     @Provides @Singleton
     fun fileRepo(@ApplicationContext ctx: Context) = FileRepository(File(ctx.filesDir, "brain-files"))

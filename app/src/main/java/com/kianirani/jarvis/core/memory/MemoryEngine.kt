@@ -24,10 +24,20 @@ import javax.inject.Singleton
 @Singleton
 class MemoryEngine @Inject constructor(
     private val repo: MemoryRepository,
+    private val preferences: PreferenceLearner,
 ) {
     private val json = Json { ignoreUnknownKeys = true }
 
     data class Recalled(val id: String, val content: String, val type: MemoryType, val score: Float)
+
+    /** A stored memory as shown in the Memory screen (CF4.3 browse). */
+    data class Stored(
+        val id: String,
+        val content: String,
+        val type: MemoryType,
+        val importance: Float,
+        val createdAt: Long,
+    )
 
     /** Store a memory; returns its id, or null if it couldn't be embedded (e.g. model not ready). */
     suspend fun remember(
@@ -74,17 +84,50 @@ class MemoryEngine @Inject constructor(
         return "\n\n[MEMORY — what you remember about this user]\n$body\n[/MEMORY]"
     }
 
-    /** Record a disliked thing as a high-importance PREFERENCE memory. */
-    suspend fun learnDislike(category: String, value: String): String? =
-        remember(
+    /** Most-recent stored memories for the Memory screen; empty on any failure (graceful). */
+    suspend fun browse(type: MemoryType? = null, limit: Int = 50): List<Stored> =
+        runCatching { repo.list(type?.name, limit, 0) }.getOrDefault(emptyList())
+            .map { Stored(it.id, it.content, MemoryType.fromName(it.type), importanceOf(it.metadata), it.created_at) }
+
+    /** How many memories are stored (optionally of one [type]); 0 on failure. */
+    suspend fun count(type: MemoryType? = null): Int =
+        runCatching { repo.count(type?.name) }.getOrDefault(0)
+
+    /** Delete one memory by id; true if it was removed. Best-effort. */
+    suspend fun forget(id: String): Boolean =
+        runCatching { repo.delete(id); true }.getOrDefault(false)
+
+    /** Wipe all stored memories; true on success. Best-effort. */
+    suspend fun clearAll(): Boolean =
+        runCatching { repo.clear(); true }.getOrDefault(false)
+
+    /**
+     * Record a disliked thing (rejection feedback) — routes through [PreferenceLearner]
+     * so repeated dislikes blacklist the value, and persists it as a high-importance
+     * PREFERENCE memory. Returns the memory id, or null if it couldn't be stored.
+     */
+    suspend fun learnDislike(category: String, value: String): String? {
+        preferences.reject(preferenceKey(category, value))
+        return remember(
             content = "User dislikes $category: $value",
             type = MemoryType.PREFERENCE,
             importance = 0.9f,
             metadata = mapOf("category" to category, "value" to value, "sentiment" to "negative"),
         )
+    }
+
+    /** True once the user has rejected this category/value enough times to blacklist it. */
+    fun isDisliked(category: String, value: String): Boolean =
+        preferences.isBlacklisted(preferenceKey(category, value))
 
     private fun importanceOf(metadata: String): Float =
         runCatching {
             json.parseToJsonElement(metadata).jsonObject["importance"]?.jsonPrimitive?.floatOrNull
         }.getOrNull() ?: 0.5f
+
+    companion object {
+        /** Stable blacklist key for a disliked category/value (case/space-insensitive). */
+        fun preferenceKey(category: String, value: String): String =
+            "${category.trim().lowercase()}:${value.trim().lowercase()}"
+    }
 }

@@ -54,6 +54,10 @@ class MemoryRepository(
 
     suspend fun count(type: String? = null): Int = dao.count(type)
 
+    suspend fun delete(id: String) = dao.delete(id)
+
+    suspend fun clear() = dao.clear()
+
     suspend fun search(query: String, topK: Int): List<SearchHit> {
         val q = embed(listOf(query)).first()
         return dao.allWithEmbedding()

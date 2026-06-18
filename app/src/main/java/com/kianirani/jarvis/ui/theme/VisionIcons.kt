@@ -11,6 +11,7 @@ import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.ChevronLeft
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Code
+import androidx.compose.material.icons.rounded.DeleteOutline
 import androidx.compose.material.icons.rounded.DeleteSweep
 import androidx.compose.material.icons.rounded.ExpandLess
 import androidx.compose.material.icons.rounded.ExpandMore
@@ -78,6 +79,7 @@ object VisionIcons {
     val ExpandMore: ImageVector = Icons.Rounded.ExpandMore
     val ExpandLess: ImageVector = Icons.Rounded.ExpandLess
     val Clear: ImageVector = Icons.Rounded.DeleteSweep
+    val Delete: ImageVector = Icons.Rounded.DeleteOutline
 
     /** Icon for a home quick-action tile. */
     fun forAction(a: QuickAction): ImageVector = when (a) {

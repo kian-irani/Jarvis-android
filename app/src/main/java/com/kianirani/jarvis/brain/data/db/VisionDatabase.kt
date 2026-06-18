@@ -49,6 +49,8 @@ interface MemoryDao {
     suspend fun list(type: String?, limit: Int, offset: Int): List<MemoryEntity>
     @Query("SELECT * FROM memories WHERE embedding IS NOT NULL") suspend fun allWithEmbedding(): List<MemoryEntity>
     @Query("SELECT COUNT(*) FROM memories WHERE (:type IS NULL OR type = :type)") suspend fun count(type: String?): Int
+    @Query("DELETE FROM memories WHERE id = :id") suspend fun delete(id: String)
+    @Query("DELETE FROM memories") suspend fun clear()
 }
 
 @Dao
