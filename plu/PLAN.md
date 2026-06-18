@@ -44,7 +44,7 @@ project: 05-vision
 - [ ] **FV4 Wake word** (PRD Part 3.3): «Hey Vision»/«ویژن» با Porcupine یا openWakeWord روی ForegroundServiceِ موجود (Brain-Lite)؛ بودجه‌ی <۱٪ باتری/ساعت → `EventBus` به UI.
 - [ ] **FV6 Voice provider abstraction** (PRD Part 3.1): اینترفیسِ `TTSEngine` + `VoiceProvider` (Edge/Android فعلی، Piper/ElevenLabs/OpenAI آینده) — تعمیمِ معماریِ صدای v34/v41.
 - [ ] **NEO7 UI quality pass** *(موجود)*: نیازِ بازخوردِ دستگاه روی v49.
-- [ ] **BUG-1b Markdown render**: رندرِ **bold**/`code`/لیست در `VisionOutput` (parser خالصِ TDD یا compose-markdown) — follow-up از v49.
+- [x] **BUG-1b Markdown render** ✅ (v59، 2026-06-18): خروجیِ مدل دیگر مارک‌داون خام نشان نمی‌دهد. `core/text/MarkdownLite` خالص (parse → `MdBlock`/`MdSpan`): **bold** (`**`/`__`)، inline `` `code` ``، و لیستِ bullet (`-`/`*`) و numbered (`1.`)؛ مارکِ بی‌جفت → متنِ ادبی (هرگز throw نمی‌کند)، code بر bold اولویت دارد. رندررِ نازکِ Compose `ui/components/MarkdownText` (AnnotatedString: bold=FontWeight.Bold، code=Monospace+بک‌گراندِ ملایم؛ لیست=prefix در Row). `VisionOutput` در HomeScreen به‌جای `Text(output)` از `MarkdownText` استفاده می‌کند. **۱۱ تستِ جدید** (`MarkdownLiteTest`: bold/code/mixed/precedence/unmatched/single-star/bullet/numbered/blank-lines/empty) · build+test سبز **۲۸۳ تست**. [ظاهرِ رندر نیازِ تأییدِ بصری روی دستگاه.]
 
 ### 🟡 MEDIUM — این هفته
 - [ ] **ORB State Machine** (PRD Part 7): `OrbState` (IDLE/LISTENING/THINKING/SPEAKING/EXECUTING/NOTIFICATION/ERROR/SLEEPING) + انیمیشن/رنگِ هر state در `VisionOrb` (جایگزینِ boolean `listening`؛ از `isSpeaking`/decision تغذیه شود). reduced-motion محترم.

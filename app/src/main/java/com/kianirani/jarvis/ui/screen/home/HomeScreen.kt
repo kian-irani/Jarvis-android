@@ -59,6 +59,7 @@ import com.kianirani.jarvis.data.agent.AgentState
 import com.kianirani.jarvis.data.agent.AgentStatus
 import com.kianirani.jarvis.data.settings.QuickAction
 import com.kianirani.jarvis.service.VisionAccessibilityService
+import com.kianirani.jarvis.ui.components.MarkdownText
 import com.kianirani.jarvis.ui.screen.hud.HudViewModel
 import com.kianirani.jarvis.ui.theme.JarvisColors
 import com.kianirani.jarvis.ui.theme.VisionColors
@@ -384,7 +385,7 @@ private fun VisionOutput(
                 .heightIn(max = if (isExpanded) 320.dp else 132.dp)
                 .verticalScroll(scroll),
         ) {
-            Text(output, style = MaterialTheme.typography.bodyMedium, color = JarvisColors.TextSecondary)
+            MarkdownText(output, MaterialTheme.typography.bodyMedium, JarvisColors.TextSecondary)
         }
         Row(Modifier.fillMaxWidth().padding(top = 6.dp), verticalAlignment = Alignment.CenterVertically) {
             if (long) {
