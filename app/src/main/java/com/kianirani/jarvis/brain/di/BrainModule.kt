@@ -12,8 +12,11 @@ import com.kianirani.jarvis.brain.data.ModelManager
 import com.kianirani.jarvis.brain.data.NodeRepository
 import com.kianirani.jarvis.brain.data.OnnxEmbedder
 import com.kianirani.jarvis.brain.data.TaskRepository
+import com.kianirani.jarvis.brain.data.db.MIGRATION_1_2
 import com.kianirani.jarvis.brain.data.db.VisionDatabase
+import com.kianirani.jarvis.core.graph.Checkpointer
 import com.kianirani.jarvis.core.memory.PreferenceLearner
+import com.kianirani.jarvis.data.graph.RoomCheckpointer
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -34,7 +37,12 @@ object BrainModule {
 
     @Provides @Singleton
     fun db(@ApplicationContext ctx: Context): VisionDatabase =
-        Room.databaseBuilder(ctx, VisionDatabase::class.java, "vision-brain.db").build()
+        Room.databaseBuilder(ctx, VisionDatabase::class.java, "vision-brain.db")
+            .addMigrations(MIGRATION_1_2)
+            .build()
+
+    @Provides @Singleton
+    fun checkpointer(db: VisionDatabase): Checkpointer = RoomCheckpointer(db.checkpointDao())
 
     @Provides @Singleton
     fun chatRepo(): ChatRepository =

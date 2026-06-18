@@ -9,6 +9,8 @@ import androidx.room.PrimaryKey
 import androidx.room.Query
 import androidx.room.RoomDatabase
 import androidx.room.Update
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 
 @Entity(tableName = "memories")
 data class MemoryEntity(
@@ -69,9 +71,43 @@ interface TaskDao {
     @Query("SELECT COUNT(*) FROM tasks WHERE status = 'pending'") suspend fun pendingCount(): Int
 }
 
-@Database(entities = [MemoryEntity::class, NodeEntity::class, TaskEntity::class], version = 1, exportSchema = false)
+@Entity(tableName = "checkpoints", primaryKeys = ["threadId", "seq"])
+data class CheckpointEntity(
+    val threadId: String,
+    val seq: Int,
+    val cursor: String,
+    val stateJson: String,
+    val ts: Long,
+)
+
+@Dao
+interface CheckpointDao {
+    @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun insert(c: CheckpointEntity)
+    @Query("SELECT * FROM checkpoints WHERE threadId = :threadId ORDER BY seq DESC LIMIT 1")
+    suspend fun latest(threadId: String): CheckpointEntity?
+    @Query("SELECT MAX(seq) FROM checkpoints WHERE threadId = :threadId") suspend fun maxSeq(threadId: String): Int?
+    @Query("SELECT * FROM checkpoints WHERE threadId = :threadId ORDER BY seq ASC") suspend fun all(threadId: String): List<CheckpointEntity>
+}
+
+/** v1→v2 (VCF-G3): additive — adds the graph checkpoint table; existing tables untouched. */
+val MIGRATION_1_2 = object : Migration(1, 2) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `checkpoints` (`threadId` TEXT NOT NULL, `seq` INTEGER NOT NULL, " +
+                "`cursor` TEXT NOT NULL, `stateJson` TEXT NOT NULL, `ts` INTEGER NOT NULL, " +
+                "PRIMARY KEY(`threadId`, `seq`))",
+        )
+    }
+}
+
+@Database(
+    entities = [MemoryEntity::class, NodeEntity::class, TaskEntity::class, CheckpointEntity::class],
+    version = 2,
+    exportSchema = false,
+)
 abstract class VisionDatabase : RoomDatabase() {
     abstract fun memoryDao(): MemoryDao
     abstract fun nodeDao(): NodeDao
     abstract fun taskDao(): TaskDao
+    abstract fun checkpointDao(): CheckpointDao
 }
