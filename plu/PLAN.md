@@ -113,7 +113,7 @@ project: 05-vision
 
 ### VCF-5 — Runtime / Gateway / Events + Eval — §10،§12
 - [ ] **VCF-R1 VisionGateway (broker)** (§10): `VisionRequest{text,image,audio,channel,sessionId}` → `submit(): Flow<GraphEvent>`؛ `SessionStore` با گرافِ ایزوله per session (main=full-trust، group=allowlist محدود). surfaceها thin. (openclaw gateway).
-- [ ] **VCF-R2 EventBus + triggers** (§10 = `DS-B5`+`CF5`): `EventBus(SharedFlow<VisionEvent>)` + triggerها (`WakeWord/AppOpened/UserIdle/Scheduled`) روی WorkManager → اجرای گراف. (CrewAI Flow `@listen`).
+- [x] **VCF-R2 EventBus + triggers** ✅ (v70، 2026-06-18): `core/event/` — `sealed VisionEvent`(WakeWord/AppOpened/UserIdle/Scheduled/Custom، هرکدام `kind`) + `VisionEventBus` (@Singleton، hot `SharedFlow` با buffer، `emit/tryEmit` + `subscriptionCount` برای gating) — **مجزا از `BrainEvent`ِ سرورِ Brain-Lite** + `Trigger(id,on,action,condition)` و `TriggerMatcher.matching` خالص (کدام triggerها برای یک event آتش می‌گیرند، با شرط). **۶ تستِ جدید** (`TriggerMatcherTest` ۴ + `VisionEventBusTest` ۲ با subscriptionCount-gating دترمینیستیک). build+test سبز **۳۶۲ تست**. [اتصالِ triggerها به WorkManager + اجرای گرافِ VisionAgent = on-device (CF5/DS-BG).] (CrewAI Flow `@listen`).
 - [ ] **VCF-R3 Streaming network plane** (§10 = `DS-C2`): افزودنِ `/v1/stream` WebSocket به Brain-Lite Ktor برای استریمِ توکن/eventها به surfaceهای راه‌دور/desktop.
 - [ ] **VCF-E1 Trace + Golden eval** (§12): persist کردنِ `GraphEvent` به‌صورتِ `RunTrace` (نمایش در HUD/VB9) + `EvalHarness`/`FeedbackLog` توسعه‌یافته (plan-quality/tool-correctness/refusal/FA-EN-codeswitch/latency) در CI.
 
