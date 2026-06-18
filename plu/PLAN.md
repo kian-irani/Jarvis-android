@@ -107,7 +107,7 @@ project: 05-vision
 - [ ] **VCF-MEM1 Summarization + store-as-tool** (§11 = `DS-B3`): `ConversationSummarizer.maybeSummarize` (history>۸ → فشرده به SEMANTIC memory)، + اکسپوزِ `remember`/`recall` به‌عنوان tool. روی CF4 `MemoryEngine`. graceful وقتی embedding نیست.
 
 ### VCF-4 — Multi-agent Team (= `AGT`) — §9
-- [ ] **VCF-X1 Roles** (§9): `AgentRole{id,role,goal,backstory,tools}` → `systemPrompt()`؛ اتصال به `AgentRegistry` موجود (دادنِ رفتار به اسم‌ها). (CrewAI role/goal/backstory).
+- [x] **VCF-X1 Roles** ✅ (v66، 2026-06-18): `core/agent/AgentRole{id,role,goal,backstory,tools}` `@Serializable` + `systemPrompt()` (CrewAI role/goal/backstory). `data/agent/AgentRoles` چهار اسمِ موجودِ `AgentId` (RESEARCH/AUTOMATION/DEVELOPER/DEVICE) را به نقشِ واقعی نگاشت می‌کند — goal + persona + tool-allowlist (مثلاً DEVICE: call/send_sms/…، DEVELOPER: بدونِ ابزار) → «دادنِ رفتار به اسم‌ها». **۵ تستِ جدید** (`AgentRoleTest` systemPrompt/round-trip · `AgentRolesTest` هر AgentId نقش دارد/۴ نگاشت/ابزارهای حساس). build+test سبز **۳۲۷ تست**. [اتصال به Crew/X2 + UIِ Agents بعداً.]
 - [ ] **VCF-X2 Crew + Process** (§9): `Crew.run(agents,Process.SEQUENTIAL|HIERARCHICAL,manager,task)` — sequential (خروجی→ورودیِ بعدی) و hierarchical (manager پلن/delegate/validate). (CrewAI process + AutoGen selector/swarm).
 - [ ] **VCF-X3 Agent-as-tool + delegation** (§9): `AgentAsTool(sub:CompiledGraph,spec)` که sub-graph را اجرا و متن برمی‌گرداند؛ `AgentDelegate` برای واگذاریِ agent→agent. (AutoGen `tools/_agent.py`).
 
