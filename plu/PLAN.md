@@ -7,15 +7,31 @@ project: 05-vision
 ---
 
 # 🗂️ PLAN — Vision OS
-> منبع کامل: `repo/ROADMAP.md` + `repo/docs/VISION-CAPABILITIES.md` (تعریفِ Agent OS، ۲۴ قابلیت).
-> ریپو: `kian-irani/Jarvis-android` · آخرین نسخه: **v52** (audit fixes تکمیل: isSpeaking init-fail + تأییدِ Clear).
-> **راهنمای ساختار:** بخش ۱ = اولویت‌های فعالِ بعدی (به ترتیب) · بخش ۲ = VISION BRAIN · بخش ۳ = FULL PROGRAM (همه‌ی فازها) · بخش ۴ = Agent-OS + WAN Mesh · بخش ۵ = مرجع و تاریخچه‌ی انجام‌شده.
+> منبع کامل: `repo/ROADMAP.md` + `repo/docs/VISION-CAPABILITIES.md` + PRDِ VCF `docs/2026-06-18-vision-cognitive-framework-PRD.md`.
+> ریپو: `kian-irani/Jarvis-android` · **آخرین نسخه: v71** (2026-06-18).
 > وضعیت: `[x]` انجام‌شده · `[~]` نیمه · `[ ]` باز.
-> **نکته‌ی اولویت (به‌روزرسانی 2026-06-15):** هسته‌ی VISION BRAIN (VB1–VB9) کامل و منتشر شد (v15–v19)؛ پس اکنون **طراحیِ بصری (RD/FNT) اولِ کارِ باز است** (خواست کاربر)، سپس رفعِ باگ‌های باقی‌مانده‌ی v20، سپس موتورِ Agent (CF)، سپس قابلیت‌های Proactive/Agentic.
 
 ---
 
-# بخش ۱ — اولویت‌های فعالِ بعدی (به ترتیب)
+## 🎯 اولویت‌های فعلی — به ترتیب (به‌روزرسانیِ 2026-06-18، پس از تکمیلِ VCF)
+
+> **سکوی فعلی (کامل و منتشرشده):** **VISION BRAIN** (VB1–VB9) · **CF4 Memory** (4.1–4.3) · **سیستمِ مکالمه** (BUG-1…5) · **کلِ فریم‌ورکِ VCF** — runtime (G1–G3) · tools (T1/T3) · ReAct (A1) · ModelNode/Planner/Reflect/Steering (A2–A5) · image (M1) · team (X1–X3) · events (R2) · trace (E1) · facadeِ **VisionAgent**. ۳۶۵+ تستِ سبز. **VCF یک frameworkِ کامل و تست‌شده اما هنوز به چتِ زنده وصل‌نشده (dormant) است.**
+>
+> **محدودیتِ سرورِ بیلد:** نه دستگاه/امولاتور، نه شبکه‌ی مدل → کارهای «نیازِ دستگاه/شبکه» فقط build-green می‌شوند و تأییدِ رفتاری روی دستگاهِ کاربر لازم دارند.
+
+1. **[دستگاه/شبکه] زنده‌کردنِ VCF** — وصل‌کردنِ `VisionAgent`+`RouterModelClient` به مسیرِ چت (جایگزینِ تدریجیِ `HudViewModel.sendChat`) + **VCF-T2** (function-calling بومی روی سیم در `CloudChatRouter`). بیشترین ارزش.
+2. **[دستگاه] تکمیلِ لانچر** — `LR6` dockِ پیکربندی‌پذیر + dock-drag · `LR9` ژست‌ها · `LR12` دکمه‌ی مرکزیِ Vision · `LR8` widget host → سپس **NEO7** passِ کیفیتِ بصری.
+3. **[دستگاه/نیمه] صدا** — `FV4` wake-word روی foreground service (مصرف‌کننده‌ی `VisionEventBus`) · `FV6` انتزاعِ `TTSEngine`/`VoiceProvider`.
+4. **[نیمه-headless] تعمیقِ VCF** — `MEM1` خلاصه‌سازی + memory-as-tools · `AgentDelegate` (هم‌سطحِ X3) · `EvalHarness` golden روی `FeedbackLog` · `R1` gateway / `R3` stream · `B1` parityِ Python.
+5. **[دستگاه] Proactive/Ambient** — `PAO` overlayِ شناور · `CTX` ContextEngine · `CF5` Automation/Scheduler (روی triggerهای R2) · `ORB` state-machine · `MON` timeline.
+6. **[آینده] DS Dual Experience** (Widget+Launcher+Windows، KMP) · `MX` mesh · `SRCH` AnySearch · `TWIN` · `MM` multimodal-live · `MCP/A2A`.
+
+> **روالِ کار (auto-rp):** یک فاز را **کامل** کن → build+test سبز → tick → bump+commit+push (CI ریلیز). فازهای «نیازِ دستگاه» را build-green کن و **needs on-device** علامت بزن.
+> **پاکسازیِ ساختار (2026-06-18):** بخش‌های پایین = مرجع/جزئیات. بخش ۲ (VISION BRAIN VB) و بیشترِ «FULL PROGRAM phases» در بخش ۳ **آرشیوِ انجام‌شده‌اند**؛ کارِ بازِ واقعی در همین لیستِ بالا و تیک‌نخورده‌های زیر است.
+
+---
+
+# بخش ۱ — جزئیاتِ تسک‌ها (backlog)
 
 ## 🗣️ PRD v2.0 — سیستم مکالمه (BUG-1…BUG-5) — انجام‌شده (v49، 2026-06-17)
 > طبقِ PRD v2.0 (Part 2 — Conversation System). build سبز: `compileDebugKotlin` + `testDebugUnitTest` (**۲۲۳ تست، ۷ تستِ جدید**). منطقِ خالص با TDD، Android/UI دورِ آن. design طبقِ `ui-ux-pro-max` (truncation→expand، state-clarity، interruptible، رنگ‌تنها نه).
@@ -63,7 +79,7 @@ project: 05-vision
 - [ ] **TWIN Digital Twin** (PRD Part 14.2): مدلِ ماندگارِ کاربر (preferences/routines/contacts/projects/usage).
 - [ ] **MCP / A2A**: اکوسیستمِ پلاگین + پروتکلِ agent-to-agent.
 
-## 🧠 VCF — Vision Cognitive Framework (فریم‌ورکِ فکر/عمل) — تحقیق 2026-06-18
+## 🧠 VCF — Vision Cognitive Framework — ✅ کامل (v57–v71، 2026-06-18) · باقی‌مانده‌ها needs-device/network
 > **منبعِ کامل (با راهنما + نمونه‌کد): [`docs/2026-06-18-vision-cognitive-framework-PRD.md`](../docs/2026-06-18-vision-cognitive-framework-PRD.md)** · مطالعه‌ی ریپوها: [`docs/research/2026-06-18-agent-frameworks-study.md`](../docs/research/2026-06-18-agent-frameworks-study.md).
 > **چرا:** برینِ *routing* ما قوی است (VB1–VB9)، اما برینِ *agentic* (CF1–CF4) ابتدایی است — `AgentEngine` فقط یک پلنِ خطیِ ثابت را راه می‌رود، `TaskPlanner` رشته را روی «then/سپس» می‌شکند، `ToolCaller` یک JSONِ regexی می‌خواند، و هیچ pipelineِ تصویر/صوت نیست. از **LangGraph** (گرافِ stateful + checkpoint + interrupt)، **AutoGen** (actor runtime + group-chat + multimodal Image)، **CrewAI** (roles + process + native-FC-with-fallback + guardrails)، **openclaw** (gateway + agent-loop hooks = trust gate + steering + voice split) یاد گرفتیم.
 > **اصلِ کار:** VCF کنترلِ جریان را روی دستگاه نگه می‌دارد؛ مدلِ ابری فقط **یک node** است که از طریقِ routerِ VB صدا زده می‌شود → «خودش تصمیم می‌گیرد، ولی از توکنِ پراوایدرها استفاده می‌کند».
@@ -115,7 +131,7 @@ project: 05-vision
 - [ ] **VCF-R1 VisionGateway (broker)** (§10): `VisionRequest{text,image,audio,channel,sessionId}` → `submit(): Flow<GraphEvent>`؛ `SessionStore` با گرافِ ایزوله per session (main=full-trust، group=allowlist محدود). surfaceها thin. (openclaw gateway).
 - [x] **VCF-R2 EventBus + triggers** ✅ (v70، 2026-06-18): `core/event/` — `sealed VisionEvent`(WakeWord/AppOpened/UserIdle/Scheduled/Custom، هرکدام `kind`) + `VisionEventBus` (@Singleton، hot `SharedFlow` با buffer، `emit/tryEmit` + `subscriptionCount` برای gating) — **مجزا از `BrainEvent`ِ سرورِ Brain-Lite** + `Trigger(id,on,action,condition)` و `TriggerMatcher.matching` خالص (کدام triggerها برای یک event آتش می‌گیرند، با شرط). **۶ تستِ جدید** (`TriggerMatcherTest` ۴ + `VisionEventBusTest` ۲ با subscriptionCount-gating دترمینیستیک). build+test سبز **۳۶۲ تست**. [اتصالِ triggerها به WorkManager + اجرای گرافِ VisionAgent = on-device (CF5/DS-BG).] (CrewAI Flow `@listen`).
 - [ ] **VCF-R3 Streaming network plane** (§10 = `DS-C2`): افزودنِ `/v1/stream` WebSocket به Brain-Lite Ktor برای استریمِ توکن/eventها به surfaceهای راه‌دور/desktop.
-- [ ] **VCF-E1 Trace + Golden eval** (§12): persist کردنِ `GraphEvent` به‌صورتِ `RunTrace` (نمایش در HUD/VB9) + `EvalHarness`/`FeedbackLog` توسعه‌یافته (plan-quality/tool-correctness/refusal/FA-EN-codeswitch/latency) در CI.
+- [x] **VCF-E1 Trace (RunTrace)** ✅ (v71، 2026-06-18): `core/eval/RunTrace` (events + nodeVisits/stepCount/completed/interrupted/failed/finalState/toolRuns) + `TraceRecorder.record(flow)/of(events)` — رکوردِ مشاهده‌پذیرِ یک run برای HUD/VB9 + time-travel. **۳ تستِ جدید** (`RunTraceTest`: runِ کاملِ tool-using با VisionAgent + interrupted + failed). build+test سبز **۳۶۵ تست**. [`EvalHarness`/golden-eval در CI = follow-up روی `FeedbackLog`ِ موجود.]
 
 ### VCF-6 — Brain-Full (Python) parity — §13
 - [ ] **VCF-B1 Contract mirror**: همان `VisionMessage/ToolSpec/GraphEvent` در `brain/` (pydantic ↔ kotlinx، JSONِ یکسان) + nodeهای سبکِ LangGraph در Python برای tierِ سنگین (VPS/PC). delegation از گوشی به brain و stream برگشت. **پذیرش:** conformance-testِ JSONِ یکسانِ دو طرف.
