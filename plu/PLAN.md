@@ -92,6 +92,7 @@ project: 05-vision
   if (needsOk!=null && !ctx.preApproved(needsOk.id)) return NodeResult.Interrupt("confirm_tool:${needsOk.name}", needsOk.toJson())
   ```
   **پذیرش:** ابزارِ `CRITICAL` فقط بعدِ `resume`+approval اجرا می‌شود؛ ابزارِ ناشناخته graceful. (openclaw `beforeToolCall.block`).
+  - [x] **VCF-T3 ToolNode** ✅ (v65، 2026-06-18): `core/tools/ToolNode : Node` ساخته شد روی registry/T1 + `SafetyLayer`/SAFE-v60. trust-gate: اولین callِ **ثبت‌شده‌ی** ریسکی و تأییدنشده → `Interrupt("confirm_tool:<name>")` (ناشناخته‌ها از گیت رد می‌شوند و به errorObservation می‌رسند تا مدل خودش اصلاح کند، نه پرامپتِ بی‌معنی). اجرا: هر call از registry، خطا/ناشناخته → `ToolResult(isError=true)` (failure-as-data، بدونِ crash)؛ node خودش `callId` را روی نتیجه مهر می‌زند؛ خروجی = پیام‌های `Role.TOOL` + `Observation`ها. **۷ تستِ جدید** (`ToolNodeTest`: read-only اجرا · unknown→error · throw→error · CRITICAL→interrupt · نامِ always-critical حتی با declared=AUTO → interrupt · pre-approved→اجرا · بدونِ call=no-op). build+test سبز **۳۲۲ تست**. [اجرای موازیِ read-only = بهینه‌سازیِ بعدی؛ فعلاً sequentialِ درست. اتصال به ReActِ A1 با ModelNodeِ A2 واقعی.]
 
 ### VCF-2 — Perception: تصویر + صوت (خواستِ صریحِ کاربر) — §8
 - [ ] **VCF-M1 Image input + per-provider encoding** (§8.3): توسعه‌ی `CloudChatRouter.ask` برای content-parts — `image_url`(OpenAI/Grok/Groq/OpenRouter)، `source/base64`(Anthropic)، `inline_data`(Gemini) + MIME-sniff از magic-bytes. **پذیرش:** تستِ encode در برابرِ fixture JSON. (AutoGen `_image.py`).
