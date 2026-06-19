@@ -175,6 +175,7 @@ class AndroidVoiceController(
             mode = settings?.neuralVoiceMode?.value
                 ?: com.kianirani.jarvis.data.settings.NeuralVoiceMode.AUTO,
             online = isOnline(),
+            replyText = text,
         )
         if (useNeural) speakNeural(text) else speakOnDevice(text)
     }
