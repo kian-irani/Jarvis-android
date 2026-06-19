@@ -76,7 +76,7 @@ project: 05-vision
 - [ ] **MM Multimodal** (PRD Part 11): فهمِ تصویر (مدلِ vision-capable: Claude/GPT-4V/Gemini) — `chatWithImage`.
 - [ ] **MX1–MX4 Mesh** (PRD Part 14): تبادلِ مدل + session handoff + universal clipboard + cross-device search.
 - [ ] **LM On-device inference** *(موجود)*: llama.cpp NDK.
-- [ ] **TWIN Digital Twin** (PRD Part 14.2): مدلِ ماندگارِ کاربر (preferences/routines/contacts/projects/usage).
+- [~] **TWIN Digital Twin** (PRD Part 14.2) (v100، 2026-06-19 — هسته‌ی خالص): `core/twin/DigitalTwin` (preferences/routines/contacts/projects/usage + updatedAt) + `DigitalTwinOps` — copy-on-writeِ immutable: setPreference/recordUsage/upsertContact/putRoutine/addProject، `topApps`، `summary` (fragmentِ prompt دباره‌ی کاربر)، و `merge` **order-independent** برای syncِ دو دستگاه (اسکالرِ newer می‌بَرد، usage جمع، setها union). `@Serializable` آماده‌ی DataStore/mesh. ۶ تست. [persist + اتصال به سیستم‌پرامپتِ زنده = on-device.]
 - [ ] **MCP / A2A**: اکوسیستمِ پلاگین + پروتکلِ agent-to-agent.
 
 ## 🧠 VCF — Vision Cognitive Framework — ✅ کامل (v57–v71، 2026-06-18) · باقی‌مانده‌ها needs-device/network
@@ -186,7 +186,7 @@ project: 05-vision
 
 ### DS-WIN — Windows shell (Compose-MP)
 - [ ] **DS-WIN1 Desktop skeleton**: Compose-MP + pairingِ peerِ Brain-Lite (mDNS/QR/election).
-- [ ] **DS-WIN2 Command palette**: hotkeyِ سراسری سبکِ Spotlight/Copilot.
+- [~] **DS-WIN2 Command palette** (v100، 2026-06-19 — matcherِ خالص): `core/palette/CommandPalette` + `Command`(id/title/keywords/category) — matcherِ fuzzyِ لایه‌ای (exact > prefix > token-prefix > keyword > substring > subsequence) پس چند کلید — حتی مخففِ «tdm»→«Toggle Dark Mode» — اکشن را سریع پیدا می‌کند؛ queryِ خالی = browse، tie با title/id، limit. مشترک بینِ لانچرِ اندروید و shellِ ویندوز. ۸ تست. [hotkeyِ سراسری + اجرای command = on-device/desktop shell.]
 - [ ] **DS-WIN3 AI taskbar/dock** (جایگزینِ taskbar).
 - [ ] **DS-WIN4 Window manager + AI snap**: Win32 via JNA (`SetWindowPos`/`EnumWindows`/`MonitorFromWindow`).
 - [ ] **DS-WIN5 Multi-desktop + Focus mode** (پنهان‌کردنِ حواس‌پرتی توسط AI).
@@ -311,7 +311,7 @@ project: 05-vision
 - [ ] **PAU — Universal app automation (دستور: «به همه برنامه‌ها و همه‌چیزِ کاربر دسترسی داشته باشد و کارهایش را انجام دهد»)**: کنترلِ عمومیِ هر اپ از طریقِ Accessibility (یافتن المان‌ها، کلیک، اسکرول، تایپ) + کاتالوگِ Intentها (باز کردن/اشتراک/جستجو در هر اپ) + Deep-link؛ به‌علاوه‌ی **App Automation/Workflow** (Phase 9.5: Trigger→Action). هدف: «اتوماسیونِ کاملِ کارهای کاربر». مجوزها: کاملِ بلوک PERM.
 
 ### AG — Agents, Skills, Delegated & Scheduled tasks
-- [ ] **AGSK — Agents & Skills (دستور: «از ایجنت‌ها و اسکیل‌ها هم استفاده کند»)**: ویژن وظایف را با **ایجنت‌های تخصصی** (روی `AgentRegistry` موجود — لایه ۲، ۴ ایجنت) و **اسکیل‌های ترکیب‌پذیر** (روی plugin registry موجود P12) انجام دهد. AgentEngine یک هدف را به ایجنت/اسکیلِ مناسب مسیریابی می‌کند (مثل routerِ مدل، اما برای قابلیت‌ها)؛ هر skill = یک واحدِ کارِ قابلِ‌فراخوان با ورودی/خروجیِ ساختاریافته. Trust per-agent (Read/Suggest/Auto/Critical) که قبلاً هست.
+- [~] **AGSK — Agents & Skills** (v100، 2026-06-19 — routerِ خالص): `core/agent/SkillRouter` — یک goal را به مناسب‌ترین `AgentRole` مسیریابی می‌کند با token-overlapِ خالص علیهِ role/goal/backstory + segmentهای نامِ ابزار (مثلِ routerِ مدل، اما برای قابلیت‌ها): «call mom» → Device، «search the news» → Research، «write code» → Developer؛ بدونِ سیگنال → null (fallback به general)، tie با id. ۷ تست. [اجرای ایجنتِ منتخب با toolهای allowlistش = ReActِ VCF-A1/A2 (موجود). اسکیل‌های ترکیب‌پذیر روی plugin registry/DS-X1 = follow-up.]
 - [ ] **AGT-DELEGATE — وظیفه‌ی واگذارشده + گزارش (نمونه: «تمام پیام‌های مادر در همه‌ی اپ‌ها را بررسی کن و گزارش کامل بده»)**: AgentEngine هدف را به ایجنت(ها) می‌سپارد → جمع‌آوریِ داده از چند اپ (NotificationListener history + خواندنِ اپ‌های پیام‌رسان via Accessibility + Timeline/MON) → جمع‌بندی با مدل → **تحویلِ گزارشِ ساختاریافته** به کاربر. (long-running task + progress در overlay.)
 - [~] **AGT-SCHED — اکشنِ زمان‌بندی‌شده/خودمختار** (v99، 2026-06-19 — پارسر کامل): `core/automation/ScheduledCommandParser` — جمله‌ی طبیعی («today at 16:00 call Mr X and say…»، «in 30 minutes remind me…»، «every 2 hours…») را به `ScheduledCommand`(schedule + action) پارس می‌کند: `AtClock`(HH:MM/am-pm)، `After`(in N min/hours)، `EveryInterval`؛ نرمال‌سازیِ ارقامِ فارسی/عربی (code-switch)؛ حذفِ عبارتِ زمان + fillerِ ابتدایی از action؛ ردِ ساعتِ نامعتبر. خروجی به `ScheduleEvaluator`/CF5 وصل می‌شود. ۹ تست. [اجرای واقعیِ CallTool + Trust-gateِ Critical در زمانِ مقرر = on-device.]
 
@@ -360,7 +360,7 @@ project: 05-vision
 - [~] **MX1 Node model advertisement** (v99، 2026-06-19 — انتخابِ خالص کامل): `core/mesh/MeshModelRouter` + `MeshNode`(id/models/freeRamGb/cpuLoad/online) — نودِ مش مدل‌های لوکالش را اعلام می‌کند و router بهترین نودِ آنلاینِ ارائه‌دهنده‌ی یک مدلِ درخواستی را انتخاب می‌کند (`score` = freeRam × (۱−load)؛ نودِ saturated/کم‌رم = ۰؛ tie با id). پس گوشیِ بدونِ مدلِ لوکال می‌تواند به‌جای cloud از peerِ قوی‌تر قرض بگیرد. ۶ تست. [heartbeat/registryِ زنده (توسعه‌ی `NodeMetrics`) + اجرای remote inference = on-device/network.]
 - [ ] **MX2 Mesh model discovery**: `agent.py`/Brain مدل‌های Ollama/llama.cpp روی سرور را شمارش و گزارش کند؛ گوشی آن‌ها را با `backend=mesh` وارد Registry کند.
 - [ ] **MX3 MeshModelClient** (`ModelBackend`): ارسال inference به `/chat` نودِ منتخب با هدف مدل لوکالِ آن؛ انتخاب نود با **BrainScore × AvailabilityGraph**.
-- [ ] **MX4 Orchestrator mesh routing**: taskهای سنگین/خصوصی به مدلِ لوکالِ قوی‌ترین نودِ مش قبل/به‌جای ابری (تکمیل WAN-Mesh **W5**).
+- [~] **MX4 Orchestrator mesh routing** (v100، 2026-06-19 — سیاستِ خالص کامل): `core/mesh/MeshRoutingPolicy` + `RoutingTask`(model/sensitivity/heavy) + `RoutingContext`(cloud/onDevice readiness) → `RouteDecision`(Mesh/Cloud/LocalOnDevice/Unavailable). اولویت: **PRIVATE هرگز cloud نمی‌رود** (Mesh→onDevice→Unavailable)؛ heavy → قوی‌ترین peerِ مش (از MeshModelRouter/MX1) → Cloud → onDevice؛ light → ارزان/محلی (onDevice→Cloud→Mesh). ۹ تست. [اعزامِ واقعیِ inference به نودِ منتخب = MX3 شبکه.]
 
 > 📌 **یادداشتِ اولویتِ تاریخی (کاربر 2026-06-14):** «هیچ قابلیتی بدون Brain v1 کار نمی‌کند» — ترتیبِ آن زمان: VB1→VB2→VB3→VB8→VB4 → VB5–VB7 → LM1→LM2 → RD/FNT/VAL → MX. **اکنون VB کامل است؛ پس طراحیِ بصری (RD/FNT) اولویتِ بازِ بعدی است (بخش ۱).**
 
