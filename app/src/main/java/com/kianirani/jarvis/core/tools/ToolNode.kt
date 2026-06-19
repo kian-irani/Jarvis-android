@@ -10,6 +10,8 @@ import com.kianirani.jarvis.core.graph.Observation
 import com.kianirani.jarvis.core.graph.Role
 import com.kianirani.jarvis.core.graph.StateUpdate
 import com.kianirani.jarvis.core.graph.VisionMessage
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
@@ -51,21 +53,44 @@ class ToolNode(
         }
 
         val toolCtx = ToolContext(sessionId = state.sessionId, preApproved = ctx.preApproved.isNotEmpty())
-        val results = calls.map { call ->
-            val tool = registry.byName(call.name)
-            if (tool == null) {
-                errorResult(call.id, call.name, "unknown tool '${call.name}'")
-            } else {
-                runCatching { tool.execute(parseArgs(call.argsJson), toolCtx).copy(callId = call.id, name = call.name) }
-                    .getOrElse { errorResult(call.id, call.name, it.message ?: "tool failed") }
-            }
-        }
+        val results = executeCalls(calls, toolCtx)
         return NodeResult.Continue(
             StateUpdate(
                 appendMessages = results.map { VisionMessage(Role.TOOL, listOf(it)) },
                 appendObservations = results.map { Observation(it.name, resultText(it), it.isError) },
             ),
         )
+    }
+
+    /**
+     * Read-only calls (no side effects, e.g. recall) fan out concurrently; any call that
+     * mutates state runs sequentially in call order. Results are reassembled in the original
+     * call order so the appended TOOL messages/observations stay deterministic regardless of
+     * which read finished first.
+     */
+    private suspend fun executeCalls(
+        calls: List<ContentPart.ToolCall>,
+        toolCtx: ToolContext,
+    ): List<ContentPart.ToolResult> = coroutineScope {
+        val out = arrayOfNulls<ContentPart.ToolResult>(calls.size)
+        val parallel = calls.mapIndexedNotNull { i, call ->
+            if (isReadOnly(call)) async { i to execOne(call, toolCtx) } else null
+        }
+        calls.forEachIndexed { i, call ->
+            if (!isReadOnly(call)) out[i] = execOne(call, toolCtx)
+        }
+        parallel.forEach { val (i, r) = it.await(); out[i] = r }
+        out.requireNoNulls().toList()
+    }
+
+    private fun isReadOnly(call: ContentPart.ToolCall): Boolean =
+        registry.byName(call.name)?.spec?.readOnly == true
+
+    private suspend fun execOne(call: ContentPart.ToolCall, toolCtx: ToolContext): ContentPart.ToolResult {
+        val tool = registry.byName(call.name)
+            ?: return errorResult(call.id, call.name, "unknown tool '${call.name}'")
+        return runCatching { tool.execute(parseArgs(call.argsJson), toolCtx).copy(callId = call.id, name = call.name) }
+            .getOrElse { errorResult(call.id, call.name, it.message ?: "tool failed") }
     }
 
     private fun parseArgs(argsJson: String): JsonObject =

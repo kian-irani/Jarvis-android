@@ -22,6 +22,13 @@ data class ToolSpec(
     val description: String,
     val parameters: JsonObject = JsonObject(emptyMap()), // JSON Schema (draft-07 subset)
     val trust: ActionRisk = ActionRisk.AUTO,
+    /**
+     * True only for side-effect-free reads (e.g. recall, get_*). The [ToolNode] runs
+     * read-only calls in a single step concurrently; anything that mutates state stays
+     * sequential. Distinct from [trust]: `open_app` is AUTO (no confirmation) yet mutates,
+     * so it is NOT read-only. Defaults false — unmarked tools keep running sequentially.
+     */
+    val readOnly: Boolean = false,
 )
 
 /** Execution environment for a tool call (expanded as device tools migrate). */

@@ -36,6 +36,7 @@ class RecallTool(private val onRecall: suspend (query: String, topK: Int) -> Lis
         description = "Search the user's long-term memory for relevant facts.",
         parameters = stringParam("query", "What to search memory for."),
         trust = ActionRisk.AUTO,
+        readOnly = true, // a pure search → safe to run concurrently with other reads (VCF-T3)
     )
 
     override suspend fun execute(args: JsonObject, ctx: ToolContext): ContentPart.ToolResult {
