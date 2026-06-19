@@ -7,6 +7,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.core.graphics.drawable.toBitmap
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.kianirani.jarvis.core.launcher.AppGroupCategory
 import com.kianirani.jarvis.data.launcher.AppRef
 import com.kianirani.jarvis.data.launcher.LauncherStore
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -57,6 +58,29 @@ class LauncherViewModel @Inject constructor(
     }
 
     fun visualFor(packageName: String?): AppVisual? = packageName?.let { _visuals.value[it] }
+
+    /**
+     * DS-L3 "Optimize home": auto-group the home's apps into category folders. The app's
+     * store category (PackageManager) maps to a context folder name; undefined apps are
+     * left loose (conservative — never dump everything into one folder). Undoable.
+     */
+    fun autoArrange() = store.autoArrange { item -> folderCategory(item.packageName) }
+
+    private fun folderCategory(packageName: String?): String? {
+        packageName ?: return null
+        val cat = runCatching { context.packageManager.getApplicationInfo(packageName, 0).category }
+            .getOrDefault(android.content.pm.ApplicationInfo.CATEGORY_UNDEFINED)
+        return when (cat) {
+            android.content.pm.ApplicationInfo.CATEGORY_SOCIAL, android.content.pm.ApplicationInfo.CATEGORY_NEWS ->
+                AppGroupCategory.COMMUNICATION
+            android.content.pm.ApplicationInfo.CATEGORY_PRODUCTIVITY, android.content.pm.ApplicationInfo.CATEGORY_MAPS,
+            android.content.pm.ApplicationInfo.CATEGORY_ACCESSIBILITY -> AppGroupCategory.PRODUCTIVITY
+            android.content.pm.ApplicationInfo.CATEGORY_AUDIO, android.content.pm.ApplicationInfo.CATEGORY_VIDEO,
+            android.content.pm.ApplicationInfo.CATEGORY_IMAGE, android.content.pm.ApplicationInfo.CATEGORY_GAME ->
+                AppGroupCategory.MEDIA
+            else -> null
+        }?.folderName
+    }
 
     /** Launch an installed app and count the tap toward the usage model. */
     fun launch(packageName: String) {

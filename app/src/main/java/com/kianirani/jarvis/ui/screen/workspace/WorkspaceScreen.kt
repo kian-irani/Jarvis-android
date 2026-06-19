@@ -148,6 +148,7 @@ fun WorkspaceHomePager(
             canRedo = vm.store.canRedo,
             onUndo = { vm.store.undo() },
             onRedo = { vm.store.redo() },
+            onOptimize = { vm.autoArrange(); showEdit = false },
             onSetGrid = { c, r -> vm.store.setGridReflow(c, r) },
             onWallpaper = {
                 runCatching {
@@ -345,6 +346,7 @@ private fun HomeEditSheet(
     canRedo: Boolean,
     onUndo: () -> Unit,
     onRedo: () -> Unit,
+    onOptimize: () -> Unit,
     onSetGrid: (Int, Int) -> Unit,
     onWallpaper: () -> Unit,
     onAddPage: () -> Unit,
@@ -367,6 +369,7 @@ private fun HomeEditSheet(
                 UndoRedoButton(VisionIcons.Undo, "Undo", enabled = canUndo, modifier = Modifier.weight(1f), onClick = onUndo)
                 UndoRedoButton(VisionIcons.Redo, "Redo", enabled = canRedo, modifier = Modifier.weight(1f), onClick = onRedo)
             }
+            IconMenuItem(VisionIcons.Spark, "Auto-organize apps", onClick = onOptimize)
             IconMenuItem(VisionIcons.Weather, "Wallpaper", onClick = onWallpaper)
             // Inline grid-size presets (re-flow safely).
             Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {

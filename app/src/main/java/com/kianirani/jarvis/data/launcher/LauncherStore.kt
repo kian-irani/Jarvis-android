@@ -89,6 +89,15 @@ class LauncherStore @Inject constructor(@ApplicationContext context: Context) {
     fun reset() = update(LauncherLayout())
 
     /**
+     * DS-L3 "Optimize home": group top-level workspace apps into category folders.
+     * [categoryOf] (supplied by the view-model from PackageManager) names each app's
+     * folder, or null to leave it loose. Pure [LauncherOps.autoArrange] does the work;
+     * this only mints folder ids and persists. Undoable like any other edit.
+     */
+    fun autoArrange(categoryOf: (LauncherItem) -> String?) =
+        update(LauncherOps.autoArrange(_layout.value, categoryOf) { newId("folder") })
+
+    /**
      * LR5 — pull a folder child back onto the home workspace at the first free
      * cell (adds a page if every page is full). False when the id isn't a child.
      */

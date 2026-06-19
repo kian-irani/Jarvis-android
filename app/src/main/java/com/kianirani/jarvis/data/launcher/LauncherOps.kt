@@ -121,6 +121,60 @@ object LauncherOps {
     fun isOccupied(layout: LauncherLayout, container: Container, page: Int, cellX: Int, cellY: Int): Boolean =
         layout.cells(container, page).any { it.cellX == cellX && it.cellY == cellY }
 
+    /**
+     * DS-L3 "Optimize / auto-organize home": group top-level workspace apps into
+     * category folders. [categoryOf] maps an app to a folder name (null = leave it
+     * loose); only categories with ≥2 apps become folders. [folderId] mints a folder id
+     * per category name. Pure & deterministic (caller supplies categories + ids), so the
+     * whole reorganisation is unit-tested before it ever touches a real home.
+     *
+     * Grouped apps leave their cells and become folder children (folder-local row-major);
+     * each new folder is dropped at the first free workspace cell (scanning pages, growing
+     * a page only if every page is full). Ungrouped apps, existing folders, widgets, and
+     * current folder children are untouched.
+     */
+    fun autoArrange(
+        layout: LauncherLayout,
+        categoryOf: (LauncherItem) -> String?,
+        folderId: (String) -> String,
+    ): LauncherLayout {
+        val apps = layout.items.filter {
+            it.parentId == null && it.container == Container.WORKSPACE && it.type == ItemType.APP
+        }
+        val groups = apps.groupBy(categoryOf)
+            .filterKeys { it != null }
+            .mapKeys { it.key!! }
+            .filterValues { it.size >= 2 }
+        if (groups.isEmpty()) return layout
+
+        val groupedIds = groups.values.flatten().map { it.id }.toSet()
+        var working = layout.copy(items = layout.items.filterNot { it.id in groupedIds })
+
+        for ((category, members) in groups) {
+            val fid = folderId(category)
+            working = placeOnWorkspace(working, LauncherItem(id = fid, type = ItemType.FOLDER, title = category))
+            val children = members.mapIndexed { i, app ->
+                app.copy(
+                    parentId = fid, container = Container.WORKSPACE, page = 0,
+                    cellX = i % working.gridCols, cellY = i / working.gridCols,
+                )
+            }
+            working = working.copy(items = working.items + children)
+        }
+        return working
+    }
+
+    /** Drop a top-level [item] at the first free workspace cell, growing a page if full. */
+    private fun placeOnWorkspace(layout: LauncherLayout, item: LauncherItem): LauncherLayout {
+        for (p in 0 until layout.pageCount) {
+            firstFreeCell(layout, Container.WORKSPACE, p)?.let { (x, y) ->
+                return add(layout, item.copy(container = Container.WORKSPACE, page = p, cellX = x, cellY = y))
+            }
+        }
+        val grown = addPage(layout)
+        return add(grown, item.copy(container = Container.WORKSPACE, page = grown.pageCount - 1, cellX = 0, cellY = 0))
+    }
+
     /** First free cell in row-major order, or null if the page/dock is full. */
     fun firstFreeCell(layout: LauncherLayout, container: Container, page: Int = 0): Pair<Int, Int>? {
         val cols = if (container == Container.HOTSEAT) layout.dockCount else layout.gridCols
