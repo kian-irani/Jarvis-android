@@ -8,6 +8,7 @@ import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.plugins.statuspages.StatusPages
 import io.ktor.server.response.respond
 import io.ktor.server.sse.SSE
+import io.ktor.server.websocket.WebSockets
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
@@ -38,6 +39,7 @@ val brainJson = Json { ignoreUnknownKeys = true; encodeDefaults = true }
 fun Application.installBrainPlugins() {
     install(ContentNegotiation) { json(brainJson) }
     install(SSE)
+    install(WebSockets)
     install(StatusPages) {
         exception<BrainException> { call, e ->
             call.respond(e.status, failure(e.code, e.message ?: e.code))

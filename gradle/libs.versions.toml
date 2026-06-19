@@ -67,6 +67,7 @@ ktor-server-cio          = { group = "io.ktor", name = "ktor-server-cio",       
 ktor-server-content-neg  = { group = "io.ktor", name = "ktor-server-content-negotiation", version.ref = "ktor" }
 ktor-server-status-pages = { group = "io.ktor", name = "ktor-server-status-pages",        version.ref = "ktor" }
 ktor-server-sse          = { group = "io.ktor", name = "ktor-server-sse",                 version.ref = "ktor" }
+ktor-server-websockets   = { group = "io.ktor", name = "ktor-server-websockets",          version.ref = "ktor" }
 ktor-server-test-host    = { group = "io.ktor", name = "ktor-server-test-host",           version.ref = "ktor" }
 room-runtime             = { group = "androidx.room", name = "room-runtime",              version.ref = "room" }
 room-ktx                 = { group = "androidx.room", name = "room-ktx",                  version.ref = "room" }

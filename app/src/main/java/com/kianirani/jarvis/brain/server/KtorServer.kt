@@ -16,6 +16,7 @@ import com.kianirani.jarvis.brain.server.routes.healthRoutes
 import com.kianirani.jarvis.brain.server.routes.memoryRoutes
 import com.kianirani.jarvis.brain.server.routes.nodeRoutes
 import com.kianirani.jarvis.brain.server.routes.statusRoutes
+import com.kianirani.jarvis.brain.server.routes.streamRoutes
 import com.kianirani.jarvis.brain.server.routes.taskRoutes
 import io.ktor.server.application.ApplicationCallPipeline
 import io.ktor.server.cio.CIO
@@ -52,6 +53,7 @@ class KtorServer(
                 taskRoutes(tasks)
                 fileRoutes(files)
                 eventRoutes(bus)
+                streamRoutes(chat, bus)
             }
         }.also { it.start(wait = false) }
     }
