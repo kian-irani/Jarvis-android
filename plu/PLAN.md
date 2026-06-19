@@ -8,7 +8,7 @@ project: 05-vision
 
 # 🗂️ PLAN — Vision OS
 > منبع کامل: `repo/ROADMAP.md` + `repo/docs/VISION-CAPABILITIES.md` + PRDِ VCF `docs/2026-06-18-vision-cognitive-framework-PRD.md`.
-> ریپو: `kian-irani/Jarvis-android` · **آخرین نسخه: v85** (2026-06-19).
+> ریپو: `kian-irani/Jarvis-android` · **آخرین نسخه: v86** (2026-06-19).
 > وضعیت: `[x]` انجام‌شده · `[~]` نیمه · `[ ]` باز.
 
 ---
@@ -166,7 +166,7 @@ project: 05-vision
 - [x] **DS-L5 Usage-based ranking** ✅ (v83، 2026-06-19): `data/launcher/AppUsageRanker` (خالص) — `score(UsageStat(count,lastUsedMillis), now) = count × افتِ نماییِ recency` با **half-life ۷ روز** (اپِ بلااستفاده هر ۷ روز نصف می‌شود؛ تایم‌استمپِ آینده/clock-skew کلمپ → وزن ۱؛ count≤0 → ۰) + `rank(items, now){statOf}` (پایدار). جایگزینِ ordering‌های فقط-شمارشی: `AppDrawerViewModel` حالا تایم‌استمپِ launch را در `vision_app_usage` ثبت می‌کند و ردیفِ **FREQUENT** + دسته‌ی **RECENT** را با `usageScore` می‌چیند؛ `LauncherViewModel.launch` هم تایم‌استمپ را در همان storeِ مشترک می‌نویسد. پس «اپی که ماه پیش یک‌بار اسپم شد» دیگر دائماً بالاتر از «driverِ روزانه» نمی‌ماند. **۷ تستِ جدید** (`AppUsageRankerTest`: صفر برای بلااستفاده · score کامل در age=0 · نصف در یک half-life · کلمپِ آینده · driverِ تازه > اسپمِ قدیمی · پایداریِ امتیازِ مساوی · شمارشِ بیشترِ تازه). build+test سبز **۴۳۶**. [داده‌ی recency از همین launchها روی دستگاه انباشته می‌شود؛ افقِ بعدی DS-L1 grouping و DS-L2 adaptive home روی همین score.]
 
 ### DS-B — Vision Brain (تعمیقِ هسته)
-- [ ] **DS-B1 Intent classifier + planner**: کلاسیفایرِ صریحِ intent + plannerِ چندمرحله‌ای (توسعه‌ی `TaskPlanner`).
+- [x] **DS-B1 Intent classifier + planner** ✅ (v86، 2026-06-19): **کلاسیفایرِ actionِ صریح** ساخته شد — `core/intent/ActionIntentClassifier` (خالص، heuristic، بدونِ مدل/شبکه) که متنِ آزادِ EN+FA را به یک `Intent`ِ protocol (DS-F2) نگاشت می‌کند: فعلِ کاربر (`open_app`/`call`/`message`/`search`/`set_reminder`/`weather`/`time`) + استخراجِ slot (app/target/task/query با حذفِ fillerِ to/the/به/… و trimِ نقطه‌گذاری)، وگرنه fallbackِ `chat` با confidenceِ پایین (۰.۳). **متمایز از `router/orchestrator/IntentClassifier`** (که capabilityِ مدل را برای routing انتخاب می‌کند — CODE/REASONING/QUICK)؛ این یکی *اکشنِ کاربر* را تشخیص می‌دهد و **producerِ `VisionRequest.intent`** است (هم برای launcher هم agent). حدسِ غلط non-fatal است (agent همچنان روی متنِ خام فکر می‌کند؛ slot صرفاً hint). **plannerِ چندمرحله‌ای از قبل موجود است** (`core/planner/TaskPlanner`/CF3 + `core/agent/PlannerNode`/VCF-A3) → نیمه‌ی plannerِ این آیتم پوشش‌داده‌شده بود؛ این فاز نیمه‌ی classifierِ action را اضافه کرد. **۹ تستِ جدید** (`ActionIntentClassifierTest`: open/call/reminder/search با slot · weather/time بدونِ slot · زنگ‌بزنِ فارسی با target=علی · بازکنِ فارسی · چتِ fallback ۰.۳ · متنِ خالی) · build+test سبز **۴۶۵ تست**. [اتصالِ زنده‌ی classifier به مسیرِ gateway/launcher = needs-device follow-up.]
 - [ ] **DS-B2 ContextEngine** [= CTX]: اپ/نوتیف/ساعت/باتری/شبکه → تزریق به prompt.
 - [ ] **DS-B3 Memory deepen** [CF4 ✅ پایه]: session کوتاه‌مدت + بلندمدتِ معنایی + preference + **summarization engine** (فشرده‌سازیِ نوبت‌های قدیمی).
 - [ ] **DS-B4 Task engine**: workflowِ زنجیره‌ای + retry/fallback (توسعه‌ی `AgentEngine`/`ToolCaller`).
