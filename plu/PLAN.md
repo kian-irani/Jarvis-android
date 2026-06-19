@@ -8,7 +8,7 @@ project: 05-vision
 
 # 🗂️ PLAN — Vision OS
 > منبع کامل: `repo/ROADMAP.md` + `repo/docs/VISION-CAPABILITIES.md` + PRDِ VCF `docs/2026-06-18-vision-cognitive-framework-PRD.md`.
-> ریپو: `kian-irani/Jarvis-android` · **آخرین نسخه: v86** (2026-06-19).
+> ریپو: `kian-irani/Jarvis-android` · **آخرین نسخه: v87** (2026-06-19).
 > وضعیت: `[x]` انجام‌شده · `[~]` نیمه · `[ ]` باز.
 
 ---
@@ -167,7 +167,7 @@ project: 05-vision
 
 ### DS-B — Vision Brain (تعمیقِ هسته)
 - [x] **DS-B1 Intent classifier + planner** ✅ (v86، 2026-06-19): **کلاسیفایرِ actionِ صریح** ساخته شد — `core/intent/ActionIntentClassifier` (خالص، heuristic، بدونِ مدل/شبکه) که متنِ آزادِ EN+FA را به یک `Intent`ِ protocol (DS-F2) نگاشت می‌کند: فعلِ کاربر (`open_app`/`call`/`message`/`search`/`set_reminder`/`weather`/`time`) + استخراجِ slot (app/target/task/query با حذفِ fillerِ to/the/به/… و trimِ نقطه‌گذاری)، وگرنه fallbackِ `chat` با confidenceِ پایین (۰.۳). **متمایز از `router/orchestrator/IntentClassifier`** (که capabilityِ مدل را برای routing انتخاب می‌کند — CODE/REASONING/QUICK)؛ این یکی *اکشنِ کاربر* را تشخیص می‌دهد و **producerِ `VisionRequest.intent`** است (هم برای launcher هم agent). حدسِ غلط non-fatal است (agent همچنان روی متنِ خام فکر می‌کند؛ slot صرفاً hint). **plannerِ چندمرحله‌ای از قبل موجود است** (`core/planner/TaskPlanner`/CF3 + `core/agent/PlannerNode`/VCF-A3) → نیمه‌ی plannerِ این آیتم پوشش‌داده‌شده بود؛ این فاز نیمه‌ی classifierِ action را اضافه کرد. **۹ تستِ جدید** (`ActionIntentClassifierTest`: open/call/reminder/search با slot · weather/time بدونِ slot · زنگ‌بزنِ فارسی با target=علی · بازکنِ فارسی · چتِ fallback ۰.۳ · متنِ خالی) · build+test سبز **۴۶۵ تست**. [اتصالِ زنده‌ی classifier به مسیرِ gateway/launcher = needs-device follow-up.]
-- [ ] **DS-B2 ContextEngine** [= CTX]: اپ/نوتیف/ساعت/باتری/شبکه → تزریق به prompt.
+- [~] **DS-B2 ContextEngine** [= CTX] (v87، 2026-06-19 — هسته‌ی خالص): `core/context/ContextEngine` ساخته شد — یک builderِ **خالص و دترمینیستیک** که snapshotِ `DeviceContext`ِ DS-F2 (foregroundApp/battery/charging/network/locale/timeOfDay/unreadNotifications/extras) را به یک **fragmentِ system-prompt** تبدیل می‌کند (`[CONTEXT — the user's current device state]…[/CONTEXT]`، هم‌قراردادِ `MemoryEngine.buildContextWindow` تا دو fragment تمیز compose شوند). فیلدهای خالی/صفر skip می‌شوند (بدونِ هدررفتِ توکن)، باتری به ۰..۱۰۰ کلمپ، charging annotate، empty in→empty out، هرگز crash. **حس‌کردنِ دستگاه (Accessibility/BatteryManager/Connectivity) کارِ surface است (opt-in) و needs-device**؛ این object فقط آنچه تحویل می‌گیرد را format می‌کند. **۷ تستِ جدید** (`ContextEngineTest`: null/empty→"" · بلوکِ پرشده با bulletها · charging annotate · کلمپِ ۱۵۰→۱۰۰ و ۵−→۰ · skipِ صفر/blank با حفظِ locale · extras به‌صورتِ bullet) · build+test سبز **۴۷۲ تست**. [حس‌گرِ دستگاهی که `DeviceContext` را پر کند + تزریقِ بلوک به مسیرِ زنده‌ی چت = needs-device follow-up؛ هسته‌ی formatting خالص و آماده.]
 - [ ] **DS-B3 Memory deepen** [CF4 ✅ پایه]: session کوتاه‌مدت + بلندمدتِ معنایی + preference + **summarization engine** (فشرده‌سازیِ نوبت‌های قدیمی).
 - [ ] **DS-B4 Task engine**: workflowِ زنجیره‌ای + retry/fallback (توسعه‌ی `AgentEngine`/`ToolCaller`).
 - [ ] **DS-B5 Event system**: توسعه‌ی `EventBus` با `app_opened`/`user_idle`/`command_received`/`context_changed` + subscriberها.
