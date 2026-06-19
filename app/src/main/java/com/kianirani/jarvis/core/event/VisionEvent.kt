@@ -1,7 +1,7 @@
 package com.kianirani.jarvis.core.event
 
 /** Coarse category of a [VisionEvent], used to register triggers by type. */
-enum class EventKind { WAKE_WORD, APP_OPENED, USER_IDLE, SCHEDULED, CUSTOM }
+enum class EventKind { WAKE_WORD, APP_OPENED, USER_IDLE, SCHEDULED, COMMAND_RECEIVED, CONTEXT_CHANGED, CUSTOM }
 
 /**
  * VCF-R2 — something that happened that Vision may react to. Surfaces (accessibility,
@@ -25,6 +25,16 @@ sealed interface VisionEvent {
 
     data class Scheduled(val id: String) : VisionEvent {
         override val kind get() = EventKind.SCHEDULED
+    }
+
+    /** A command arrived from a surface (HUD/widget/voice/remote); [source] tags its origin. */
+    data class CommandReceived(val text: String, val source: String = "main") : VisionEvent {
+        override val kind get() = EventKind.COMMAND_RECEIVED
+    }
+
+    /** A piece of device context changed (e.g. foreground app), so subscribers can re-ground. */
+    data class ContextChanged(val key: String, val value: String = "") : VisionEvent {
+        override val kind get() = EventKind.CONTEXT_CHANGED
     }
 
     data class Custom(val name: String, val data: String = "") : VisionEvent {

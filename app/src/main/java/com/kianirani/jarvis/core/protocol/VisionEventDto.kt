@@ -24,6 +24,14 @@ data class VisionEventDto(
     val name: String? = null,
     /** [VisionEvent.Custom.data] */
     val data: String? = null,
+    /** [VisionEvent.CommandReceived.text] */
+    val text: String? = null,
+    /** [VisionEvent.CommandReceived.source] */
+    val source: String? = null,
+    /** [VisionEvent.ContextChanged.key] */
+    val key: String? = null,
+    /** [VisionEvent.ContextChanged.value] */
+    val value: String? = null,
 )
 
 /** Flatten a runtime [VisionEvent] to its serializable wire form. */
@@ -32,6 +40,8 @@ fun VisionEvent.toDto(): VisionEventDto = when (this) {
     is VisionEvent.AppOpened -> VisionEventDto(EventKind.APP_OPENED, packageName = packageName)
     is VisionEvent.UserIdle -> VisionEventDto(EventKind.USER_IDLE, idleMillis = millis)
     is VisionEvent.Scheduled -> VisionEventDto(EventKind.SCHEDULED, id = id)
+    is VisionEvent.CommandReceived -> VisionEventDto(EventKind.COMMAND_RECEIVED, text = text, source = source)
+    is VisionEvent.ContextChanged -> VisionEventDto(EventKind.CONTEXT_CHANGED, key = key, value = value)
     is VisionEvent.Custom -> VisionEventDto(EventKind.CUSTOM, name = name, data = data)
 }
 
@@ -41,5 +51,7 @@ fun VisionEventDto.toEvent(): VisionEvent = when (kind) {
     EventKind.APP_OPENED -> VisionEvent.AppOpened(packageName ?: "")
     EventKind.USER_IDLE -> VisionEvent.UserIdle(idleMillis ?: 0L)
     EventKind.SCHEDULED -> VisionEvent.Scheduled(id ?: "")
+    EventKind.COMMAND_RECEIVED -> VisionEvent.CommandReceived(text ?: "", source ?: "main")
+    EventKind.CONTEXT_CHANGED -> VisionEvent.ContextChanged(key ?: "", value ?: "")
     EventKind.CUSTOM -> VisionEvent.Custom(name ?: "", data ?: "")
 }

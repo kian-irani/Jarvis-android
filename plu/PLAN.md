@@ -8,7 +8,7 @@ project: 05-vision
 
 # 🗂️ PLAN — Vision OS
 > منبع کامل: `repo/ROADMAP.md` + `repo/docs/VISION-CAPABILITIES.md` + PRDِ VCF `docs/2026-06-18-vision-cognitive-framework-PRD.md`.
-> ریپو: `kian-irani/Jarvis-android` · **آخرین نسخه: v87** (2026-06-19).
+> ریپو: `kian-irani/Jarvis-android` · **آخرین نسخه: v88** (2026-06-19).
 > وضعیت: `[x]` انجام‌شده · `[~]` نیمه · `[ ]` باز.
 
 ---
@@ -170,7 +170,7 @@ project: 05-vision
 - [~] **DS-B2 ContextEngine** [= CTX] (v87، 2026-06-19 — هسته‌ی خالص): `core/context/ContextEngine` ساخته شد — یک builderِ **خالص و دترمینیستیک** که snapshotِ `DeviceContext`ِ DS-F2 (foregroundApp/battery/charging/network/locale/timeOfDay/unreadNotifications/extras) را به یک **fragmentِ system-prompt** تبدیل می‌کند (`[CONTEXT — the user's current device state]…[/CONTEXT]`، هم‌قراردادِ `MemoryEngine.buildContextWindow` تا دو fragment تمیز compose شوند). فیلدهای خالی/صفر skip می‌شوند (بدونِ هدررفتِ توکن)، باتری به ۰..۱۰۰ کلمپ، charging annotate، empty in→empty out، هرگز crash. **حس‌کردنِ دستگاه (Accessibility/BatteryManager/Connectivity) کارِ surface است (opt-in) و needs-device**؛ این object فقط آنچه تحویل می‌گیرد را format می‌کند. **۷ تستِ جدید** (`ContextEngineTest`: null/empty→"" · بلوکِ پرشده با bulletها · charging annotate · کلمپِ ۱۵۰→۱۰۰ و ۵−→۰ · skipِ صفر/blank با حفظِ locale · extras به‌صورتِ bullet) · build+test سبز **۴۷۲ تست**. [حس‌گرِ دستگاهی که `DeviceContext` را پر کند + تزریقِ بلوک به مسیرِ زنده‌ی چت = needs-device follow-up؛ هسته‌ی formatting خالص و آماده.]
 - [ ] **DS-B3 Memory deepen** [CF4 ✅ پایه]: session کوتاه‌مدت + بلندمدتِ معنایی + preference + **summarization engine** (فشرده‌سازیِ نوبت‌های قدیمی).
 - [ ] **DS-B4 Task engine**: workflowِ زنجیره‌ای + retry/fallback (توسعه‌ی `AgentEngine`/`ToolCaller`).
-- [ ] **DS-B5 Event system**: توسعه‌ی `EventBus` با `app_opened`/`user_idle`/`command_received`/`context_changed` + subscriberها.
+- [x] **DS-B5 Event system** ✅ (v88، 2026-06-19): `VisionEvent`/`EventBus`ِ VCF-R2 با دو واریانتِ تازه و یک رجیستریِ subscriber کامل شد. **رویدادهای جدید:** `CommandReceived(text, source)` (`COMMAND_RECEIVED` — فرمانِ رسیده از HUD/widget/voice/remote) و `ContextChanged(key, value)` (`CONTEXT_CHANGED` — تغییرِ contextِ دستگاه تا subscriberها دوباره ground شوند)؛ `app_opened`/`user_idle` از قبل بودند. مَپرِ wireِ `VisionEventDto`/v84 برای هر دو واریانت گسترش یافت (فیلدهای text/source/key/value) → round-tripِ lossless حفظ شد. **`core/event/EventSubscriptions` (خالص):** رجیستریِ subscriber — مکملِ `Trigger` (که *قاعده* است: kind+condition→action string)، اینجا *handlerِ زنده‌ی in-process* (مثلِ ContextEngine که روی `ContextChanged` دوباره ground می‌کند یا loggerِ همه‌ی رویدادها). transport/coroutine-free و دترمینیستیک: `on(kind)`/`onAny()`/`off()`/`subscribersFor()`/`dispatch()` همگام، به‌ترتیبِ ثبت، replace-by-id، و **ایزولاسیونِ throw** (handlerِ خطادار بقیه را نمی‌شکند)؛ `VisionEventBus`ِ async (SharedFlow) همان fan-outِ hot می‌ماند و یک collectorِ نازک رویدادهای bus را به `dispatch` پمپ می‌کند. **۹ تستِ جدید** (`EventSubscriptionsTest` ۷: kind-scoped · onAny · ترتیبِ ثبت · replace-by-id · off · ایزولاسیونِ throw · subscribersFor بدونِ fire؛ + ۲ واریانتِ تازه در round-tripِ `VisionProtocolTest`) · build+test سبز **۴۷۹ تست**. [اتصالِ collectorِ bus→dispatch + ثبتِ subscriberهای واقعی = on-device follow-up.]
 
 ### DS-BG — Background system
 - [ ] **DS-BG1 Foreground service manager**: یکپارچه‌سازیِ سرویس‌های widget + brain-lite (یک ساختارِ پایدار).

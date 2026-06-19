@@ -98,6 +98,8 @@ class VisionProtocolTest {
             VisionEvent.AppOpened("com.foo"),
             VisionEvent.UserIdle(5_000L),
             VisionEvent.Scheduled("job-1"),
+            VisionEvent.CommandReceived("open maps", "widget"),
+            VisionEvent.ContextChanged("foregroundApp", "com.bar"),
             VisionEvent.Custom("ping", "payload"),
         )
         events.forEach { e -> assertEquals(e, e.toDto().toEvent()) }
