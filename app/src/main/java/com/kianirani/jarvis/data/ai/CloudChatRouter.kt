@@ -15,7 +15,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import com.kianirani.jarvis.core.graph.ContentPart
+import com.kianirani.jarvis.core.graph.VisionMessage
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
@@ -130,6 +133,9 @@ class CloudChatRouter @Inject constructor(
 
     data class CloudReply(val text: String, val provider: AiProvider)
 
+    /** VCF-T2: a structured assistant turn — plain text and/or native tool calls. */
+    data class StructuredReply(val parts: List<ContentPart>, val provider: AiProvider)
+
     /**
      * Tries configured providers in order; within a provider rotates over ALL
      * its tokens (user directive: e.g. 4 Grok keys). Failure falls through.
@@ -197,6 +203,85 @@ class CloudChatRouter @Inject constructor(
      */
     suspend fun test(p: AiProvider, token: String): Result<Unit> =
         runCatching { ask(p, token, "ping", emptyList()) }.map { }
+
+    /**
+     * VCF-T2 — one structured agent turn with **native function-calling**. Used by the
+     * cognitive framework's [RouterModelClient]; the plain-text [chat]/[chatWith] path
+     * (what the live HUD uses today) is untouched, so this can't regress chat.
+     *
+     * Walks configured providers and rotates tokens via the [TokenPool], exactly like
+     * [chat]. When [toolSchema] is non-null/non-empty the request carries the provider's
+     * native `tools` schema and the reply is parsed into [ContentPart]s — assistant text
+     * plus structured [ContentPart.ToolCall]s the [com.kianirani.jarvis.core.tools.ToolNode]
+     * can run. When the schema is null the model just answers in text (the caller then uses
+     * the `TOOL_PROTOCOL` text fallback). History/memory stay owned by the agent graph, so
+     * — unlike [chatWith] — this neither appends to [history] nor captures memory.
+     *
+     * Over-the-wire behaviour needs on-device/network confirmation; the request shaping and
+     * response parsing are pure ([FunctionCalling]) and unit-tested.
+     */
+    suspend fun complete(messages: List<VisionMessage>, toolSchema: JsonArray?): Result<StructuredReply> {
+        val providers = store.configured()
+        if (providers.isEmpty()) {
+            return Result.failure(IllegalStateException("No AI provider token configured — add one in AI PROVIDERS"))
+        }
+        var last: Throwable = IllegalStateException("all providers failed")
+        for (p in providers) {
+            for (key in pool.order(p, store.tokens(p))) {
+                runCatching { completeWith(p, key, messages, toolSchema) }
+                    .onSuccess { parts ->
+                        pool.recordSuccess(p, key)
+                        usage.record(p, success = true)
+                        return Result.success(StructuredReply(parts, p))
+                    }
+                    .onFailure {
+                        pool.recordFailure(p, key, pool.classify(it.message))
+                        usage.record(p, success = false)
+                        last = it
+                    }
+            }
+        }
+        return Result.failure(last)
+    }
+
+    /** Build the FC request for one provider/token, post it, and parse the reply (VCF-T2). */
+    private suspend fun completeWith(
+        p: AiProvider,
+        token: String,
+        messages: List<VisionMessage>,
+        toolSchema: JsonArray?,
+    ): List<ContentPart> {
+        val wire = FunctionCalling.wireOf(p)
+        val model = store.model(p)
+        val tools = toolSchema?.takeIf { it.isNotEmpty() }?.let { FunctionCalling.toolsFragment(wire, it) }
+        val body = FunctionCalling.requestBody(wire, model, messages, tools)
+        return FunctionCalling.parseAssistant(wire, parse(postRaw(p, token, model, body)))
+    }
+
+    /** POST a prebuilt body to [p]'s endpoint and return the raw response (VCF-T2). */
+    private suspend fun postRaw(p: AiProvider, token: String, model: String, body: JsonObject): String {
+        val resp = when (FunctionCalling.wireOf(p)) {
+            FunctionCalling.Wire.ANTHROPIC -> http.post("${p.baseUrl}/v1/messages") {
+                header("x-api-key", token); header("anthropic-version", "2023-06-01")
+                contentType(ContentType.Application.Json); setBody(body.toString())
+            }
+            FunctionCalling.Wire.GEMINI -> http.post("${p.baseUrl}/v1beta/models/$model:generateContent") {
+                header("x-goog-api-key", token)
+                contentType(ContentType.Application.Json); setBody(body.toString())
+            }
+            FunctionCalling.Wire.OPENAI -> http.post("${p.baseUrl}/v1/chat/completions") {
+                header("Authorization", "Bearer $token")
+                if (p == AiProvider.OPENROUTER) {
+                    header("HTTP-Referer", "https://github.com/kian-irani/Jarvis-android")
+                    header("X-Title", "Vision OS")
+                }
+                contentType(ContentType.Application.Json); setBody(body.toString())
+            }
+        }
+        val raw = resp.bodyAsText()
+        check(resp.status.isSuccess()) { "${p.name} ${resp.status}: ${raw.take(160)}" }
+        return raw
+    }
 
     private suspend fun ask(p: AiProvider, token: String, message: String, context: List<ChatTurn>, extraSystem: String = ""): String {
       val sys = systemPrompt() + extraSystem
