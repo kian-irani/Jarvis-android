@@ -54,4 +54,39 @@ class ActionToolParsingTest {
         assertNull(SmsTool.parse("what's the weather"))
         assertNull(SmsTool.parse(""))
     }
+
+    // --- v79 device-bug fix: broaden parsing to the phrasings users (and the model) use ---
+
+    @Test
+    fun `parses more natural persian call phrasings`() {
+        assertEquals("مامان", CallTool.parseTarget("به مامان یه زنگ بزن"))
+        assertEquals("مامان", CallTool.parseTarget("زنگ بزن مامان"))
+        assertEquals("علی", CallTool.parseTarget("تماس با علی بگیر"))
+        assertEquals("علی", CallTool.parseTarget("شماره علی رو بگیر"))
+        // existing qualified forms must still win, not be swallowed by the looser ones
+        assertEquals("علی", CallTool.parseTarget("زنگ بزن به علی"))
+    }
+
+    @Test
+    fun `parses give-a-call english phrasing`() {
+        assertEquals("mom", CallTool.parseTarget("give mom a call"))
+    }
+
+    @Test
+    fun `parses the bego form the prompt tells the model to emit`() {
+        // TOOL_PROTOCOL example: «به مامان بگو: فردا نمیام» — previously unmatched -> "didn't understand".
+        assertEquals("مامان" to "فردا نمیام", SmsTool.parse("به مامان بگو: فردا نمیام"))
+        assertEquals("مامان" to "فردا نمیام", SmsTool.parse("به مامان بگو فردا نمیام"))
+        assertEquals("علی" to "سلام", SmsTool.parse("به علی بفرست سلام"))
+        assertEquals("مامان" to "دوستت دارم", SmsTool.parse("برای مامان بنویس دوستت دارم"))
+    }
+
+    @Test
+    fun `bego to self or assistant is a chat request not an sms`() {
+        // "tell me the time" must flow to the AI, not become an SMS to a contact "من".
+        assertNull(SmsTool.parse("به من بگو ساعت چنده"))
+        assertNull(SmsTool.parse("به ویژن بگو خاموش شو"))
+        // a real addressee with بگو still parses
+        assertEquals("علی" to "سلام", SmsTool.parse("به علی بگو سلام"))
+    }
 }

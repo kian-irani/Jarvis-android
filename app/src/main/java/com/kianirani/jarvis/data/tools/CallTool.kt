@@ -51,22 +51,30 @@ class CallTool @Inject constructor(
     }
 
     companion object {
-        // EN: "call/phone/dial/ring <name> [now|please]"
-        private val EN = Regex("""^(?:call|phone|dial|ring)\s+(.+?)(?:\s+(?:now|please|right now))?$""")
+        // EN: "call/phone/dial/ring <name> [now|please]"  |  "give <name> a call"
+        private val EN = listOf(
+            Regex("""^(?:call|phone|dial|ring)\s+(.+?)(?:\s+(?:now|please|right now))?$"""),
+            Regex("""^give\s+(.+?)\s+a\s+call$"""),
+        )
 
-        // FA variants (word order differs): با X تماس بگیر / به X زنگ بزن / تماس بگیر با X / زنگ بزن به X
+        // FA variants (word order differs). Order matters: more specific forms first so a
+        // looser one (e.g. bare "زنگ بزن X") can't swallow the qualified version.
         private val FA = listOf(
+            Regex("""^به\s+(.+?)\s+(?:یه|یک)\s+زنگ\s+بزن$"""), // "به X یه زنگ بزن"
             Regex("""^با\s+(.+?)\s+تماس\s+بگیر$"""),
             Regex("""^به\s+(.+?)\s+زنگ\s+بزن$"""),
             Regex("""^تماس\s+بگیر\s+با\s+(.+)$"""),
+            Regex("""^تماس\s+با\s+(.+?)\s+بگیر$"""),
             Regex("""^زنگ\s+بزن\s+به\s+(.+)$"""),
+            Regex("""^زنگ\s+بزن\s+(.+)$"""), // bare "زنگ بزن X" (after the "به X" form above)
+            Regex("""^شماره\s+(.+?)\s+(?:رو|را)\s+بگیر$"""), // "شماره X رو بگیر"
         )
 
         /** Extract the call target ("mother") from a command, or null if not a call. */
         fun parseTarget(message: String): String? {
             val m = message.trim().lowercase()
             if (m.isEmpty()) return null
-            EN.find(m)?.groupValues?.get(1)?.trim()?.takeIf { it.isNotEmpty() }?.let { return it }
+            for (rx in EN) rx.find(m)?.groupValues?.get(1)?.trim()?.takeIf { it.isNotEmpty() }?.let { return it }
             for (rx in FA) rx.find(m)?.groupValues?.get(1)?.trim()?.takeIf { it.isNotEmpty() }?.let { return it }
             return null
         }

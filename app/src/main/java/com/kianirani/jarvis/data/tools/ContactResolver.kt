@@ -33,6 +33,17 @@ class ContactResolver @Inject constructor(
 
     fun find(name: String): Lookup {
         if (!hasContactsPermission()) return Lookup.NoPermission
+        // Try the spoken name, then any relationship synonyms ("مامان" → "مادر", …), so a
+        // relation word resolves even when the contact is saved under a different label.
+        for (candidate in ContactRelations.candidates(name)) {
+            val r = queryOne(candidate)
+            if (r is Lookup.Found) return r
+        }
+        return Lookup.NotFound
+    }
+
+    /** One `DISPLAY_NAME LIKE` lookup for a single candidate fragment. Assumes permission. */
+    private fun queryOne(name: String): Lookup {
         val resolver = context.contentResolver
         val uri = ContactsContract.CommonDataKinds.Phone.CONTENT_URI
         val projection = arrayOf(

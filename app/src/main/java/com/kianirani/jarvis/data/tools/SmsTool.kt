@@ -58,11 +58,25 @@ class SmsTool @Inject constructor(
             Regex("""^send\s+(.+?)\s+(?:a\s+)?(?:message|text|sms)\s*(?:saying|that|:)?\s+(.+)$"""),
         )
 
-        // FA: به X پیام بده [که|:] body / به X بنویس body / پیام بده به X [که|:] body
+        // "به X بگو …" — the exact form TOOL_PROTOCOL tells the model to emit. "بگو" is a
+        // general speech verb ("say/tell"), so it's only a message when X is a real
+        // addressee, never the user themself or the assistant (those are chat requests
+        // like "به من بگو ساعت چنده"). Kept separate so [parse] can apply that guard.
+        private val BEGO = Regex("""^به\s+(.+?)\s+بگو\s*(?:که|:)?\s*(.+)$""")
+
+        // Speech-verb (بگو) targets that are never an SMS recipient — the user or Vision.
+        private val NON_SMS_TARGETS =
+            setOf("من", "خودم", "خودت", "ویژن", "vision", "جارویس", "jarvis", "me", "myself", "yourself")
+
+        // FA: به X پیام بده [که|:] body / به X بنویس body / پیام بده به X [که|:] body /
+        //     به X بگو [که|:] body / به X بفرست body / برای X بنویس|بفرست body
         private val FA = listOf(
             Regex("""^به\s+(.+?)\s+(?:پیام|اس\s*ام\s*اس)\s+بده\s*(?:که|:)?\s*(.+)$"""),
             Regex("""^به\s+(.+?)\s+بنویس\s+(.+)$"""),
             Regex("""^(?:پیام|اس\s*ام\s*اس)\s+بده\s+به\s+(.+?)\s*(?:که|:)?\s*(.+)$"""),
+            BEGO,
+            Regex("""^به\s+(.+?)\s+بفرست\s+(.+)$"""),
+            Regex("""^برای\s+(.+?)\s+(?:بنویس|بفرست)\s*(?:که|:)?\s*(.+)$"""),
         )
 
         /** Returns (target, body) for a send-message command, or null if not one. */
@@ -73,7 +87,10 @@ class SmsTool @Inject constructor(
                 val g = rx.find(m)?.groupValues ?: continue
                 val target = g.getOrNull(1)?.trim().orEmpty()
                 val body = g.getOrNull(2)?.trim().orEmpty()
-                if (target.isNotEmpty()) return target to body
+                if (target.isEmpty()) continue
+                // "بگو" to self/assistant is a chat request, not an SMS — let it flow to AI.
+                if (rx === BEGO && target in NON_SMS_TARGETS) continue
+                return target to body
             }
             return null
         }
