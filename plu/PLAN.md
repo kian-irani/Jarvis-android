@@ -8,7 +8,7 @@ project: 05-vision
 
 # 🗂️ PLAN — Vision OS
 > منبع کامل: `repo/ROADMAP.md` + `repo/docs/VISION-CAPABILITIES.md` + PRDِ VCF `docs/2026-06-18-vision-cognitive-framework-PRD.md`.
-> ریپو: `kian-irani/Jarvis-android` · **آخرین نسخه: v88** (2026-06-19).
+> ریپو: `kian-irani/Jarvis-android` · **آخرین نسخه: v89** (2026-06-19).
 > وضعیت: `[x]` انجام‌شده · `[~]` نیمه · `[ ]` باز.
 
 ---
@@ -68,7 +68,7 @@ project: 05-vision
 - [ ] **CTX ContextEngine** (PRD Part 8.2): app/نوتیف/ساعت/باتری/شبکه‌ی فعلی → تزریق به prompt (opt-in Accessibility).
 - [ ] **PAO Floating overlay** (PRD Part 8.1): سرویسِ `SYSTEM_ALERT_WINDOW` — گویِ شناور روی همه‌ی اپ‌ها؛ tap=پنل، drag=جابه‌جایی، double-tap=voice.
 - [ ] **CF5 Automation/Scheduler** (PRD Part 10): `AutomationTrigger`/`Workflow` روی WorkManager (TIME/CONDITION/APP_OPEN/NOTIFICATION/LOCATION) → `AgentEngine`.
-- [ ] **SRCH AnySearch** (PRD Part 9): جستجوی معناییِ یکپارچه (MEMORY/APPS/CONTACTS/MESSAGES/FILES/WEB) با embedding + `SearchResult`.
+- [~] **SRCH AnySearch** (PRD Part 9) [= DS-L4] (v89، 2026-06-19 — هسته‌ی رتبه‌بندیِ خالص): `core/search/SearchRanker` ساخته شد — هسته‌ی خالص و دترمینیستیکِ جستجوی یکپارچه که candidateهای منابعِ ناهمگن را در **یک** لیستِ رتبه‌بندی‌شده با **یک تابعِ scoring** ادغام می‌کند (پس نتایجِ APPS/CONTACTS/MEMORY/WEB/… قابلِ‌مقایسه‌اند). `SearchSource`(۸ منبع با وزن: ACTIONS>APPS>CONTACTS>MEMORY>SETTINGS>MESSAGES>FILES>WEB) · `SearchCandidate`(id/title/source/subtitle/`relevanceBoost` که منبع می‌تواند cosine/usage تزریق کند) · `SearchResult`(score). `textScore` خالص ۰..۱ (exact=1.0 · prefix=0.85 · همه‌ی tokenها=0.7 · overlapِ جزئی scale · subtitle-only=0.3 · case-insensitive) و `rank` = score = textScore×وزنِ منبع + boost، فیلترِ بی‌تطبیق برای queryِ ناخالی، queryِ خالی=browse با وزن+boost، مرتب‌سازیِ **پایدار**، limit. **بدونِ نیازِ embedding** (منبع می‌تواند cosine را به boost بدهد). **۹ تستِ جدید** (`SearchRankerTest`: گرادیانِ exact/prefix/token · overlapِ جزئی و صفر · subtitle-only · فیلترِ بی‌تطبیق · شکستِ tie با وزنِ منبع · لیفتِ boost · browseِ queryِ خالی · limit · پایداری) · build+test سبز **۴۸۸ تست**. [آداپترهای واقعیِ هر منبع (PackageManager/contacts provider/MemoryEngine/web-via-brain) + UIِ یکپارچه = on-device/network follow-up؛ هسته‌ی merge/rank خالص و آماده.]
 - [~] **AGT Agent Society** (PRD Part 5): گسترشِ rosterِ `AgentId` + `AgentDelegate` (واگذاریِ agent→agent) + pipelineِ Planner→Memory→Tools→Feedback. — **`AgentDelegate` ✅ (v77، 2026-06-19):** ابزارِ delegation به سبکِ CrewAI «Delegate work to coworker» (`core/agent/AgentDelegate.kt`): rosterِ `AgentRole` را به‌صورتِ یک `VisionTool` با argهای `{coworker, task}` عرضه می‌کند؛ managerِ عامل در زمانِ اجرا coworker را **با نام** (تطبیقِ case-insensitive روی `role` یا `id`) انتخاب و sub-task را واگذار می‌کند؛ پاسخِ coworker = نتیجه‌ی ابزار. متمایز از `AgentAsTool` (یک sub-agentِ ثابت) و `Crew` (اجرای همه). runnerِ هر agent تزریقی (تولید: ReActAgentFactory+VB، تست: fake) → بدونِ مدل/شبکه؛ coworkerِ ناشناخته/argِ کم → نتیجه‌ی خطا با لیستِ نام‌های معتبر (failure-as-data، بدونِ throw)؛ `ToolNode` callId را stamp می‌کند. **۶ تستِ `AgentDelegateTest`** · build+test سبز **۴۰۲ تست**. [باقی‌ماندهٔ AGT: گسترشِ rosterِ `AgentId` + اتصالِ delegate به registryِ زنده/UI = نیازِ دستگاه.]
 - [ ] **LR8 Widget Host** *(موجود)* · **LR9 Gestures** *(موجود)* · **VB9.1 health dots per-provider در UI**.
 
@@ -162,7 +162,7 @@ project: 05-vision
 - [ ] **DS-L1 AI smart grouping**: خوشه‌بندیِ اپ‌ها بر اساسِ usage+category → فولدرهای زمینه‌ای (Work/Social/Media/Tools).
 - [ ] **DS-L2 Adaptive home**: پیشنهادِ پویای اپ بر اساسِ الگوی استفاده؛ هابِ orb مرکزی.
 - [ ] **DS-L3 Edit-mode AI optimize**: اکشن‌های «clean home»/«optimize productivity» + تاریخچه‌ی undo/redo چیدمان.
-- [ ] **DS-L4 Universal search** [= SRCH]: apps/files/settings/contacts/AI-actions/web/automation در یک لیستِ رتبه‌بندی‌شده‌ی معنایی.
+- [~] **DS-L4 Universal search** [= SRCH] (v89، 2026-06-19): هسته‌ی رتبه‌بندیِ خالص `core/search/SearchRanker` پیاده شد (← شرحِ کامل در SRCH/Part 9 بالا). یک تابعِ scoring روی apps/files/settings/contacts/AI-actions/web/memory؛ آداپترهای منبع + UI = on-device follow-up.
 - [x] **DS-L5 Usage-based ranking** ✅ (v83، 2026-06-19): `data/launcher/AppUsageRanker` (خالص) — `score(UsageStat(count,lastUsedMillis), now) = count × افتِ نماییِ recency` با **half-life ۷ روز** (اپِ بلااستفاده هر ۷ روز نصف می‌شود؛ تایم‌استمپِ آینده/clock-skew کلمپ → وزن ۱؛ count≤0 → ۰) + `rank(items, now){statOf}` (پایدار). جایگزینِ ordering‌های فقط-شمارشی: `AppDrawerViewModel` حالا تایم‌استمپِ launch را در `vision_app_usage` ثبت می‌کند و ردیفِ **FREQUENT** + دسته‌ی **RECENT** را با `usageScore` می‌چیند؛ `LauncherViewModel.launch` هم تایم‌استمپ را در همان storeِ مشترک می‌نویسد. پس «اپی که ماه پیش یک‌بار اسپم شد» دیگر دائماً بالاتر از «driverِ روزانه» نمی‌ماند. **۷ تستِ جدید** (`AppUsageRankerTest`: صفر برای بلااستفاده · score کامل در age=0 · نصف در یک half-life · کلمپِ آینده · driverِ تازه > اسپمِ قدیمی · پایداریِ امتیازِ مساوی · شمارشِ بیشترِ تازه). build+test سبز **۴۳۶**. [داده‌ی recency از همین launchها روی دستگاه انباشته می‌شود؛ افقِ بعدی DS-L1 grouping و DS-L2 adaptive home روی همین score.]
 
 ### DS-B — Vision Brain (تعمیقِ هسته)
