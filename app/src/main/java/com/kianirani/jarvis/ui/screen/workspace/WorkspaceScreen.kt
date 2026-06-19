@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.fillMaxSize
@@ -143,6 +144,10 @@ fun WorkspaceHomePager(
             cols = layout.gridCols,
             rows = layout.gridRows,
             canRemovePage = layout.pageCount > 1,
+            canUndo = vm.store.canUndo,
+            canRedo = vm.store.canRedo,
+            onUndo = { vm.store.undo() },
+            onRedo = { vm.store.redo() },
             onSetGrid = { c, r -> vm.store.setGridReflow(c, r) },
             onWallpaper = {
                 runCatching {
@@ -336,6 +341,10 @@ private fun HomeEditSheet(
     cols: Int,
     rows: Int,
     canRemovePage: Boolean,
+    canUndo: Boolean,
+    canRedo: Boolean,
+    onUndo: () -> Unit,
+    onRedo: () -> Unit,
     onSetGrid: (Int, Int) -> Unit,
     onWallpaper: () -> Unit,
     onAddPage: () -> Unit,
@@ -349,6 +358,15 @@ private fun HomeEditSheet(
     ) {
         Column(Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp)) {
             Text("Edit home", style = MaterialTheme.typography.titleMedium, color = VisionColors.TextPrimary, modifier = Modifier.padding(start = 16.dp, bottom = 8.dp))
+            // DS-L3 — undo/redo the layout (drag/folder/grid/page edits). Disabled when
+            // there's nothing to step to; stays open so several steps are quick.
+            Row(
+                Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                UndoRedoButton(VisionIcons.Undo, "Undo", enabled = canUndo, modifier = Modifier.weight(1f), onClick = onUndo)
+                UndoRedoButton(VisionIcons.Redo, "Redo", enabled = canRedo, modifier = Modifier.weight(1f), onClick = onRedo)
+            }
             IconMenuItem(VisionIcons.Weather, "Wallpaper", onClick = onWallpaper)
             // Inline grid-size presets (re-flow safely).
             Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
@@ -385,6 +403,32 @@ private fun IconMenuItem(icon: androidx.compose.ui.graphics.vector.ImageVector, 
     ) {
         Icon(icon, label, tint = tint, modifier = Modifier.size(20.dp))
         Text(label, style = MaterialTheme.typography.bodyMedium, color = if (danger) VisionColors.DangerRed else VisionColors.TextPrimary)
+    }
+}
+
+/** DS-L3 — a glass undo/redo button; dimmed + non-interactive when [enabled] is false. */
+@Composable
+private fun UndoRedoButton(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    label: String,
+    enabled: Boolean,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit,
+) {
+    val tint = if (enabled) VisionColors.CyanPrimary else VisionColors.TextDim
+    Row(
+        modifier
+            .clip(RoundedCornerShape(10.dp))
+            .border(1.dp, if (enabled) VisionColors.Border else VisionColors.Border.copy(alpha = 0.4f), RoundedCornerShape(10.dp))
+            .clickable(enabled = enabled, onClick = onClick)
+            .heightIn(min = 48.dp)
+            .padding(horizontal = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Center,
+    ) {
+        Icon(icon, label, tint = tint, modifier = Modifier.size(20.dp))
+        Spacer(Modifier.width(8.dp))
+        Text(label, style = MaterialTheme.typography.bodyMedium, color = if (enabled) VisionColors.TextPrimary else VisionColors.TextDim)
     }
 }
 

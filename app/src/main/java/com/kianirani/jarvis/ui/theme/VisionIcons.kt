@@ -1,6 +1,8 @@
 package com.kianirani.jarvis.ui.theme
 
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.Redo
+import androidx.compose.material.icons.automirrored.rounded.Undo
 import androidx.compose.material.icons.rounded.ArrowUpward
 import androidx.compose.material.icons.rounded.AutoAwesome
 import androidx.compose.material.icons.rounded.BatteryFull
@@ -80,6 +82,8 @@ object VisionIcons {
     val ExpandLess: ImageVector = Icons.Rounded.ExpandLess
     val Clear: ImageVector = Icons.Rounded.DeleteSweep
     val Delete: ImageVector = Icons.Rounded.DeleteOutline
+    val Undo: ImageVector = Icons.AutoMirrored.Rounded.Undo
+    val Redo: ImageVector = Icons.AutoMirrored.Rounded.Redo
 
     /** Icon for a home quick-action tile. */
     fun forAction(a: QuickAction): ImageVector = when (a) {

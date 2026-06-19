@@ -27,14 +27,32 @@ class LauncherStore @Inject constructor(@ApplicationContext context: Context) {
     private val _layout = MutableStateFlow(load())
     val layout: StateFlow<LauncherLayout> = _layout.asStateFlow()
 
+    // DS-L3 — undo/redo over every edit. All mutations funnel through update(), so the
+    // history records there; undo()/redo() re-apply without re-recording.
+    private val history = LayoutHistory(_layout.value)
+
     private fun load(): LauncherLayout =
         prefs.getString(KEY, null)?.let { runCatching { json.decodeFromString<LauncherLayout>(it) }.getOrNull() }
             ?: LauncherLayout()
 
     private fun update(next: LauncherLayout) {
+        history.record(next)
+        apply(next)
+    }
+
+    /** Persist + emit without touching the undo history (used by [undo]/[redo]). */
+    private fun apply(next: LauncherLayout) {
         _layout.value = next
         prefs.edit().putString(KEY, json.encodeToString(LauncherLayout.serializer(), next)).apply()
     }
+
+    /** DS-L3 — whether an undo/redo is available right now (drives edit-mode buttons). */
+    val canUndo: Boolean get() = history.canUndo
+    val canRedo: Boolean get() = history.canRedo
+
+    /** DS-L3 — step the layout back/forward one edit; false when there's nothing to do. */
+    fun undo(): Boolean = history.undo()?.also { apply(it) } != null
+    fun redo(): Boolean = history.redo()?.also { apply(it) } != null
 
     /** True until the user (or [seedDefault]) has placed anything. */
     val isEmpty: Boolean get() = _layout.value.items.isEmpty()
