@@ -8,7 +8,7 @@ project: 05-vision
 
 # 🗂️ PLAN — Vision OS
 > منبع کامل: `repo/ROADMAP.md` + `repo/docs/VISION-CAPABILITIES.md` + PRDِ VCF `docs/2026-06-18-vision-cognitive-framework-PRD.md`.
-> ریپو: `kian-irani/Jarvis-android` · **آخرین نسخه: v76** (2026-06-19).
+> ریپو: `kian-irani/Jarvis-android` · **آخرین نسخه: v77** (2026-06-19).
 > وضعیت: `[x]` انجام‌شده · `[~]` نیمه · `[ ]` باز.
 
 ---
@@ -69,7 +69,7 @@ project: 05-vision
 - [ ] **PAO Floating overlay** (PRD Part 8.1): سرویسِ `SYSTEM_ALERT_WINDOW` — گویِ شناور روی همه‌ی اپ‌ها؛ tap=پنل، drag=جابه‌جایی، double-tap=voice.
 - [ ] **CF5 Automation/Scheduler** (PRD Part 10): `AutomationTrigger`/`Workflow` روی WorkManager (TIME/CONDITION/APP_OPEN/NOTIFICATION/LOCATION) → `AgentEngine`.
 - [ ] **SRCH AnySearch** (PRD Part 9): جستجوی معناییِ یکپارچه (MEMORY/APPS/CONTACTS/MESSAGES/FILES/WEB) با embedding + `SearchResult`.
-- [ ] **AGT Agent Society** (PRD Part 5): گسترشِ rosterِ `AgentId` + `AgentDelegate` (واگذاریِ agent→agent) + pipelineِ Planner→Memory→Tools→Feedback.
+- [~] **AGT Agent Society** (PRD Part 5): گسترشِ rosterِ `AgentId` + `AgentDelegate` (واگذاریِ agent→agent) + pipelineِ Planner→Memory→Tools→Feedback. — **`AgentDelegate` ✅ (v77، 2026-06-19):** ابزارِ delegation به سبکِ CrewAI «Delegate work to coworker» (`core/agent/AgentDelegate.kt`): rosterِ `AgentRole` را به‌صورتِ یک `VisionTool` با argهای `{coworker, task}` عرضه می‌کند؛ managerِ عامل در زمانِ اجرا coworker را **با نام** (تطبیقِ case-insensitive روی `role` یا `id`) انتخاب و sub-task را واگذار می‌کند؛ پاسخِ coworker = نتیجه‌ی ابزار. متمایز از `AgentAsTool` (یک sub-agentِ ثابت) و `Crew` (اجرای همه). runnerِ هر agent تزریقی (تولید: ReActAgentFactory+VB، تست: fake) → بدونِ مدل/شبکه؛ coworkerِ ناشناخته/argِ کم → نتیجه‌ی خطا با لیستِ نام‌های معتبر (failure-as-data، بدونِ throw)؛ `ToolNode` callId را stamp می‌کند. **۶ تستِ `AgentDelegateTest`** · build+test سبز **۴۰۲ تست**. [باقی‌ماندهٔ AGT: گسترشِ rosterِ `AgentId` + اتصالِ delegate به registryِ زنده/UI = نیازِ دستگاه.]
 - [ ] **LR8 Widget Host** *(موجود)* · **LR9 Gestures** *(موجود)* · **VB9.1 health dots per-provider در UI**.
 
 ### 🟢 FUTURE
