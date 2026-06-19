@@ -118,23 +118,37 @@ class AppDrawerViewModel @Inject constructor(
         viewModelScope.launch {
             val loaded = withContext(Dispatchers.IO) { loadApps() }
             _apps.value = loaded
-            _frequent.value = loaded
-                .filter { counts.getInt(it.packageName, 0) > 0 }
-                .sortedByDescending { counts.getInt(it.packageName, 0) }
+            // DS-L5: rank by frequency × recency, not raw launch count.
+            val now = System.currentTimeMillis()
+            _frequent.value = com.kianirani.jarvis.data.launcher.AppUsageRanker
+                .rank(loaded.filter { counts.getInt(it.packageName, 0) > 0 }, now) { statOf(it.packageName) }
                 .take(4)
         }
     }
 
     fun onQuery(q: String) { _query.value = q }
 
-    /** Launch count for a package — drives the Recent category ordering. */
+    /** Launch count for a package — used to filter the Recent category (count > 0). */
     fun usageCount(packageName: String): Int = counts.getInt(packageName, 0)
+
+    /** DS-L5 relevance score (frequency × recency) — orders FREQUENT + Recent. */
+    fun usageScore(packageName: String): Double =
+        com.kianirani.jarvis.data.launcher.AppUsageRanker.score(statOf(packageName), System.currentTimeMillis())
+
+    private fun statOf(packageName: String) = com.kianirani.jarvis.data.launcher.UsageStat(
+        count = counts.getInt(packageName, 0),
+        lastUsedMillis = counts.getLong("$packageName#ts", 0L),
+    )
 
     fun launch(packageName: String) {
         context.packageManager.getLaunchIntentForPackage(packageName)?.let {
             it.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             context.startActivity(it)
-            counts.edit().putInt(packageName, counts.getInt(packageName, 0) + 1).apply()
+            // DS-L5: record both frequency and recency so the ranker can decay stale apps.
+            counts.edit()
+                .putInt(packageName, counts.getInt(packageName, 0) + 1)
+                .putLong("$packageName#ts", System.currentTimeMillis())
+                .apply()
         }
     }
 
@@ -208,7 +222,7 @@ fun AppDrawerScreen(
     val base = when (category) {
         AppCategory.ALL -> apps
         AppCategory.RECENT -> apps.filter { vm.usageCount(it.packageName) > 0 }
-            .sortedByDescending { vm.usageCount(it.packageName) }
+            .sortedByDescending { vm.usageScore(it.packageName) }
         else -> apps.filter { it.category == category }
     }
     val filtered = if (query.isBlank()) base else apps.filter { it.label.contains(query, ignoreCase = true) }

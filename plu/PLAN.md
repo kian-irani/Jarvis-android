@@ -163,7 +163,7 @@ project: 05-vision
 - [ ] **DS-L2 Adaptive home**: پیشنهادِ پویای اپ بر اساسِ الگوی استفاده؛ هابِ orb مرکزی.
 - [ ] **DS-L3 Edit-mode AI optimize**: اکشن‌های «clean home»/«optimize productivity» + تاریخچه‌ی undo/redo چیدمان.
 - [ ] **DS-L4 Universal search** [= SRCH]: apps/files/settings/contacts/AI-actions/web/automation در یک لیستِ رتبه‌بندی‌شده‌ی معنایی.
-- [ ] **DS-L5 Usage-based ranking**: رتبه‌بندیِ اپ‌ها/اکشن‌ها.
+- [x] **DS-L5 Usage-based ranking** ✅ (v83، 2026-06-19): `data/launcher/AppUsageRanker` (خالص) — `score(UsageStat(count,lastUsedMillis), now) = count × افتِ نماییِ recency` با **half-life ۷ روز** (اپِ بلااستفاده هر ۷ روز نصف می‌شود؛ تایم‌استمپِ آینده/clock-skew کلمپ → وزن ۱؛ count≤0 → ۰) + `rank(items, now){statOf}` (پایدار). جایگزینِ ordering‌های فقط-شمارشی: `AppDrawerViewModel` حالا تایم‌استمپِ launch را در `vision_app_usage` ثبت می‌کند و ردیفِ **FREQUENT** + دسته‌ی **RECENT** را با `usageScore` می‌چیند؛ `LauncherViewModel.launch` هم تایم‌استمپ را در همان storeِ مشترک می‌نویسد. پس «اپی که ماه پیش یک‌بار اسپم شد» دیگر دائماً بالاتر از «driverِ روزانه» نمی‌ماند. **۷ تستِ جدید** (`AppUsageRankerTest`: صفر برای بلااستفاده · score کامل در age=0 · نصف در یک half-life · کلمپِ آینده · driverِ تازه > اسپمِ قدیمی · پایداریِ امتیازِ مساوی · شمارشِ بیشترِ تازه). build+test سبز **۴۳۶**. [داده‌ی recency از همین launchها روی دستگاه انباشته می‌شود؛ افقِ بعدی DS-L1 grouping و DS-L2 adaptive home روی همین score.]
 
 ### DS-B — Vision Brain (تعمیقِ هسته)
 - [ ] **DS-B1 Intent classifier + planner**: کلاسیفایرِ صریحِ intent + plannerِ چندمرحله‌ای (توسعه‌ی `TaskPlanner`).

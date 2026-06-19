@@ -63,7 +63,11 @@ class LauncherViewModel @Inject constructor(
         context.packageManager.getLaunchIntentForPackage(packageName)?.let {
             it.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             context.startActivity(it)
-            usage.edit().putInt(packageName, usage.getInt(packageName, 0) + 1).apply()
+            // DS-L5: record frequency + recency in the shared usage store (drawer ranks on it).
+            usage.edit()
+                .putInt(packageName, usage.getInt(packageName, 0) + 1)
+                .putLong("$packageName#ts", System.currentTimeMillis())
+                .apply()
         }
     }
 
