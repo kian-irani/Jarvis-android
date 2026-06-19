@@ -52,6 +52,9 @@ import androidx.core.graphics.drawable.toBitmap
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.kianirani.jarvis.core.search.SearchCandidate
+import com.kianirani.jarvis.core.search.SearchRanker
+import com.kianirani.jarvis.core.search.SearchSource
 import com.kianirani.jarvis.ui.theme.JarvisColors
 import com.kianirani.jarvis.ui.theme.VisionColors
 import com.kianirani.jarvis.ui.theme.VisionIcons
@@ -225,7 +228,24 @@ fun AppDrawerScreen(
             .sortedByDescending { vm.usageScore(it.packageName) }
         else -> apps.filter { it.category == category }
     }
-    val filtered = if (query.isBlank()) base else apps.filter { it.label.contains(query, ignoreCase = true) }
+    // SRCH/DS-L4: rank query results with the unified SearchRanker (exact ▸ prefix ▸ token)
+    // instead of a flat substring filter, with a small usage boost to break ties toward
+    // the apps the user actually opens. Blank query keeps the category browse.
+    val filtered = if (query.isBlank()) {
+        base
+    } else {
+        val maxUsage = (apps.maxOfOrNull { vm.usageScore(it.packageName) }?.takeIf { it > 0.0 } ?: 1.0).toFloat()
+        val candidates = apps.map { a ->
+            SearchCandidate(
+                id = a.packageName,
+                title = a.label,
+                source = SearchSource.APPS,
+                relevanceBoost = (vm.usageScore(a.packageName).toFloat() / maxUsage).coerceIn(0f, 1f) * 0.3f,
+            )
+        }
+        val byId = apps.associateBy { it.packageName }
+        SearchRanker.rank(query, candidates).mapNotNull { byId[it.id] }
+    }
     val showExtras = query.isBlank() && category == AppCategory.ALL
 
     Column(
