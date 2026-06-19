@@ -8,7 +8,7 @@ project: 05-vision
 
 # 🗂️ PLAN — Vision OS
 > منبع کامل: `repo/ROADMAP.md` + `repo/docs/VISION-CAPABILITIES.md` + PRDِ VCF `docs/2026-06-18-vision-cognitive-framework-PRD.md`.
-> ریپو: `kian-irani/Jarvis-android` · **آخرین نسخه: v91** (2026-06-19).
+> ریپو: `kian-irani/Jarvis-android` · **آخرین نسخه: v92** (2026-06-19).
 > وضعیت: `[x]` انجام‌شده · `[~]` نیمه · `[ ]` باز.
 
 ---
@@ -159,7 +159,7 @@ project: 05-vision
 - [ ] **DS-W6 Battery/low-mem**: notifِ کم‌اولویت، idle-collapse، Doze-safe، wake-word کم‌مصرف، degrade در حافظه‌ی کم.
 
 ### DS-L — Vision Launcher (Android، روی LR/NEO)
-- [ ] **DS-L1 AI smart grouping**: خوشه‌بندیِ اپ‌ها بر اساسِ usage+category → فولدرهای زمینه‌ای (Work/Social/Media/Tools).
+- [~] **DS-L1 AI smart grouping** (v92، 2026-06-19 — هسته‌ی خوشه‌بندیِ خالص): `core/launcher/AppGrouper` ساخته شد — هسته‌ی خالصِ خوشه‌بندی که اپ‌های تگ‌خورده با category + usageScore (سیگنالِ recency×frequencyِ `AppUsageRanker`/DS-L5) را به **فولدرهای زمینه‌ای** تبدیل می‌کند. `AppGroupCategory`(COMMUNICATION→Social · PRODUCTIVITY→Work · MEDIA→Media · TOOLS→Tools · SYSTEM→System، framework-free—مستقل از `AppCategory`ِ Compose-coupledِ drawer) · `GroupableApp` · `AppGroup`. قواعد: یک فولدر per categoryِ دارای ≥`minGroupSize`(۲) اپ؛ categoryهای کوچک‌تر ungrouped می‌مانند (فولدرِ تک‌اپ = نویز)؛ فولدرها بر اساسِ usageِ تجمعی نزولی مرتب (خوشه‌ای که بیشتر استفاده می‌شود اول)، tie = ترتیبِ اعلانِ category؛ اپ‌های داخلِ فولدر بر اساسِ usage نزولی. `group(apps)` + `ungrouped(apps)`. خالص و دترمینیستیک. **۶ تستِ جدید** (`AppGrouperTest`: خوشه‌بندی به فولدرِ نام‌دار · حذفِ category تک‌اپی + ungrouped · ترتیبِ فولدر بر usageِ تجمعی · مرتب‌سازیِ اعضای فولدر بر usage · ورودیِ خالی · حفظِ ترتیبِ اعلان در tie) · build+test سبز **۵۱۲ تست**. [resolve کردنِ categoryِ واقعی از `ApplicationInfo.category` (drawer قبلاً دارد) + رندر/persistِ فولدرها روی `LauncherStore` = on-device follow-up؛ الگوریتمِ خوشه‌بندی خالص و آماده.]
 - [ ] **DS-L2 Adaptive home**: پیشنهادِ پویای اپ بر اساسِ الگوی استفاده؛ هابِ orb مرکزی.
 - [ ] **DS-L3 Edit-mode AI optimize**: اکشن‌های «clean home»/«optimize productivity» + تاریخچه‌ی undo/redo چیدمان.
 - [~] **DS-L4 Universal search** [= SRCH] (v89، 2026-06-19): هسته‌ی رتبه‌بندیِ خالص `core/search/SearchRanker` پیاده شد (← شرحِ کامل در SRCH/Part 9 بالا). یک تابعِ scoring روی apps/files/settings/contacts/AI-actions/web/memory؛ آداپترهای منبع + UI = on-device follow-up.
