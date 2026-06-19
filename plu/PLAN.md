@@ -153,7 +153,7 @@ project: 05-vision
 ### DS-W — Vision Widget (overlayِ همیشه‌روشن)  [= PAO، productized]
 - [ ] **DS-W1 FloatingWidgetService**: foreground service + `WindowManager` overlay (`TYPE_APPLICATION_OVERLAY`) + هاستِ `ComposeView` (الحاقِ Lifecycle/SavedState)؛ funnelِ مجوز (overlay/mic/notif).
 - [ ] **DS-W2 Orb state machine UI** [= ORB]: idle breathing / listening wave / thinking pulse / responding glow؛ reduced-motion، ۱۵۰–۳۰۰ms، interruptible.
-- [ ] **DS-W3 Gestures**: tap→quick prompt · long-press→voice · swipe-up→پنلِ گسترده · swipe-side→quick actions · double-tap→تکرارِ آخرین اکشن؛ drag-threshold؛ collapse-to-dot در idle.
+- [~] **DS-W3 Gestures** (v102، 2026-06-19 — نگاشتِ خالص): `core/gesture/GestureMap` + `Gesture`/`GestureAction` — `DEFAULTS` طبقِ اسپک (tap→quick prompt، long-press→voice، swipe-up→expand، swipe-side→quick actions، double-tap→repeat-last)؛ override per-gesture (NONEِ صریح = غیرفعال)؛ `bind` immutable. ۶ تست. [تشخیصِ ژست (drag-threshold، collapse-to-dot) + اجرای اکشن = on-device.]
 - [ ] **DS-W4 Mini-panels**: Notes (capture→Memory) · Reminders (→scheduler) · Smart Search (DS-L4) · Automation (macro) · Recent-memory (نمای recall).
 - [ ] **DS-W5 Context awareness**: اپِ foreground (Accessibility) + نوتیف‌ها → promptِ Brain (مشترک با DS-B2).
 - [ ] **DS-W6 Battery/low-mem**: notifِ کم‌اولویت، idle-collapse، Doze-safe، wake-word کم‌مصرف، degrade در حافظه‌ی کم.
@@ -312,12 +312,12 @@ project: 05-vision
 
 ### AG — Agents, Skills, Delegated & Scheduled tasks
 - [~] **AGSK — Agents & Skills** (v100، 2026-06-19 — routerِ خالص): `core/agent/SkillRouter` — یک goal را به مناسب‌ترین `AgentRole` مسیریابی می‌کند با token-overlapِ خالص علیهِ role/goal/backstory + segmentهای نامِ ابزار (مثلِ routerِ مدل، اما برای قابلیت‌ها): «call mom» → Device، «search the news» → Research، «write code» → Developer؛ بدونِ سیگنال → null (fallback به general)، tie با id. ۷ تست. [اجرای ایجنتِ منتخب با toolهای allowlistش = ReActِ VCF-A1/A2 (موجود). اسکیل‌های ترکیب‌پذیر روی plugin registry/DS-X1 = follow-up.]
-- [ ] **AGT-DELEGATE — وظیفه‌ی واگذارشده + گزارش (نمونه: «تمام پیام‌های مادر در همه‌ی اپ‌ها را بررسی کن و گزارش کامل بده»)**: AgentEngine هدف را به ایجنت(ها) می‌سپارد → جمع‌آوریِ داده از چند اپ (NotificationListener history + خواندنِ اپ‌های پیام‌رسان via Accessibility + Timeline/MON) → جمع‌بندی با مدل → **تحویلِ گزارشِ ساختاریافته** به کاربر. (long-running task + progress در overlay.)
+- [~] **AGT-DELEGATE — وظیفه‌ی واگذارشده + گزارش** (v102، 2026-06-19 — هسته‌ی aggregation): `core/agent/ReportAggregator` — آیتم‌های جمع‌آوری‌شده از چند اپ را group/order می‌کند: `SenderGroup` (count/sources/items newest-first/latest)، `AggregatedReport` (busiest-sender-first)، `filterSender` برای «همه‌ی پیام‌های مادر در همه‌ی اپ‌ها» (case-insensitive، cross-source). خالص → گزارشِ واگذارشده دترمینیستیک؛ مدل فقط prose را می‌نویسد. ۶ تست. [جمع‌آوریِ آیتم‌ها (NotificationListener/Accessibility/MON) + روایتِ مدل + progressِ overlay = on-device.]
 - [~] **AGT-SCHED — اکشنِ زمان‌بندی‌شده/خودمختار** (v99، 2026-06-19 — پارسر کامل): `core/automation/ScheduledCommandParser` — جمله‌ی طبیعی («today at 16:00 call Mr X and say…»، «in 30 minutes remind me…»، «every 2 hours…») را به `ScheduledCommand`(schedule + action) پارس می‌کند: `AtClock`(HH:MM/am-pm)، `After`(in N min/hours)، `EveryInterval`؛ نرمال‌سازیِ ارقامِ فارسی/عربی (code-switch)؛ حذفِ عبارتِ زمان + fillerِ ابتدایی از action؛ ردِ ساعتِ نامعتبر. خروجی به `ScheduleEvaluator`/CF5 وصل می‌شود. ۹ تست. [اجرای واقعیِ CallTool + Trust-gateِ Critical در زمانِ مقرر = on-device.]
 
 ### MON — نظارتِ همیشگی + Timeline (دستور کاربر 2026-06-15)
 > «خیلی مهم است ویژن همیشه همه‌چیز را ثبت کند و به صفحه، تماس‌ها، پیام‌ها، فایل‌ها و همه‌چیزِ کاربر نظارت داشته باشد و همیشه در حال بررسیِ کاربر و اقداماتش باشد.» (Always-On Ambient Awareness — C0/Phase 6 Timeline/Phase 7.5.)
-- [ ] **MON1 Activity log/Timeline**: ثبتِ رویدادها (اپِ باز، تماس، پیام، نوتیف) در Room + جستجو (Phase 6 Vision Timeline).
+- [~] **MON1 Activity log/Timeline** (v102، 2026-06-19 — هسته‌ی خالص): `core/timeline/Timeline` + `TimelineEvent` + `ActivityType`(APP_OPEN/CALL/MESSAGE/NOTIFICATION/CUSTOM) — ringِ محدودِ newest-first + `query` ساختاریافته (type/since/until/source/text + limit) + `recent`/`countByType`. ۷ تست. [persist در Room + feed از NotificationListener/UsageStats/CallLog (MON2) + گیتِ privacy (MON3) = on-device.]
 - [ ] **MON2 نظارت**: NotificationListener (هست) + UsageStats (هست) + CallLog/SMS observers + Accessibility صفحه + (اختیاری) MediaProjection+OCR برای صفحه.
 - [ ] **MON3 حریم خصوصی**: همه‌چیز on-device/رمزنگاری‌شده؛ تحت Trust gate؛ سوییچِ شفافِ روشن/خاموش (کاربر کنترل کامل دارد) — چون این داده‌ها بسیار حساس‌اند.
 
@@ -353,7 +353,7 @@ project: 05-vision
   - [ ] **LM2.1 (follow-up)**: `ModelSource` واقعی با OkHttp Range + استپ «Offline Model Download» در Setup Wizard (B.5، UI) + ثبت readiness در registry.
 - [~] **LM3 Device-tier gating** (v101، 2026-06-19 — انتخابِ خالص کامل): `core/device/DeviceTierSelector` + `DeviceTier`(NANO/LITE/FULL) — `tierFor(ramGb, cpuCores)` کلاسه می‌کند (FULL: ≥۶GB و ≥۸core؛ NANO: <۳GB یا <۴core)؛ `warnLowMemory` زیرِ ۳GB؛ `selectModel` بزرگ‌ترین مدلی که در RAM جا می‌شود را برمی‌گزیند (یا null) — پس دستگاهِ کم‌رم به‌جای OOM مدلِ کوچک‌تر می‌گیرد. ۶ تست. [load/unloadِ on-demandِ واقعی = on-device/NDK (LM1).]
 - [x] **LM4 Hybrid routing** (v23، 2026-06-15 auto-rp): `SubstitutionPolicy.PREFER_LOCAL` + بازچینشِ local-firstِ پایدار در `SubstitutionEngine`؛ `BackendRouter` در مودِ Economy این پالیسی را برمی‌گزیند (تزریقِ `CostController`)، Privacy/Offline همچنان `LOCAL_ONLY`. مدلِ لوکال در registry با `local=true` هست (seed) و وقتی هیچ ابری reachable نیست خودبه‌خود candidate می‌شود. ۵ تست (۳ engine + economy/balanced router). [بقیه‌ی LM: LM1/LM3 نیازِ NDK/دستگاه].
-- [ ] **LM5 Privacy Mode**: اجبارِ local-only (بدون خروجِ ابری)، نمایش در Trust gate.
+- [x] **LM5 Privacy Mode** ✅ (v102، 2026-06-19): `core/privacy/PrivacyPolicy` — local-only هر task را PRIVATE می‌کند، `allowsCloud=false`، و `sanitize` هر `RouteDecision.Cloud` را به `Unavailable` تنزل می‌دهد (belt-and-suspenders روی MX4)؛ `label` برای Trust gate. خالص، به `core/mesh`(Sensitivity/RouteDecision) وصل. ۶ تست. [توگلِ UI + بَجِ Trust-gate = on-device.]
 - [ ] **LM6 Graceful no-model**: اگر نه توکن ابری و نه مدل لوکال هست → CommandInterpreter جواب می‌دهد + پیشنهاد دانلود مدل لوکال (جلوگیری از رگرسیونِ «صحبت نمی‌کند»). (هسته در `HudViewModel.sendChat` پیاده است.)
 
 ### فاز MX — Mesh Model Exchange (استفاده از مدل‌های لوکالِ دستگاه‌های دیگر؛ M17 + Phase 8) 🟡
