@@ -26,6 +26,8 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
+import com.kianirani.jarvis.core.orb.OrbState
+import com.kianirani.jarvis.core.orb.OrbStateMachine
 import com.kianirani.jarvis.ui.theme.ThemeStore
 import com.kianirani.jarvis.ui.theme.VisionColors
 import com.kianirani.jarvis.ui.theme.VisionFonts
@@ -44,13 +46,38 @@ import kotlin.random.Random
  * **reflection ripples** below. The centred "VISION / AI CORE ONLINE" wordmark
  * is laid over the canvas in the bundled display face.
  *
- * Listening tightens the ring and brightens the halo. All motion honours
- * [ThemeStore.animations] (reduced-motion → calm frozen pose). Colours read the
- * state-backed [VisionColors] so theme + accent recolour the core live.
+ * The orb's mood is driven by an explicit [OrbState] (ORB state machine): each phase
+ * tightens/loosens the ring, modulates the halo brightness, and shows a distinct caption
+ * with its own colour — so meaning never rides on colour alone (the label always says what
+ * is happening). All motion honours [ThemeStore.animations] (reduced-motion → calm frozen
+ * pose). Colours read the state-backed [VisionColors] so theme + accent recolour live.
  */
 @Composable
-fun VisionOrb(listening: Boolean, modifier: Modifier = Modifier) {
+fun VisionOrb(state: OrbState, modifier: Modifier = Modifier) {
     val animate = ThemeStore.animations
+    // Per-state look: ring tightness, halo intensity, caption text + colour.
+    val ringFactor = when (state) {
+        OrbState.LISTENING, OrbState.THINKING -> 0.62f
+        OrbState.SPEAKING -> 0.66f
+        OrbState.SLEEPING -> 0.72f
+        else -> 0.68f
+    }
+    val glowMul = when (state) {
+        OrbState.SPEAKING -> 1.18f
+        OrbState.LISTENING -> 1.10f
+        OrbState.NOTIFICATION -> 0.92f
+        OrbState.ERROR -> 0.75f
+        OrbState.SLEEPING -> 0.50f
+        else -> 1f
+    }
+    val captionColor = when (state) {
+        OrbState.LISTENING -> VisionColors.NeonGreen
+        OrbState.THINKING, OrbState.EXECUTING -> VisionColors.CyanPrimary
+        OrbState.SPEAKING -> VisionColors.Violet
+        OrbState.NOTIFICATION -> VisionColors.WarningAmber
+        OrbState.ERROR -> VisionColors.DangerRed
+        OrbState.IDLE, OrbState.SLEEPING -> VisionColors.TextSecondary
+    }
     val inf = rememberInfiniteTransition(label = "orb")
     val breathA by inf.animateFloat(0.96f, 1.04f, infiniteRepeatable(tween(3600, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "breath")
     val glowA by inf.animateFloat(0.5f, 0.98f, infiniteRepeatable(tween(2800, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "glow")
@@ -87,9 +114,9 @@ fun VisionOrb(listening: Boolean, modifier: Modifier = Modifier) {
             val cx = size.width / 2f
             val cy = size.height / 2f
             val base = minOf(cx, cy)
-            val ringR = base * (if (listening) 0.62f else 0.68f) * breath
+            val ringR = base * ringFactor * breath
             val stroke = base * 0.085f
-            val haloAlpha = (if (listening) 0.6f else 0.4f) * glow
+            val haloAlpha = (0.45f * glow * glowMul).coerceIn(0f, 1f)
 
             // 1. Layered glow — a wide soft bloom + a tighter brighter halo (depth).
             drawCircle(
@@ -199,11 +226,11 @@ fun VisionOrb(listening: Boolean, modifier: Modifier = Modifier) {
                 color = VisionColors.TextPrimary,
             )
             Text(
-                if (listening) "LISTENING…" else "AI CORE ONLINE",
+                OrbStateMachine.label(state),
                 fontFamily = VisionFonts.mono,
                 fontSize = 10.sp,
                 letterSpacing = 4.sp,
-                color = if (listening) VisionColors.NeonGreen else VisionColors.TextSecondary,
+                color = captionColor,
             )
         }
     }

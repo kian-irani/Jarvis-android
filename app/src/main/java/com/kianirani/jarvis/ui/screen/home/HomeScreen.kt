@@ -61,6 +61,9 @@ import com.kianirani.jarvis.data.settings.QuickAction
 import com.kianirani.jarvis.service.VisionAccessibilityService
 import com.kianirani.jarvis.ui.components.MarkdownText
 import com.kianirani.jarvis.ui.screen.hud.HudViewModel
+import com.kianirani.jarvis.core.orb.OrbSignals
+import com.kianirani.jarvis.core.orb.OrbState
+import com.kianirani.jarvis.core.orb.OrbStateMachine
 import com.kianirani.jarvis.ui.theme.JarvisColors
 import com.kianirani.jarvis.ui.theme.VisionColors
 import com.kianirani.jarvis.ui.theme.VisionIcons
@@ -115,8 +118,13 @@ fun HomeScreen(
         GreetingRow(name = name, assistantName = assistantName, onOpenSettings = onOpenSettings)
 
         // ── The hero: the AI core, dominating the screen ──────────────────────
+        // ORB state machine: derive the orb's mood from the live signals (listening/
+        // speaking/thinking). Notification/error/sleeping sources are on-device follow-ups.
+        val orbState = OrbStateMachine.resolve(
+            OrbSignals(listening = s.isListening, speaking = s.isSpeaking, thinking = s.isThinking),
+        )
         OrbCluster(
-            listening = s.isListening,
+            state = orbState,
             // Tapping the core while Vision is speaking interrupts it (BUG-2), else talks.
             onTalk = { if (s.isSpeaking) hud.stopSpeaking() else hud.toggleListening() },
             onRecents = { openSystemRecents(ctx) },
@@ -220,7 +228,7 @@ private data class NodeSpec(val icon: ImageVector, val label: String, val fx: Fl
  */
 @Composable
 private fun OrbCluster(
-    listening: Boolean,
+    state: OrbState,
     onTalk: () -> Unit,
     onRecents: () -> Unit,
     onMemory: () -> Unit,
@@ -240,7 +248,7 @@ private fun OrbCluster(
         val half = maxWidth / 2
 
         VisionOrb(
-            listening = listening,
+            state = state,
             modifier = Modifier.fillMaxSize().padding(10.dp)
                 .pointerInput(Unit) { detectTapGestures(onTap = { onTalk() }) }
                 .pointerInput(Unit) {

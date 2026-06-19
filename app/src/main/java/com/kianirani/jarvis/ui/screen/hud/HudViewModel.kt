@@ -127,6 +127,8 @@ class HudViewModel @Inject constructor(
             interpreter.tryHandle(msg)?.let { reply ->
                 typeText(reply); speak(reply); addLog("Local: command", "ok"); return@launch
             }
+            _state.update { it.copy(isThinking = true) }
+            try {
             typeText("Processing...")
             // VISION BRAIN (VB3+VB8): Vision *thinks first*, then routes. The
             // orchestrator classifies the request and ranks reachable models
@@ -166,6 +168,9 @@ class HudViewModel @Inject constructor(
                     "برای گفت‌وگو یک کلید هوش مصنوعی لازم است — در تنظیمات، AI Providers یک کلید رایگان اضافه کن."
             }
             typeText(reply); speak(reply); addLog("No answerer", "err")
+            } finally {
+                _state.update { it.copy(isThinking = false) }
+            }
         }
     }
 

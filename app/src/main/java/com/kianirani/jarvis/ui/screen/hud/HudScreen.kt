@@ -33,6 +33,8 @@ data class HudUiState(
     val jarvisOutput: String = "", val inputText: String = "", val isListening: Boolean = false,
     // BUG-1 expandable output · BUG-2 Vision is speaking (drives Stop affordance).
     val isOutputExpanded: Boolean = false, val isSpeaking: Boolean = false,
+    // ORB: a request is in flight (orchestrator → router) — drives the THINKING orb state.
+    val isThinking: Boolean = false,
     val waveformAmplitudes: List<Float> = List(40) { 0.05f },
     val currentTime: String = "", val eventLog: List<LogEvent> = emptyList(),
     // VB9 decision telemetry: which model answered and the orchestrator's one-line "why".
