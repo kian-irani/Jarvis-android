@@ -37,7 +37,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -74,12 +76,14 @@ fun WorkspaceHomePager(
     vm: LauncherViewModel,
     homePage: @Composable () -> Unit,
     onOpenSettings: () -> Unit = {},
+    onAssistant: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val layout by vm.layout.collectAsStateWithLifecycle()
     val visuals by vm.visuals.collectAsStateWithLifecycle()
     val totalPages = (1 + layout.pageCount).coerceAtLeast(1)
     val pagerState = rememberPagerState(pageCount = { totalPages })
+    val scope = rememberCoroutineScope()
     var openFolder by remember { mutableStateOf<String?>(null) }
     var showEdit by remember { mutableStateOf(false) }
     val ctx = androidx.compose.ui.platform.LocalContext.current
@@ -120,6 +124,21 @@ fun WorkspaceHomePager(
             count = totalPages,
             current = pagerState.currentPage,
             modifier = Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(bottom = 96.dp),
+        )
+
+        // LR6/LR12 — the configurable dock (hotseat) with the always-present Vision
+        // assistant button at its centre. Hotseat apps come from the persisted layout;
+        // the centre button scrolls to the orb/command-bar home and opens the assistant.
+        WorkspaceDock(
+            apps = layout.cells(Container.HOTSEAT),
+            dockCount = layout.dockCount,
+            visualFor = visuals::get,
+            onLaunch = vm::launch,
+            onAssistant = {
+                scope.launch { pagerState.animateScrollToPage(0) }
+                onAssistant()
+            },
+            modifier = Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(bottom = 16.dp),
         )
     }
 
@@ -169,6 +188,75 @@ fun WorkspaceHomePager(
 }
 
 /**
+ * LR6 Configurable Dock (Hotseat) + LR12 Vision Assistant button. A glass bar pinned to the
+ * bottom across every page: up to [dockCount] hotseat apps with the **Vision orb button**
+ * always at the centre. Tapping an app launches it; tapping the centre opens the assistant
+ * (home orb + command bar). The dock count is user-configurable in Settings (4/5/6) and
+ * persisted on [LauncherLayout.dockCount]; apps in the dock are the `HOTSEAT` container items.
+ */
+@Composable
+private fun WorkspaceDock(
+    apps: List<LauncherItem>,
+    dockCount: Int,
+    visualFor: (String?) -> AppVisual?,
+    onLaunch: (String) -> Unit,
+    onAssistant: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val slots = dockCount.coerceIn(4, 6)
+    // Half the apps left of the Vision button, half right (centre is the assistant).
+    val shown = apps.take(slots)
+    val mid = (shown.size + 1) / 2
+    val left = shown.take(mid)
+    val right = shown.drop(mid)
+
+    Row(
+        modifier
+            .clip(RoundedCornerShape(28.dp))
+            .glassPanel(radius = 28.dp)
+            .padding(horizontal = 10.dp, vertical = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        left.forEach { DockApp(it, visualFor(it.packageName), onLaunch) }
+
+        // LR12 — the always-present Vision assistant button (the dock's hero).
+        Box(
+            Modifier
+                .size(54.dp)
+                .clip(CircleShape)
+                .background(VisionColors.PlasmaSweep)
+                .clickable(onClick = onAssistant),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(VisionIcons.Spark, contentDescription = "Vision assistant", tint = androidx.compose.ui.graphics.Color.White, modifier = Modifier.size(26.dp))
+        }
+
+        right.forEach { DockApp(it, visualFor(it.packageName), onLaunch) }
+    }
+}
+
+/** A single launchable app icon in the dock. */
+@Composable
+private fun DockApp(item: LauncherItem, visual: AppVisual?, onLaunch: (String) -> Unit) {
+    val pkg = item.packageName ?: return
+    Box(
+        Modifier.size(48.dp).clip(RoundedCornerShape(14.dp)).clickable { onLaunch(pkg) },
+        contentAlignment = Alignment.Center,
+    ) {
+        if (visual != null) {
+            Image(visual.icon, contentDescription = item.label, modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(14.dp)))
+        } else {
+            Box(
+                Modifier.fillMaxSize().background(VisionColors.CyanFaint, RoundedCornerShape(14.dp))
+                    .border(1.dp, VisionColors.Border, RoundedCornerShape(14.dp)),
+                contentAlignment = Alignment.Center,
+            ) { Icon(VisionIcons.Apps, item.label, tint = VisionColors.CyanPrimary, modifier = Modifier.size(22.dp)) }
+        }
+    }
+}
+
+/**
  * One workspace page: a fixed [gridCols]×[gridRows] grid (no scroll — a real
  * launcher page) painted from the layout's cells. Empty cells stay blank so the
  * spatial arrangement the user/seed chose is preserved.
@@ -209,7 +297,9 @@ private fun WorkspacePage(
     val removeStripPx = with(androidx.compose.ui.platform.LocalDensity.current) { 64.dp.toPx() }
 
     Box(
-        modifier.systemBarsPadding().padding(horizontal = 14.dp, vertical = 8.dp)
+        // NEO7 — leave room at the bottom so the last app row clears the dock (LR6), and
+        // keep comfortable side gutters. Top/side from systemBars; bottom reserves the dock.
+        modifier.systemBarsPadding().padding(start = 14.dp, end = 14.dp, top = 8.dp, bottom = 96.dp)
             .onSizeChanged { gridSize = it }
             .pointerInput(cells, gridSize, cols, rows) {
                 detectDragGesturesAfterLongPress(

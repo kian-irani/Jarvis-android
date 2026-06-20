@@ -81,6 +81,7 @@ class SettingsHubViewModel @Inject constructor(
     fun resetLayout() = launcher.reset()
     val launcherLayout = launcher.layout
     fun setGrid(cols: Int, rows: Int) = launcher.setGridReflow(cols, rows)
+    fun setDockCount(count: Int) = launcher.setDockCount(count)
 }
 
 /**
@@ -190,6 +191,7 @@ fun SettingsHubScreen(
         Section("LAUNCHER", 7) {
             val layout by vm.launcherLayout.collectAsStateWithLifecycle()
             GridSizeRow(layout.gridCols, layout.gridRows) { c, r -> vm.setGrid(c, r) }
+            DockCountRow(layout.dockCount) { vm.setDockCount(it) }
             NavRow("Set as default home", "open Android home settings") {
                 runCatching { ctx.startActivity(Intent(Settings.ACTION_HOME_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
             }
@@ -407,6 +409,25 @@ private fun GridSizeRow(cols: Int, rows: Int, onChange: (Int, Int) -> Unit) {
                         .padding(horizontal = 12.dp, vertical = 6.dp),
                 )
             }
+        }
+    }
+}
+
+/** LR6 — pick how many apps the dock (hotseat) holds: 4, 5, or 6. */
+@Composable
+private fun DockCountRow(count: Int, onChange: (Int) -> Unit) {
+    Row(Modifier.fillMaxWidth().padding(vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+        Text("Dock apps", style = MaterialTheme.typography.bodyMedium, color = JarvisColors.TextPrimary, modifier = Modifier.weight(1f))
+        listOf(4, 5, 6).forEach { n ->
+            val sel = n == count
+            Text(
+                "$n",
+                style = MaterialTheme.typography.labelMedium,
+                color = if (sel) JarvisColors.CyanPrimary else JarvisColors.TextDim,
+                modifier = Modifier.clickable { onChange(n) }
+                    .border(1.dp, if (sel) JarvisColors.CyanPrimary else JarvisColors.Border, RoundedCornerShape(6.dp))
+                    .padding(horizontal = 14.dp, vertical = 6.dp),
+            )
         }
     }
 }

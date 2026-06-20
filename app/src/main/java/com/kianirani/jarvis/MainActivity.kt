@@ -217,6 +217,7 @@ private fun RouteContent(route: VisionRoute, homeWide: Boolean, onNavigate: (Vis
                     vm = launcher,
                     homePage = { homeContent(false) },
                     onOpenSettings = { onNavigate(VisionRoute.SETTINGS) },
+                    onAssistant = { onNavigate(VisionRoute.HOME) },
                 )
             }
         }
