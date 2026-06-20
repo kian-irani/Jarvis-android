@@ -81,6 +81,10 @@
             android:name=".service.WakeWordService"
             android:exported="false"
             android:foregroundServiceType="microphone" />
+        <!-- CF5: automation/scheduler alarm receiver -->
+        <receiver
+            android:name=".data.automation.AutomationReceiver"
+            android:exported="false" />
         <!-- Phase 7.5: real device control (Home/Back/Recents). User enables once. -->
         <service
             android:name=".service.VisionAccessibilityService"
