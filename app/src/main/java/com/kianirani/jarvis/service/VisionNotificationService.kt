@@ -72,6 +72,16 @@ class VisionNotificationService : NotificationListenerService() {
         }.getOrDefault(emptyMap())
     }
 
+    /** DS-BG3 — dismiss a notification by its key (real "clear that notification"). */
+    fun dismiss(key: String): Boolean = runCatching { cancelNotification(key); true }.getOrDefault(false)
+
+    /** Dismiss every clearable notification ("clear all"). */
+    fun dismissAll(): Boolean = runCatching { cancelAllNotifications(); true }.getOrDefault(false)
+
+    /** Keys of the active clearable notifications (so a tool can target one to dismiss/reply). */
+    fun activeKeys(): List<String> =
+        runCatching { activeNotifications?.filter { it.isClearable }?.map { it.key } ?: emptyList() }.getOrDefault(emptyList())
+
     /** Current notifications as "Title: text" lines, most recent last. */
     fun recent(limit: Int = 8): List<String> =
         runCatching {

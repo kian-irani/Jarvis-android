@@ -45,6 +45,15 @@ class VisionAccessibilityService : AccessibilityService() {
     fun lockScreen(): Boolean = performGlobalAction(GLOBAL_ACTION_LOCK_SCREEN)
 
     /**
+     * App tool — close the current app: open Recents and (on API 28+) the launcher can swipe it
+     * away. Simplest reliable cross-version behavior is Back-to-exit then Home; we expose both a
+     * soft close (home) and recents so the agent can pick. Returns true if the action dispatched.
+     */
+    fun closeCurrentApp(): Boolean = performGlobalAction(GLOBAL_ACTION_HOME) // soft close to launcher
+    fun showQuickSettings(): Boolean = performGlobalAction(GLOBAL_ACTION_QUICK_SETTINGS)
+    fun showNotificationsShade(): Boolean = performGlobalAction(GLOBAL_ACTION_NOTIFICATIONS)
+
+    /**
      * PAU — universal app automation. Find the first clickable node whose text/description matches
      * [text] (case-insensitive, normalized) and click it. Returns true if something was clicked.
      */
