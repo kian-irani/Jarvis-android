@@ -440,10 +440,10 @@ project: 05-vision
 - [x] جستجوی حافظه‌ی مکالمه در App Drawer (v1)
 - [ ] AnySearch: یک‌کاسه‌کردن apps + contacts + files + memory + web
 - [ ] Vision Timeline (تاریخچه‌ی فعالیت قابل‌جستجو، Room) → **MON1**
-- [ ] Vision Notes (یادداشت سریع + embedding + بازیابی)
+- [x] **Vision Notes** ✅ (v117، 2026-06-20): `core/notes/NoteStore` — add/edit/pin/delete + `search` (substring روی متن+tag، case-insensitive) + `all` (pinned-first، newest-first). `@Serializable`. ۵ تست. [persist Room + embeddingِ semantic روی MemoryEngine = follow-up.]
 
 ## 🔵 Phase 1.5 — Fast File Transfer / VISN Protocol
-- [ ] انتقال فایل دستگاه‌به‌دستگاه روی LAN (chunked, resume)
+- [x] **انتقال فایل (chunked, resume)** ✅ (v117، 2026-06-20): `core/transfer/ChunkPlan` — `chunkCount`/`chunkAt`(آخرین کوتاه)/`allChunks`/`remaining`(resume با ackها)/`progress`. ۶ تست. [سوکتِ LAN + UIِ پیشرفت/تأیید = device half.]
 - [ ] UI انتقال + پیشرفت + تأیید امنیتی
 
 ## 🟢 Phase 7.5 — Vision Capture + Context Cards + Accessibility — v1 شروع شد (v6)
@@ -454,16 +454,16 @@ project: 05-vision
 - [ ] `JarvisNotificationService` (خواندن/پاسخ/حذف نوتیف)
 - [ ] OverlayService + FloatingOrb (دستیار شناور همه‌جا) → **PAO**
 - [ ] MediaProjection screenshot + ML Kit OCR → Context Cards
-- [ ] runtime permission manager (storage/media/notif/overlay) → **PERM**
+- [x] **PERM runtime permission manager** ✅ (v117، 2026-06-20): `core/perm/PermissionCatalog` + `VisionCapability`(calls/sms/contacts/mic/camera/notif/overlay→permissions) — `missing`/`isSatisfied`/`missingFor`(batch+dedup)/`available`. ۴ تست. [requestPermissions/intent = device half.]
 
 ## 🔵 Phase 8 — Device Mesh & Node Network — partial
 - [x] mDNS discovery · election · heartbeat · QR/URI pairing
 - [ ] mesh چندنود واقعی (آدرس LAN واقعی به‌جای 127.0.0.1) · هماهنگی task بین نودها
-- [ ] node garbage-collection (پاک‌سازی نودهای آفلاین قدیمی)
+- [x] **node garbage-collection** ✅ (v117، 2026-06-20): `core/mesh/MeshNodeGc` — `isStale`(beyond grace ۹۰s)/`live`/`toEvict` روی lastSeen. ۳ تست. [registryِ زنده + heartbeat = network half.]
 
 ## 🔵 Phase 9.5 — Vision Tutor + Automation Builder
 - [ ] Automation Engine: `Workflow/Trigger/Action` (مثل «باتری<۲۰٪ → Power Save») → **CF5**
-- [ ] سازنده‌ی workflow بصری
+- [x] **سازنده‌ی workflow (B2 When→Then)** ✅ (v117، 2026-06-20): `core/automation/Workflow` + `WorkflowTrigger`(OnEventKind/OnDailyAt) + `WorkflowBuilder` — `validate`/`isValid`/`toRule` (lowering به `AutomationRule`ِ AutomationEngine؛ invalid/disabled→null). `@Serializable`. ۴ تست. [UIِ بصری = surface half.]
 - [ ] Vision Tutor (راهنمای تعاملی درون‌اپ)
 
 ## 🔵 Phase 10 — Digital Twin & Self-Learning + Smart Power
