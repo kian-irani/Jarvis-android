@@ -40,6 +40,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import com.kianirani.jarvis.service.FloatingWidget
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -174,6 +175,10 @@ fun SettingsHubScreen(
             ActivationRow(vm.activation)
         }
         Section("PRIVACY MONITOR", 6) {
+            val localOnly by s.privacyLocalOnly.collectAsStateWithLifecycle()
+            ToggleRow("Private mode", "keep everything on-device / mesh — no cloud", localOnly) {
+                s.set(VisionSettings.KEY_PRIVACY_LOCAL_ONLY, it)
+            }
             val used = AiProvider.entries.map { it to vm.usage.usage(it) }.filter { it.second.calls > 0 }
             if (used.isEmpty()) {
                 InfoRow("Cloud calls", "none — nothing has left this device")
@@ -210,7 +215,24 @@ fun SettingsHubScreen(
                 android.widget.Toast.makeText(ctx, "Home layout cleared", android.widget.Toast.LENGTH_SHORT).show()
             }
         }
-        Section("ABOUT", 8) {
+        Section("FLOATING WIDGET", 8) {
+            NavRow("Enable floating orb", "show Vision over every app") {
+                if (FloatingWidget.canDraw(ctx)) {
+                    FloatingWidget.start(ctx)
+                    android.widget.Toast.makeText(ctx, "Floating orb started", android.widget.Toast.LENGTH_SHORT).show()
+                } else {
+                    runCatching { ctx.startActivity(FloatingWidget.permissionIntent(ctx)) }
+                }
+            }
+            NavRow("Disable floating orb", "remove the overlay") {
+                FloatingWidget.stop(ctx)
+                android.widget.Toast.makeText(ctx, "Floating orb stopped", android.widget.Toast.LENGTH_SHORT).show()
+            }
+            NavRow("Overlay permission", "allow drawing over other apps") {
+                runCatching { ctx.startActivity(FloatingWidget.permissionIntent(ctx)) }
+            }
+        }
+        Section("ABOUT", 9) {
             InfoRow("Version", "VISION v${com.kianirani.jarvis.BuildConfig.VERSION_NAME} — Sovereign Intelligence")
             InfoRow("Source", "github.com/kian-irani/Jarvis-android")
         }

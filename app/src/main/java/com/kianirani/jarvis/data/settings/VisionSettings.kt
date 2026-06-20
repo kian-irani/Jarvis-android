@@ -30,11 +30,14 @@ class VisionSettings @Inject constructor(@ApplicationContext context: Context) {
     private val _ttsEnabled = flow(KEY_TTS, true)
     private val _scanLine = flow(KEY_SCANLINE, true)
     private val _aurora = flow(KEY_AURORA, true)
+    // LM5 Privacy Mode — when on, nothing leaves the device/mesh (PrivacyPolicy reads this).
+    private val _privacyLocalOnly = flow(KEY_PRIVACY_LOCAL_ONLY, false)
 
     val voiceEnabled: StateFlow<Boolean> = _voiceEnabled
     val ttsEnabled: StateFlow<Boolean> = _ttsEnabled
     val scanLine: StateFlow<Boolean> = _scanLine
     val aurora: StateFlow<Boolean> = _aurora
+    val privacyLocalOnly: StateFlow<Boolean> = _privacyLocalOnly
 
     /** Edge neural-voice mode (v51) — see [NeuralVoiceMode]. Migrates from the old boolean toggle. */
     private val _neuralVoiceMode = MutableStateFlow(readNeuralMode())
@@ -146,6 +149,7 @@ class VisionSettings @Inject constructor(@ApplicationContext context: Context) {
             KEY_TTS -> _ttsEnabled.value = value
             KEY_SCANLINE -> _scanLine.value = value
             KEY_AURORA -> _aurora.value = value
+            KEY_PRIVACY_LOCAL_ONLY -> _privacyLocalOnly.value = value
         }
     }
 
@@ -156,6 +160,7 @@ class VisionSettings @Inject constructor(@ApplicationContext context: Context) {
         const val KEY_NEURAL_MODE = "neural_voice_mode"
         const val KEY_SCANLINE = "fx_scanline"
         const val KEY_AURORA = "fx_aurora"
+        const val KEY_PRIVACY_LOCAL_ONLY = "privacy_local_only"
         const val KEY_TRUST = "trust_level"
         const val KEY_RATE = "voice_rate"
         const val KEY_PITCH = "voice_pitch"
