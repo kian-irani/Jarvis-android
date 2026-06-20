@@ -16,10 +16,12 @@ class ToolRegistry @Inject constructor(
     notifications: NotificationTool,
     call: CallTool,
     sms: SmsTool,
+    web: WebTool,
 ) {
     // call/sms first: they execute a real action (and report honestly) before any
-    // looser matcher or the LLM can pretend the action happened (v20 fix).
-    private val tools: List<Tool> = listOf(call, sms, flashlight, deviceSettings, navigation, notifications)
+    // looser matcher or the LLM can pretend the action happened (v20 fix). web last —
+    // it only claims URL/search/YouTube phrasings the others don't, so it never hijacks.
+    private val tools: List<Tool> = listOf(call, sms, flashlight, deviceSettings, navigation, notifications, web)
 
     /** Ids of registered tools — useful for diagnostics / future tool-calling. */
     val ids: List<String> get() = tools.map { it.id }
