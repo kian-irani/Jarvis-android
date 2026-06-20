@@ -3,8 +3,10 @@ package com.kianirani.jarvis.service
 import android.accessibilityservice.AccessibilityService
 import android.graphics.Bitmap
 import android.os.Build
+import android.os.Bundle
 import android.view.Display
 import android.view.accessibility.AccessibilityEvent
+import android.view.accessibility.AccessibilityNodeInfo
 import java.io.ByteArrayOutputStream
 import kotlin.coroutines.resume
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -41,6 +43,58 @@ class VisionAccessibilityService : AccessibilityService() {
     fun goBack(): Boolean = performGlobalAction(GLOBAL_ACTION_BACK)
     fun openRecents(): Boolean = performGlobalAction(GLOBAL_ACTION_RECENTS)
     fun lockScreen(): Boolean = performGlobalAction(GLOBAL_ACTION_LOCK_SCREEN)
+
+    /**
+     * PAU — universal app automation. Find the first clickable node whose text/description matches
+     * [text] (case-insensitive, normalized) and click it. Returns true if something was clicked.
+     */
+    fun clickByText(text: String): Boolean {
+        val root = rootInActiveWindow ?: return false
+        val target = AccessibilityMatch.normalize(text)
+        val node = findNode(root) { n ->
+            val label = AccessibilityMatch.label(n.text?.toString(), n.contentDescription?.toString())
+            n.isClickable && AccessibilityMatch.matches(label, target)
+        } ?: return false
+        return node.performAction(AccessibilityNodeInfo.ACTION_CLICK)
+    }
+
+    /** PAU — scroll the first scrollable container forward or backward. */
+    fun scroll(forward: Boolean): Boolean {
+        val root = rootInActiveWindow ?: return false
+        val node = findNode(root) { it.isScrollable } ?: return false
+        val action = if (forward) AccessibilityNodeInfo.ACTION_SCROLL_FORWARD else AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD
+        return node.performAction(action)
+    }
+
+    /**
+     * PAW — set the text of the currently focused editable field (the real "rewrite and replace"
+     * write-back). Returns true if a focused editable node accepted the new [value].
+     */
+    fun setFocusedText(value: String): Boolean {
+        val root = rootInActiveWindow ?: return false
+        val node = root.findFocus(AccessibilityNodeInfo.FOCUS_INPUT)
+            ?: findNode(root) { it.isEditable && it.isFocused }
+            ?: return false
+        val args = Bundle().apply { putCharSequence(AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE, value) }
+        return node.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, args)
+    }
+
+    /** The text of the currently focused editable field, or null (read for PAW improve). */
+    fun focusedText(): String? {
+        val root = rootInActiveWindow ?: return null
+        val node = root.findFocus(AccessibilityNodeInfo.FOCUS_INPUT) ?: return null
+        return node.text?.toString()
+    }
+
+    /** Depth-first search for the first node satisfying [predicate]. */
+    private fun findNode(node: AccessibilityNodeInfo?, predicate: (AccessibilityNodeInfo) -> Boolean): AccessibilityNodeInfo? {
+        node ?: return null
+        if (runCatching { predicate(node) }.getOrDefault(false)) return node
+        for (i in 0 until node.childCount) {
+            findNode(node.getChild(i), predicate)?.let { return it }
+        }
+        return null
+    }
 
     /**
      * VCF-M2 — capture the current screen as PNG bytes via the Accessibility screenshot API
