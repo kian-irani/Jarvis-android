@@ -458,7 +458,7 @@ project: 05-vision
 
 ## 🔵 Phase 8 — Device Mesh & Node Network — partial
 - [x] mDNS discovery · election · heartbeat · QR/URI pairing
-- [ ] mesh چندنود واقعی (آدرس LAN واقعی به‌جای 127.0.0.1) · هماهنگی task بین نودها
+- [x] **mesh چندنود — هماهنگی task** ✅ (v122، 2026-06-20): `core/mesh/TaskCoordinator` + `WorkerNode` — `assign` (least-loaded-first، احترام به maxSlots، overflow صف می‌شود) + `totalFreeSlots`. ۳ تست. [bindِ LANِ واقعی = W1 (پایین).]
 - [x] **node garbage-collection** ✅ (v117، 2026-06-20): `core/mesh/MeshNodeGc` — `isStale`(beyond grace ۹۰s)/`live`/`toEvict` روی lastSeen. ۳ تست. [registryِ زنده + heartbeat = network half.]
 
 ## 🔵 Phase 9.5 — Vision Tutor + Automation Builder
@@ -531,7 +531,7 @@ project: 05-vision
 > Vision نباید فقط در صفحه‌ی اصلی فعال باشد. باید **همیشه و همه‌جا در دسترس** باشد، اپ‌های در حال استفاده را ببیند، و **پیش‌دستانه پیشنهاد بدهد و تعامل کند**. (→ بلوک PROACTIVE/AMBIENT بخش ۱)
 - [ ] **C0.1 Persistent ambient service**: foreground service همیشه‌فعال + overlay/bubble سراسری (SYSTEM_ALERT_WINDOW یا Bubble API) تا Vision از داخل هر اپ یک‌لمسی در دسترس باشد، نه فقط در launcher. (→ **PAO**)
 - [x] **C0.2 Foreground-app awareness** ✅ (= DS-W5/v111): `VisionAccessibilityService.foregroundPackage` از TYPE_WINDOW_STATE_CHANGED + تزریق به DeviceContext.
-- [ ] **C0.3 Proactive suggestions**: بر اساس اپ/زمان/رویداد پیشنهاد بده (مثلاً داخل مرورگر → «خلاصه کنم؟»، نوتیف مهم → اقدام). با C4 Proactive یکی می‌شود. (→ **PAS**)
+- [x] **C0.3 Proactive suggestions** ✅ (v122، 2026-06-20): `core/proactive/ProactiveRules` — `suggestionFor(event)` رویدادهای bus (DS-BG3) را به candidateِ `Suggestion` نگاشت می‌کند (notification_important→«handle?»، browser open→«summarize?») که از گیتِ `SuggestionEngine`/PAS رد می‌شود. ۳ تست. [subscriptionِ EventBus = runtime.]
 - [ ] **C0.4 Always-listening wake** (اختیاری/قابل‌خاموش): فعال‌سازی صوتی سراسری با حریم‌خصوصی محلی. (→ **FV4**)
 
 ### 🐞 BUG (کاربر 2026-06-14) — منوی Recents/برنامه‌های باز داخل Vision نمی‌آید
@@ -542,7 +542,7 @@ project: 05-vision
 - [x] **C2 Server Control Center** ✅ (v119، 2026-06-20): `core/server/ServerControl` + `ServerCommand`/`ServerOp`/`ServerRisk` — `opFor` (status/restart/stop/deploy/remove، EN+FA)، `riskOf` (remove=CRITICAL، mutating=CONFIRM)، `parse`، `requiresConfirmation`. ۴ تست. [اجرای SSH/Docker = network half.]
 - [x] **C3 Shared/Org Brain** ✅ (v121، 2026-06-20): `core/brain/BrainScope` + `BrainTier`(PERSONAL/SHARED/ORG) + `Viewer`/`ScopedItem` — `canRead` (personal=owner، shared=group، org=org) + `visible`. ۴ تست. [storeِ synced + auth = network half.]
 - [ ] **C4 Proactive Assistant**: نظارت پیش‌دستانه بر دستگاه/سرور/اپ‌ها و هشدار خودکار بدون دستور. (→ **PAS/MON**)
-- [ ] **C5 AI App Launcher**: به‌جای آیکن‌ها، «با علی تماس بگیر» → Vision بهترین اپ را انتخاب و اجرا کند. (✅ Call/SMS در v21)
+- [x] **C5 AI App Launcher** ✅ (v122، 2026-06-20): `core/launcher/AppActionResolver` + `AppAction`(CALL/MESSAGE/EMAIL/NAVIGATE/MUSIC/CAMERA/…) — `classify` (EN+FA) + `target` (متنِ بعدِ verb) تا «با علی تماس بگیر» به categoryِ درست برود. ۳ تست. [resolveِ اپِ پیش‌فرض + launch = device half؛ Call/SMS از v21.]
 
 ### فاز D — Ambient / Future
 - [x] **D1 Meeting & Voice Intelligence** ✅ (v119، 2026-06-20): `core/meeting/MeetingNotes` — `parseTurns` (transcript→speaker turns)، `digest` (استخراجِ heuristicِ action-item + decision)، `summaryPrompt`. ۴ تست. [ضبط/STT = device half (VCF-M3).]
@@ -563,7 +563,7 @@ project: 05-vision
 
 ### ✅ قابلیتِ لازم — WAN Mesh / Remote Server Brain (معماری معکوس)
 چون سرورها همیشه‌روشن و دارای IP عمومی‌اند و گوشی پشت NAT است، جهت اتصال باید **برعکس** شود:
-- [ ] **W1 Bind انتخابی**: وقتی «Accept remote nodes» روشن است، Brain روی `0.0.0.0:7799` bind شود (نه فقط loopback) + هشدار امنیتی + توکن اجباری.
+- [x] **W1 Bind انتخابی** ✅ (v122، 2026-06-20): `core/mesh/BindPolicy` — `decide` (remote off→loopback؛ on→0.0.0.0 + requireToken + warn) + `canExpose` (فقط remote-on و token-set). ۳ تست. [bindِ واقعیِ سوکت = server half.]
 - [ ] **W2 Server-hosted node/brain**: یک نصبِ تک‌خطی واقعی برای سرورِ خالی لینوکس (بدون Vision/اندروید): `curl -fsSL <repo>/node-agent/install.sh | bash -s -- --host <addr> --token <t>` که `agent.py` را می‌گیرد، یک systemd unit می‌سازد، و منابع (CPU/RAM/GPU/disk) سرور را به Brain اضافه می‌کند. install.sh کهنه بازنویسی شود (HTTP/:7799/stdlib، بدون pip، بدون IP هاردکد، برند Vision).
 - [ ] **W3 اتصال خروجی/Relay برای عبور از NAT**: یا (الف) گوشی به‌صورت خروجی به مغزِ سرورِ عمومی وصل شود (BrainSelectionStore الان host پویا را پشتیبانی می‌کند → افزودن سرور با host:port+token)، یا (ب) یک relay/rendezvous سبک (یا تونل مثل Cloudflare Tunnel/WireGuard از پروژه 01-kian-v2ray) تا مغزِ گوشی از بیرون قابل‌دسترس شود.
 - [ ] **W4 افزودن سرور دستی در UI**: به‌جای فقط QR/mDNS، فرم «Add remote server» با host/port/token (اینترنت) + تست اتصال + نمایش منابع سرور.
