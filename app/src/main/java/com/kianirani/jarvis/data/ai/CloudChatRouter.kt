@@ -141,6 +141,16 @@ class CloudChatRouter @Inject constructor(
      * its tokens (user directive: e.g. 4 Grok keys). Failure falls through.
      */
     suspend fun chat(message: String): Result<CloudReply> {
+        // LM5 Privacy Mode: when the user chose local-only, never reach for the cloud.
+        // Default is off, so the normal chat path is unchanged.
+        if (settings.privacyLocalOnly.value) {
+            return Result.failure(
+                IllegalStateException(
+                    "Private mode is on — cloud is disabled. Turn it off in Settings ▸ Privacy Monitor, " +
+                        "or use an on-device model.",
+                ),
+            )
+        }
         val providers = store.configured()
         if (providers.isEmpty()) {
             return Result.failure(IllegalStateException("No AI provider token configured — add one in AI PROVIDERS"))
