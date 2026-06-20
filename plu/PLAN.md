@@ -515,16 +515,16 @@ project: 05-vision
 
 ### فاز A (بسیار مهم) — Memory & Reasoning Core
 - [ ] **A1 Memory Engine**: لایه‌های Short-Term (مکالمات/وضعیت/تسک‌های فعال)، Long-Term (علایق/پروژه‌ها/افراد)، Episodic (رویدادهای تاریخ‌دار). API: `remember()/recall()/forget()`؛ ذخیره در brain (Room) + on-device. هدف: «آخرین بار روی پروژه VPN چه کردم؟» (→ **CF4**)
-- [ ] **A2 Knowledge Graph**: گره‌ها (Person/Project/Server/Service/Token) + یال‌ها؛ استخراج خودکار از مکالمات؛ کوئری روابط.
+- [~] **A2 Knowledge Graph** (v108، 2026-06-20 — هسته‌ی خالص): `core/knowledge/KnowledgeGraph` + `Entity`(PERSON/PROJECT/SERVER/SERVICE/TOKEN/APP/PLACE/NOTE) + `Relation`(from/label/to) — گرافِ جهت‌دارِ برچسب‌دار: addEntity/addRelation(dedup)، `neighbors` (دوطرفه)، `related(label)` (یال خروجی)، `findByName` (case-insensitive)، `removeEntity` (cascade). `@Serializable`. ۶ تست. [استخراجِ خودکارِ entity/relation از چت (NER/مدل) + persistِ Room = on-device.]
 - [ ] **A3 Universal Search**: جستجوی یکپارچه روی پیام‌ها/فایل‌ها/نوت‌ها/حافظه/اپ‌ها/سرورها (`find: …`). (نقشه‌برداری به Phase 6 موجود)
-- [ ] **A4 Goal System + Autonomous Planner**: Goal را خودکار به فاز/تسک/زیرتسک با وابستگی بشکند و progress را دنبال کند. (→ **CF3**)
-- [ ] **A5 Agent Timeline**: Time-Machine رویدادها (Today/Yesterday/Last Week/Month). (→ **MON1**)
+- [~] **A4 Goal System + Autonomous Planner** (v108، 2026-06-20 — هسته‌ی خالص): `core/goal/GoalGraph` + `GoalTask`(deps/status) — گرافِ وابستگیِ تسک: `order()` (topological، prerequisite اول، تشخیصِ cycle→خالی)، `nextActionable()` (TODOهایی که depهاشان DONE)، `blocked()`، `progress()`/`isComplete()`؛ idهای dep ناشناخته ignore. متمایز از `TaskPlanner`/CF3 (که goalِ تک را به stepِ خطی می‌شکند؛ این لایه‌ی dependency/topology+progress است). ۷ تست. [شکستنِ goalِ طبیعی به taskها (مدل) + اجرا (agent) = on-device.]
+- [~] **A5 Agent Timeline** (v108، 2026-06-20 — هسته‌ی خالص): `core/timeline/TimelineBuckets` + `TimeBucket`(TODAY/YESTERDAY/THIS_WEEK/THIS_MONTH/OLDER) — `bucketOf` (نسبت به dayStartِ تزریقیِ timezone-aware؛ futureها=TODAY) + `group` (مرتبِ TODAY→OLDER، newest-first داخل، حذفِ bucketِ خالی) روی `TimelineEvent`های MON1. ۴ تست. [نمای Time-Machine روی هوم = on-device.]
 
 ### فاز B — Orchestration & Intelligence
 - [ ] **B1 Multi-Agent Architecture**: ایجنت‌های Brain/Memory/Device/Server/Automation + router هماهنگ‌کننده. (هم‌راستا با KERNEL workspace) (→ **AGSK/CF1**)
 - [ ] **B2 AI Workflow Builder**: When→Then بدون کد (مثلاً «پیام تلگرام → ذخیره در Notion → خلاصه → ارسال به Discord»).
 - [ ] **B3 Plugin Marketplace**: قوی‌تر از Omi — GitHub/Docker/Telegram/Discord/Notion/Home-Assistant/OpenRouter/Ollama. (توسعه Phase 12)
-- [ ] **B4 Semantic Notification System**: تحلیل نوتیف‌ها → Important/Medium/Ignore.
+- [~] **B4 Semantic Notification System** (v108، 2026-06-20 — هسته‌ی خالص): `core/notif/NotificationTriage` + `Importance`(IGNORE/MEDIUM/IMPORTANT) + `NotificationInfo`/`TriagePolicy` — کلاسه‌بندیِ خالص: appِ muted→IGNORE؛ VIP-sender یا keywordِ urgent (otp/code/urgent…)→IMPORTANT؛ categoryِ call/msg/email→بالا؛ promo/social/ongoing→پایین؛ `important()` فیلتر. ۷ تست. [feedِ NotificationListener (MON2) + اقدام = on-device.]
 - [ ] **B5 Personal Dashboard**: Goals/Memory/Agents/Servers/Tasks/Automations/Plugins.
 
 ### ⭐ فاز C0 — Always-On Ambient Presence (اولویت بالا — کاربر 2026-06-14)
