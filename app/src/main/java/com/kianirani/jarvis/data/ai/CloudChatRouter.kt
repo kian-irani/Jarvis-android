@@ -370,6 +370,96 @@ class CloudChatRouter @Inject constructor(
       }
     }
 
+    /**
+     * MM (PRD §11) — answer about an image. Sends [imageBytes] + [message] to the first
+     * configured **vision-capable** provider (OpenAI/Anthropic/Gemini/xAI/OpenRouter — Groq has
+     * no vision model so it's skipped), building the multimodal body via [ImageEncoding]. The
+     * plain-text [chat] path is untouched. Private mode still blocks the cloud.
+     */
+    suspend fun chatWithImage(message: String, imageBytes: ByteArray): Result<CloudReply> {
+        if (settings.privacyLocalOnly.value) {
+            return Result.failure(IllegalStateException("Private mode is on — cloud vision is disabled."))
+        }
+        val visionProviders = store.configured().filter { it != AiProvider.GROQ }
+        if (visionProviders.isEmpty()) {
+            return Result.failure(IllegalStateException("No vision-capable provider configured."))
+        }
+        var last: Throwable = IllegalStateException("all vision providers failed")
+        for (p in visionProviders) {
+            for (key in pool.order(p, store.tokens(p))) {
+                runCatching { askWithImage(p, key, message, imageBytes) }
+                    .onSuccess {
+                        pool.recordSuccess(p, key); usage.record(p, success = true)
+                        return Result.success(CloudReply(it, p))
+                    }
+                    .onFailure { pool.recordFailure(p, key, pool.classify(it.message)); last = it; usage.record(p, success = false) }
+            }
+        }
+        return Result.failure(last)
+    }
+
+    private suspend fun askWithImage(p: AiProvider, token: String, message: String, imageBytes: ByteArray): String {
+        val sys = systemPrompt()
+        val model = store.model(p)
+        return when (p) {
+            AiProvider.ANTHROPIC -> {
+                val img = com.kianirani.jarvis.core.perception.ImageEncoding.encode(imageBytes, com.kianirani.jarvis.core.perception.ImageEncoding.Provider.ANTHROPIC)
+                val body = buildJsonObject {
+                    put("model", model); put("max_tokens", 1024); put("system", sys)
+                    put("messages", buildJsonArray {
+                        add(buildJsonObject {
+                            put("role", "user")
+                            put("content", buildJsonArray { add(img); add(buildJsonObject { put("type", "text"); put("text", message) }) })
+                        })
+                    })
+                }
+                val resp = http.post("${p.baseUrl}/v1/messages") {
+                    header("x-api-key", token); header("anthropic-version", "2023-06-01")
+                    contentType(ContentType.Application.Json); setBody(body.toString())
+                }
+                val raw = resp.bodyAsText(); check(resp.status.isSuccess()) { "Anthropic ${resp.status}: ${raw.take(160)}" }
+                parse(raw)["content"]!!.jsonArray.first().jsonObject["text"]!!.jsonPrimitive.content
+            }
+            AiProvider.GEMINI -> {
+                val img = com.kianirani.jarvis.core.perception.ImageEncoding.encode(imageBytes, com.kianirani.jarvis.core.perception.ImageEncoding.Provider.GEMINI)
+                val body = buildJsonObject {
+                    putJsonObject("system_instruction") { put("parts", buildJsonArray { add(buildJsonObject { put("text", sys) }) }) }
+                    put("contents", buildJsonArray {
+                        add(buildJsonObject {
+                            put("role", "user")
+                            put("parts", buildJsonArray { add(buildJsonObject { put("text", message) }); add(img) })
+                        })
+                    })
+                }
+                val resp = http.post("${p.baseUrl}/v1beta/models/$model:generateContent") {
+                    header("x-goog-api-key", token); contentType(ContentType.Application.Json); setBody(body.toString())
+                }
+                val raw = resp.bodyAsText(); check(resp.status.isSuccess()) { "Gemini ${resp.status}: ${raw.take(160)}" }
+                parse(raw)["candidates"]!!.jsonArray.first().jsonObject["content"]!!.jsonObject["parts"]!!.jsonArray.first().jsonObject["text"]!!.jsonPrimitive.content
+            }
+            else -> { // OpenAI-compatible vision (OpenAI, xAI, OpenRouter)
+                val img = com.kianirani.jarvis.core.perception.ImageEncoding.encode(imageBytes, com.kianirani.jarvis.core.perception.ImageEncoding.Provider.OPENAI)
+                val body = buildJsonObject {
+                    put("model", model)
+                    put("messages", buildJsonArray {
+                        add(buildJsonObject { put("role", "system"); put("content", sys) })
+                        add(buildJsonObject {
+                            put("role", "user")
+                            put("content", buildJsonArray { add(buildJsonObject { put("type", "text"); put("text", message) }); add(img) })
+                        })
+                    })
+                }
+                val resp = http.post("${p.baseUrl}/v1/chat/completions") {
+                    header("Authorization", "Bearer $token")
+                    if (p == AiProvider.OPENROUTER) { header("HTTP-Referer", "https://github.com/kian-irani/Jarvis-android"); header("X-Title", "Vision OS") }
+                    contentType(ContentType.Application.Json); setBody(body.toString())
+                }
+                val raw = resp.bodyAsText(); check(resp.status.isSuccess()) { "${p.name} ${resp.status}: ${raw.take(160)}" }
+                parse(raw)["choices"]!!.jsonArray.first().jsonObject["message"]!!.jsonObject["content"]!!.jsonPrimitive.content
+            }
+        }
+    }
+
     private fun parse(text: String): JsonObject = json.decodeFromString(JsonObject.serializer(), text)
 
     /** Process-lifetime singleton; closed by tests or DI teardown (review HIGH-2). */
