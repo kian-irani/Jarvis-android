@@ -25,4 +25,6 @@ android {
 dependencies {
     implementation(libs.serialization.json)
     implementation(libs.coroutines.android)
+    // @Inject/@Singleton annotations only (Hilt in :app generates the bindings cross-module).
+    implementation("javax.inject:javax.inject:1")
 }
