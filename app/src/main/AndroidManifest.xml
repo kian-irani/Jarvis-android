@@ -13,6 +13,8 @@
     <!-- DS-W: floating assistant orb over other apps -->
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <!-- FV4: always-listening wake word -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
     <!-- Real device actions: place calls, send SMS, resolve contacts (CallTool/SmsTool) -->
     <uses-permission android:name="android.permission.CALL_PHONE" />
     <uses-permission android:name="android.permission.SEND_SMS" />
@@ -74,6 +76,11 @@
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
                 android:value="Floating assistant orb overlay" />
         </service>
+        <!-- FV4: always-listening wake-word service -->
+        <service
+            android:name=".service.WakeWordService"
+            android:exported="false"
+            android:foregroundServiceType="microphone" />
         <!-- Phase 7.5: real device control (Home/Back/Recents). User enables once. -->
         <service
             android:name=".service.VisionAccessibilityService"
