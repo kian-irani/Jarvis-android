@@ -27,6 +27,8 @@ class DeviceContextProvider @Inject constructor(@ApplicationContext private val 
 
     /** A best-effort snapshot of the current device state. */
     fun snapshot(): DeviceContext = DeviceContext(
+        // DS-W5 — the foreground app (Accessibility, opt-in; null when the service is off).
+        foregroundApp = com.kianirani.jarvis.service.VisionAccessibilityService.foregroundPackage,
         batteryPercent = battery(),
         charging = charging(),
         network = network(),
