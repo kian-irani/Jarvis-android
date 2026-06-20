@@ -11,9 +11,11 @@ import com.kianirani.jarvis.core.sdk.VisionSdk
 import com.kianirani.jarvis.core.tools.DeviceCommandTool
 import com.kianirani.jarvis.core.tools.RecallTool
 import com.kianirani.jarvis.core.tools.RememberTool
+import com.kianirani.jarvis.core.context.ContextEngine
 import com.kianirani.jarvis.core.tools.ToolRegistry
 import com.kianirani.jarvis.data.agent.CommandInterpreter
 import com.kianirani.jarvis.data.ai.RouterModelClient
+import com.kianirani.jarvis.data.context.DeviceContextProvider
 import com.kianirani.jarvis.data.settings.VisionSettings
 import dagger.Module
 import dagger.Provides
@@ -40,6 +42,7 @@ object BrainFacadeModule {
         interpreter: CommandInterpreter,
         memory: MemoryEngine,
         settings: VisionSettings,
+        deviceContext: DeviceContextProvider,
     ): VisionGateway {
         // VCF-LIVE-2 — give the (previously dormant, tool-less) agent its real capabilities:
         // the on-device action layer (open app / time / battery / settings, via the working
@@ -59,11 +62,13 @@ object BrainFacadeModule {
         // Give the agent an identity, a language preference, and the directive to actually
         // call tools (it had none — so it answered like a bare chat model). Evaluated per run
         // so it tracks the live persona/language settings.
-        return VisionGateway { _ -> VisionAgent(client, tools, checkpointer, schema, systemPrompt = { agentSystemPrompt(settings) }) }
+        return VisionGateway { _ ->
+            VisionAgent(client, tools, checkpointer, schema, systemPrompt = { agentSystemPrompt(settings, deviceContext) })
+        }
     }
 
-    /** Persona + tool-use + language guidance for the VCF agent's SYSTEM turn. */
-    private fun agentSystemPrompt(settings: VisionSettings): String {
+    /** Persona + tool-use + language guidance + live device context for the agent's SYSTEM turn. */
+    private fun agentSystemPrompt(settings: VisionSettings, deviceContext: DeviceContextProvider): String {
         val name = settings.personaName.value.ifBlank { "VISION" }
         val user = settings.userName.value.trim()
         val lang = when (settings.language.value) {
@@ -82,6 +87,9 @@ object BrainFacadeModule {
             )
             append(lang)
             append(" Keep replies concise and natural.")
+            // Live device state (battery/network/time/…) so the agent can reason about the
+            // user's situation. Guarded inside snapshot()/buildContextBlock — "" on any failure.
+            append(ContextEngine.buildContextBlock(runCatching { deviceContext.snapshot() }.getOrNull()))
         }
     }
 
