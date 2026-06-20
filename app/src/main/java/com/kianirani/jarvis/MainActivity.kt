@@ -198,6 +198,7 @@ private fun RouteContent(route: VisionRoute, homeWide: Boolean, onNavigate: (Vis
                     onOpenAgents = { onNavigate(VisionRoute.AGENTS) },
                     onOpenMemory = { onNavigate(VisionRoute.MEMORY) },
                     onQuickAction = { handleQuickAction(it, ctx, onNavigate) },
+                    onOpenSearch = { onNavigate(VisionRoute.APPS) },
                     showSidePanels = sidePanels,
                 )
             }

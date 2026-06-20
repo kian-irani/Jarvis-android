@@ -93,6 +93,7 @@ fun HomeScreen(
     onOpenAgents: () -> Unit,
     onOpenMemory: () -> Unit,
     onQuickAction: (QuickAction) -> Unit,
+    onOpenSearch: () -> Unit = {},
     showSidePanels: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
@@ -116,6 +117,9 @@ fun HomeScreen(
     ) {
         Spacer(Modifier.height(6.dp))
         GreetingRow(name = name, assistantName = assistantName, onOpenSettings = onOpenSettings)
+        // NEO11 — At-a-Glance date + a unified search entry (apps/contacts/web via the drawer).
+        Spacer(Modifier.height(10.dp))
+        GlanceSearchBar(onOpenSearch = onOpenSearch)
 
         // ── The hero: the AI core, dominating the screen ──────────────────────
         // ORB state machine: derive the orb's mood from the live signals (listening/
@@ -169,7 +173,35 @@ fun HomeScreen(
     }
 }
 
-/** Greeting on the left, a glass weather chip + a small settings button on the right. */
+/**
+ * NEO11 — At-a-Glance + unified search bar (Neo/Pixel style). A glass pill across the top of
+ * home: today's date on the left, a "Search apps, contacts, web" entry that opens the unified
+ * search (the App Drawer's `SearchRanker`-backed search). Tap target ≥ 48dp, on-style glass.
+ */
+@Composable
+private fun GlanceSearchBar(onOpenSearch: () -> Unit) {
+    val today = remember {
+        val c = Calendar.getInstance()
+        val day = c.getDisplayName(Calendar.DAY_OF_WEEK, Calendar.LONG, java.util.Locale.getDefault())
+        val month = c.getDisplayName(Calendar.MONTH, Calendar.SHORT, java.util.Locale.getDefault())
+        "$day · $month ${c.get(Calendar.DAY_OF_MONTH)}"
+    }
+    Row(
+        Modifier.fillMaxWidth().heightIn(min = 52.dp).clip(RoundedCornerShape(26.dp))
+            .glassPanel(radius = 26.dp).clickable(onClick = onOpenSearch)
+            .padding(horizontal = 16.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        Icon(VisionIcons.Search, contentDescription = "Search", tint = VisionColors.CyanPrimary, modifier = Modifier.size(22.dp))
+        Column(Modifier.weight(1f)) {
+            Text("Search apps, contacts, web", style = MaterialTheme.typography.bodyMedium, color = JarvisColors.TextSecondary)
+            Text(today, style = MaterialTheme.typography.labelSmall, color = JarvisColors.TextDim)
+        }
+        Icon(VisionIcons.Mic, contentDescription = "Voice search", tint = JarvisColors.TextDim, modifier = Modifier.size(20.dp))
+    }
+}
+
 @Composable
 private fun GreetingRow(name: String, assistantName: String, onOpenSettings: () -> Unit) {
     val ctx = LocalContext.current
