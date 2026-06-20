@@ -174,15 +174,15 @@ project: 05-vision
 
 ### DS-BG — Background system
 - [x] **DS-BG1 Foreground service manager** ✅ (v112، 2026-06-20): `service/VisionServiceManager` (@Singleton) — یک نقطه برای start/stop/queryِ سرویس‌های پس‌زمینه (floating widget + wake-word؛ Brain-Lite lifecycleِ خودش را دارد): `startWidget/stopWidget/canShowWidget`، `startWakeWord/stopWakeWord`، و `applyPowerState` (power-aware). compile سبز.
-- [ ] **DS-BG2 Task scheduler** [= CF5]: WorkManager (TIME/CONDITION/APP_OPEN/NOTIFICATION/LOCATION).
-- [ ] **DS-BG3 Notification handler** + event bus (DS-B5).
+- [x] **DS-BG2 Task scheduler** [= CF5] ✅ (v113، = `AutomationScheduler`/v110): همان CF5 — `ScheduleEvaluator` core + `AutomationScheduler` (AlarmManager، Doze-safe) + `AutomationReceiver`. (PLAN خودش این را aliasِ CF5 علامت زده بود.)
+- [x] **DS-BG3 Notification handler + event bus** ✅ (v113، 2026-06-20): `VisionNotificationService` حالا `@AndroidEntryPoint` است و `VisionEventBus` تزریق می‌کند؛ روی `onNotificationPosted` نوتیف را با `NotificationInfo` می‌سازد، با `NotificationTriage` کلاسه می‌کند و **فقط IMPORTANT** را به‌صورتِ `VisionEvent.Custom("notification_important", pkg)` به bus emit می‌کند (proactive layer بدونِ spam). compile سبز.
 - [x] **DS-BG4 Resource/power optimizer** ✅ (v112، 2026-06-20): `service/PowerOptimizer` روی `PowerPolicy` (DS-W6) — تصمیمِ خالصِ «کدام سرویسِ پس‌زمینه برای این `PowerState` مجاز است»: `allowWakeWord` (جز MINIMAL)، `allowWidget` (جز MINIMALِ بی‌شارژ)، `shouldThrottleBackground` (جز FULL). `VisionServiceManager.applyPowerState` آن را مصرف می‌کند → صرفه‌جوییِ باتری در یک‌جا. compile سبز.
 
 ### DS-C — Communication
-- [ ] **DS-C1 In-process plane**: Widget+Launcher ↔ Brain مستقیم (facadeِ `VisionBrain`، هم‌پروسه).
-- [ ] **DS-C2 Network plane**: توسعه‌ی Brain-Lite API — استریمِ توکن WebSocket (`/v1/stream`)؛ ارزیابیِ gRPC برای `vision-api`.
+- [x] **DS-C1 In-process plane** ✅ (v113، 2026-06-20): `di/BrainFacadeModule` (Hilt) — زنجیره‌ی agent را به facadeِ `VisionBrain` می‌بندد و `VisionSdk` (= `InProcessVisionSdk`) را provide می‌کند تا هر surface (widget/launcher/desktop) یک object تزریق و `send/recall` کند بدونِ دانستنِ gateway/گراف/router. `VisionGateway{ ReActِ VisionAgent(RouterModelClient, tools, RoomCheckpointer) }`. compile سبز (Hilt graph سالم، ۷۳۳ تست). [facadeِ خالص از v82/v85 بود؛ این binding آن را زنده کرد.]
+- [x] **DS-C2 Network plane** ✅ (v113، 2026-06-20): سرورِ `/v1/stream` از VCF-R3/v80 بود؛ حالا **clientِ واقعی** `data/stream/StreamClient` با **OkHttp WebSocket** (بدونِ dep جدید) — به `ws://host:7799/v1/stream` وصل می‌شود، prompt می‌فرستد و فریم‌های `token`/`done`/`error` را به `Flow<Chunk>` (متنِ cumulative + finished) تبدیل می‌کند. compile سبز. [gRPC برای vision-api = ارزیابیِ بعدی.]
 - [~] **DS-C3 Cross-device sync** [= MX] (v98، 2026-06-19 — CRDTِ چیدمان کامل): `core/sync/LwwMap` — CRDTِ state-basedِ Last-Writer-Wins برای merge کردنِ stateِ چیدمانِ لانچر بینِ دستگاه‌ها بدونِ سرورِ مرکزی. هر key با timestamp+nodeId مهر می‌خورد؛ `merge` یک joinِ semilattice (commutative/associative/idempotent — با تست اثبات شد)؛ delete = tombstone (resurrection-safe در re-merge)؛ tie-break با nodeId برای همگراییِ یکسانِ همه‌ی replicaها. خالص، بدونِ clock-dep (timestamp تزریقی). ۷ تست. **+ universal clipboard (v101):** `core/sync/ClipboardSync` — registerِ LWWِ تک‌کلیپ + historyِ محدود؛ آخرین کلیپِ هر دستگاه current می‌شود؛ `merge` order-independent/idempotent (tie با nodeId)؛ blank نادیده. ۶ تست. [انتقالِ snapshot روی mesh + handoff = باقیِ DS-C3 روی‌دستگاه/شبکه.]
-- [ ] **DS-C4 IPC (گزینه‌ی جدا-اپ)**: AIDL bound-service / Messenger برای Widgetِ cross-process.
+- [x] **DS-C4 IPC (گزینه‌ی جدا-اپ)** ✅ (v113، 2026-06-20): `service/VisionIpcService` — bound serviceِ `Messenger` برای widgetِ cross-process: پروتکلِ `MSG_COMMAND`(KEY_TEXT + replyTo) → `MSG_REPLY`؛ یک handler-thread، crash-safe (clientِ مرده → drop). manifest service. compile سبز. [route به gateway/agent از طریقِ VisionBrain (DS-C1) = follow-up.]
 
 ### DS-WIN — Windows shell (Compose-MP)
 - [ ] **DS-WIN1 Desktop skeleton**: Compose-MP + pairingِ peerِ Brain-Lite (mDNS/QR/election).

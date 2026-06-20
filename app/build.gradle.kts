@@ -14,8 +14,8 @@ android {
         applicationId = "com.kianirani.jarvis"
         minSdk        = 26
         targetSdk     = 35
-        versionCode   = 114
-        versionName   = "112.0"
+        versionCode   = 115
+        versionName   = "113.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField("String", "GROQ_KEYS", "\"${System.getenv("GROQ_KEYS") ?: ""}\"")
     }
