@@ -126,6 +126,12 @@ fun SettingsHubScreen(
         Section("INTELLIGENCE", 1) {
             NavRow("AI Providers", "API tokens, multi-key rotation", onOpenAiTokens)
             NavRow("Brain & Mesh", "election, pairing, mesh nodes", onOpenElection)
+            // VCF-LIVE-5 — route chat through the agentic VCF brain (it can use device + memory
+            // tools mid-reply), instead of the single-shot router. Opt-in until on-device verify.
+            val agentic by s.agenticMode.collectAsStateWithLifecycle()
+            ToggleRow("Agentic mode", "let Vision act with tools, not just answer", agentic) {
+                s.set(VisionSettings.KEY_AGENTIC, it)
+            }
         }
         Section("VOICE", 1) {
             ToggleRow("Voice input", "wake Vision with the mic", voice) { s.set(VisionSettings.KEY_VOICE, it) }

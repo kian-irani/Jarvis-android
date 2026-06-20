@@ -35,6 +35,7 @@ class HudViewModel @Inject constructor(
     private val orchestrator: com.kianirani.jarvis.router.orchestrator.VisionOrchestrator,
     private val backendRouter: com.kianirani.jarvis.router.backend.BackendRouter,
     private val history: com.kianirani.jarvis.data.ai.ChatHistoryStore,
+    private val visionBrain: com.kianirani.jarvis.core.brain.VisionBrain,
 ) : ViewModel() {
     private val _state = MutableStateFlow(HudUiState())
     val uiState: StateFlow<HudUiState> = _state.asStateFlow()
@@ -129,6 +130,11 @@ class HudViewModel @Inject constructor(
             }
             _state.update { it.copy(isThinking = true) }
             try {
+            // VCF-LIVE-4: when the user opts into Agentic Mode, drive the turn through the
+            // VCF brain (ReAct loop + real device/memory tools) instead of the single-shot
+            // router. Default-off keeps the proven path until on-device tool round-trip is
+            // confirmed; everything below this branch is the unchanged router path.
+            if (settings.agenticMode.value) { runAgentic(msg); return@launch }
             typeText("Processing...")
             // VISION BRAIN (VB3+VB8): Vision *thinks first*, then routes. The
             // orchestrator classifies the request and ranks reachable models
@@ -172,6 +178,53 @@ class HudViewModel @Inject constructor(
                 _state.update { it.copy(isThinking = false) }
             }
         }
+    }
+
+    /**
+     * VCF-LIVE-4: agentic chat path. Drives the request through the VCF [visionBrain]
+     * (the ReAct loop wired with the real device + memory tools) and renders the streamed
+     * run: tool traffic goes to the event log, and the final assistant message is typed and
+     * spoken. A confirmation pause (HIL — only for CRITICAL tools, which are none yet) is
+     * surfaced honestly; resuming from the HUD lands in a later on-device pass.
+     */
+    private suspend fun runAgentic(msg: String) {
+        typeText("Thinking...")
+        var lastReply = ""
+        var interrupted = false
+        runCatching {
+            visionBrain.handle(msg).collect { event ->
+                when (event) {
+                    is com.kianirani.jarvis.core.graph.GraphEvent.ToolStart ->
+                        addLog("Tool → ${event.call.name}", "info")
+                    is com.kianirani.jarvis.core.graph.GraphEvent.ToolEnd ->
+                        addLog("Tool ✓ ${event.result.name}", if (event.result.isError) "warn" else "ok")
+                    is com.kianirani.jarvis.core.graph.GraphEvent.Interrupted -> {
+                        interrupted = true; addLog("Needs confirmation: ${event.reason}", "warn")
+                    }
+                    is com.kianirani.jarvis.core.graph.GraphEvent.Done ->
+                        lastReply = event.state.messages
+                            .lastOrNull { it.role == com.kianirani.jarvis.core.graph.Role.ASSISTANT }
+                            ?.text().orEmpty()
+                    is com.kianirani.jarvis.core.graph.GraphEvent.Failed ->
+                        addLog("Agent failed: ${event.message}", "err")
+                    else -> Unit
+                }
+            }
+        }.onFailure { addLog("Agent error: ${it.message}", "err") }
+
+        val reply = when {
+            lastReply.isNotBlank() -> lastReply
+            interrupted ->
+                "That action needs your confirmation — on-device approval is coming soon. " +
+                    "این کار به تأیید شما نیاز دارد؛ تأیید روی دستگاه به‌زودی اضافه می‌شود."
+            else ->
+                "I couldn't complete that with the agent. " +
+                    "نتوانستم این را با ایجنت کامل کنم."
+        }
+        // Direct render (not deliver()) — the agent already executed any tools, so the text is
+        // a final answer, not a tool-call JSON to re-run.
+        typeText(reply); speak(reply)
+        addLog("Agentic reply", "ok")
     }
 
     /** Drops a leading "<name>[,/ ]" so addressing Vision by its (configurable) name works. */

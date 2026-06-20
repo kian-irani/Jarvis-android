@@ -32,12 +32,17 @@ class VisionSettings @Inject constructor(@ApplicationContext context: Context) {
     private val _aurora = flow(KEY_AURORA, true)
     // LM5 Privacy Mode — when on, nothing leaves the device/mesh (PrivacyPolicy reads this).
     private val _privacyLocalOnly = flow(KEY_PRIVACY_LOCAL_ONLY, false)
+    // VCF-LIVE — route chat through the agentic VCF brain (VisionBrain: ReAct + device/memory
+    // tools) instead of the single-shot router. Opt-in (default off) so the proven chat path
+    // stays the default until the on-device tool round-trip is confirmed.
+    private val _agenticMode = flow(KEY_AGENTIC, false)
 
     val voiceEnabled: StateFlow<Boolean> = _voiceEnabled
     val ttsEnabled: StateFlow<Boolean> = _ttsEnabled
     val scanLine: StateFlow<Boolean> = _scanLine
     val aurora: StateFlow<Boolean> = _aurora
     val privacyLocalOnly: StateFlow<Boolean> = _privacyLocalOnly
+    val agenticMode: StateFlow<Boolean> = _agenticMode
 
     /** Edge neural-voice mode (v51) — see [NeuralVoiceMode]. Migrates from the old boolean toggle. */
     private val _neuralVoiceMode = MutableStateFlow(readNeuralMode())
@@ -150,6 +155,7 @@ class VisionSettings @Inject constructor(@ApplicationContext context: Context) {
             KEY_SCANLINE -> _scanLine.value = value
             KEY_AURORA -> _aurora.value = value
             KEY_PRIVACY_LOCAL_ONLY -> _privacyLocalOnly.value = value
+            KEY_AGENTIC -> _agenticMode.value = value
         }
     }
 
@@ -161,6 +167,7 @@ class VisionSettings @Inject constructor(@ApplicationContext context: Context) {
         const val KEY_SCANLINE = "fx_scanline"
         const val KEY_AURORA = "fx_aurora"
         const val KEY_PRIVACY_LOCAL_ONLY = "privacy_local_only"
+        const val KEY_AGENTIC = "agentic_mode"
         const val KEY_TRUST = "trust_level"
         const val KEY_RATE = "voice_rate"
         const val KEY_PITCH = "voice_pitch"

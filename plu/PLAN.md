@@ -8,7 +8,7 @@ project: 05-vision
 
 # 🗂️ PLAN — Vision OS
 > منبع کامل: `repo/ROADMAP.md` + `repo/docs/VISION-CAPABILITIES.md` + PRDِ VCF `docs/2026-06-18-vision-cognitive-framework-PRD.md`.
-> ریپو: `kian-irani/Jarvis-android` · **آخرین نسخه: v97** (2026-06-19).
+> ریپو: `kian-irani/Jarvis-android` · **آخرین نسخه: v128** (2026-06-20 — VCF-LIVE: agentic chat path).
 > وضعیت: `[x]` انجام‌شده · `[~]` نیمه · `[ ]` باز.
 
 ---
@@ -19,7 +19,7 @@ project: 05-vision
 >
 > **محدودیتِ سرورِ بیلد:** نه دستگاه/امولاتور، نه شبکه‌ی مدل → کارهای «نیازِ دستگاه/شبکه» فقط build-green می‌شوند و تأییدِ رفتاری روی دستگاهِ کاربر لازم دارند.
 
-1. **[دستگاه/شبکه] زنده‌کردنِ VCF** — ~~**VCF-T2** (function-calling بومی روی سیم)~~ ✅ v76 (`CloudChatRouter.complete` + `RouterModelClient` حالا native-FC با fallbackِ متنی؛ shaping/parse تست‌شده). باقی‌مانده: وصل‌کردنِ `VisionAgent`/`VisionGateway` به مسیرِ چت (جایگزینِ تدریجیِ `HudViewModel.sendChat`) + تأییدِ round-tripِ FC روی دستگاه. بیشترین ارزش.
+1. **[دستگاه/شبکه] زنده‌کردنِ VCF** — ~~**VCF-T2** (function-calling بومی روی سیم)~~ ✅ v76 · ~~**VCF-LIVE** (وصل‌کردنِ `VisionAgent`/`VisionGateway` به مسیرِ چت)~~ ✅ **v128** (2026-06-20): گیتوی دیگر tool-less نیست — `ToolRegistry` واقعی (`DeviceCommandTool` پلِ `CommandInterpreter` + `Remember/RecallTool` پلِ `MemoryEngine`) + function-schema به `VisionAgent` تزریق شد؛ `HudViewModel.sendChat` یک مسیرِ **Agentic Mode** (opt-in، پیش‌فرض خاموش، toggle در Settings→INTELLIGENCE) دارد که turn را با `VisionBrain.handle()` می‌راند و `GraphEvent`ها (Token/ToolStart/ToolEnd/Done/Failed) را رندر می‌کند؛ مسیرِ تک‌شاتِ router دست‌نخورده. باقی‌مانده: **تأییدِ round-tripِ FC + اجرای ابزار روی دستگاهِ واقعی** (needs on-device) + سیمِ HIL resume برای ابزارهای CRITICAL. بیشترین ارزش.
 2. **[دستگاه] تکمیلِ لانچر** — `LR6` dockِ پیکربندی‌پذیر + dock-drag · `LR9` ژست‌ها · `LR12` دکمه‌ی مرکزیِ Vision · `LR8` widget host → سپس **NEO7** passِ کیفیتِ بصری.
 3. **[دستگاه/نیمه] صدا** — `FV4` wake-word روی foreground service (مصرف‌کننده‌ی `VisionEventBus`) · `FV6` انتزاعِ `TTSEngine`/`VoiceProvider`.
 4. **[نیمه-headless] تعمیقِ VCF** — `MEM1` خلاصه‌سازی + memory-as-tools · `AgentDelegate` (هم‌سطحِ X3) · `EvalHarness` golden روی `FeedbackLog` · `R1` gateway / `R3` stream · `B1` parityِ Python.
