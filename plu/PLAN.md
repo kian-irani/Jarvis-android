@@ -474,11 +474,11 @@ project: 05-vision
 ## 🔵 Phase 11 — OS-Level Integration + Conversational OS
 - [ ] کنترل کامل دستگاه با زبان طبیعی (روی Accessibility) → **PAU**
 - [ ] دستورات OS محاوره‌ای چندمرحله‌ای
-- [ ] جایگزینی دستیار پیش‌فرض (Assistant role)
+- [x] **جایگزینی دستیار پیش‌فرض (Assistant role)** ✅ (v118، 2026-06-20): `data/role/AssistantRole` — `isDefaultAssistant`/`requestIntent` via `RoleManager.ROLE_ASSISTANT` (Android 10+) با fallback به assist-settings؛ best-effort. compile سبز.
 
 ## 🔵 Phase 11.5 — Focus Mode + Broadcast
 - [ ] Focus Mode (محدودسازی نوتیف/اپ‌ها)
-- [ ] Broadcast (هم‌رسانی وضعیت بین دستگاه‌ها)
+- [x] **Broadcast / presence** ✅ (v118، 2026-06-20): `core/mesh/DevicePresence` + `PresenceStatus`(ONLINE/AWAY/BUSY/OFFLINE) — `merge` (freshest per device، order-independent)، `effectiveStatus` (silent>۲دقیقه→OFFLINE)، `onlineDevices`. ۴ تست. [transportِ mesh = network half.]
 
 ## 🔵 Phase 12 — MCP & Plugin Ecosystem + Widget API — partial
 - [x] VisionPlugin interface + PluginRegistry + SystemInfoPlugin (v1)
@@ -488,8 +488,8 @@ project: 05-vision
 
 ## 🔵 Phase 13 — Zero-Trust Security + Privacy Monitor — partial
 - [x] Privacy Monitor (شمارش cloud calls) · trust gate
-- [ ] Behavioral baseline (تشخیص ناهنجاری)
-- [ ] رمزنگاری end-to-end mesh · audit log
+- [x] **Behavioral baseline (anomaly detection)** ✅ (v118، 2026-06-20): `core/monitor/AnomalyDetector` + `Baseline` — mean/stddev rolling + `zScore` + `isAnomaly` (آستانه‌ی ۳σ + min-samples تا داده‌ی کم judge نشود). ۴ تست.
+- [x] **audit log** ✅ (v118، 2026-06-20): `core/security/AuditLog` + `AuditEntry`/`AuditCategory` — append-only، newest-first، capacity-bound، فیلترِ category، و **redactِ توکن‌ها** (رشته‌ی ۲۰+ کاراکترِ url-safe / bearer/sk- → ***redacted***) تا خودِ log نشت نکند. ۴ تست. [E2E mesh crypto با Keystore = device half.]
 
 ## 🔵 Phase 14 — Vision System (Screen Understanding)
 - [ ] VisionManager + ScreenshotProvider + OCRManager + ImageAnalyzer
@@ -516,7 +516,7 @@ project: 05-vision
 ### فاز A (بسیار مهم) — Memory & Reasoning Core
 - [ ] **A1 Memory Engine**: لایه‌های Short-Term (مکالمات/وضعیت/تسک‌های فعال)، Long-Term (علایق/پروژه‌ها/افراد)، Episodic (رویدادهای تاریخ‌دار). API: `remember()/recall()/forget()`؛ ذخیره در brain (Room) + on-device. هدف: «آخرین بار روی پروژه VPN چه کردم؟» (→ **CF4**)
 - [~] **A2 Knowledge Graph** (v108، 2026-06-20 — هسته‌ی خالص): `core/knowledge/KnowledgeGraph` + `Entity`(PERSON/PROJECT/SERVER/SERVICE/TOKEN/APP/PLACE/NOTE) + `Relation`(from/label/to) — گرافِ جهت‌دارِ برچسب‌دار: addEntity/addRelation(dedup)، `neighbors` (دوطرفه)، `related(label)` (یال خروجی)، `findByName` (case-insensitive)، `removeEntity` (cascade). `@Serializable`. ۶ تست. [استخراجِ خودکارِ entity/relation از چت (NER/مدل) + persistِ Room = on-device.]
-- [ ] **A3 Universal Search**: جستجوی یکپارچه روی پیام‌ها/فایل‌ها/نوت‌ها/حافظه/اپ‌ها/سرورها (`find: …`). (نقشه‌برداری به Phase 6 موجود)
+- [x] **A3 Universal Search** ✅ (v118، 2026-06-20): `core/search/UnifiedSearch` — آداپترهای خالصِ apps/contacts/notes → `SearchCandidate` و rank یکپارچه با `SearchRanker` (یک لیست روی همه‌ی منابع، وزنِ منبع tie را می‌شکند). ۴ تست. [آداپترهای device (PackageManager/contacts provider) + messages/web = surface half.]
 - [~] **A4 Goal System + Autonomous Planner** (v108، 2026-06-20 — هسته‌ی خالص): `core/goal/GoalGraph` + `GoalTask`(deps/status) — گرافِ وابستگیِ تسک: `order()` (topological، prerequisite اول، تشخیصِ cycle→خالی)، `nextActionable()` (TODOهایی که depهاشان DONE)، `blocked()`، `progress()`/`isComplete()`؛ idهای dep ناشناخته ignore. متمایز از `TaskPlanner`/CF3 (که goalِ تک را به stepِ خطی می‌شکند؛ این لایه‌ی dependency/topology+progress است). ۷ تست. [شکستنِ goalِ طبیعی به taskها (مدل) + اجرا (agent) = on-device.]
 - [~] **A5 Agent Timeline** (v108، 2026-06-20 — هسته‌ی خالص): `core/timeline/TimelineBuckets` + `TimeBucket`(TODAY/YESTERDAY/THIS_WEEK/THIS_MONTH/OLDER) — `bucketOf` (نسبت به dayStartِ تزریقیِ timezone-aware؛ futureها=TODAY) + `group` (مرتبِ TODAY→OLDER، newest-first داخل، حذفِ bucketِ خالی) روی `TimelineEvent`های MON1. ۴ تست. [نمای Time-Machine روی هوم = on-device.]
 
