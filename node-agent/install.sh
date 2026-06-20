@@ -1,23 +1,63 @@
-#!/bin/bash
-BRAIN_IP="212.87.199.62"
-echo "🤖 JARVIS Node Installer"
-pip3 install websockets psutil --break-system-packages 2>/dev/null || /opt/jarvis/venv/bin/pip install websockets psutil
-mkdir -p /opt/jarvis-node
-cp /opt/jarvis/node-agent/agent.py /opt/jarvis-node/agent.py
-cat > /etc/systemd/system/jarvis-node.service << SERVICE
+#!/usr/bin/env bash
+# W2 — Vision mesh node installer. One-liner for a bare Linux server (no Vision/Android):
+#   curl -fsSL https://raw.githubusercontent.com/kian-irani/Jarvis-android/main/node-agent/install.sh \
+#        | bash -s -- --host <brain-addr> --token <pairing-token> [--port 7799]
+#
+# Fetches agent.py (stdlib only — no pip), installs a systemd unit, and the agent registers the
+# server's CPU/RAM/disk with the Brain over plain HTTP, re-posting a heartbeat every 30s.
+set -euo pipefail
+
+HOST=""
+PORT="7799"
+TOKEN=""
+REPO_RAW="https://raw.githubusercontent.com/kian-irani/Jarvis-android/main/node-agent"
+
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    --host)  HOST="$2"; shift 2 ;;
+    --port)  PORT="$2"; shift 2 ;;
+    --token) TOKEN="$2"; shift 2 ;;
+    *) echo "unknown arg: $1" >&2; exit 2 ;;
+  esac
+done
+
+if [ -z "$HOST" ] || [ -z "$TOKEN" ]; then
+  echo "usage: install.sh --host <brain-addr> --token <token> [--port 7799]" >&2
+  exit 2
+fi
+
+echo "🛰️  Vision node installer — brain ${HOST}:${PORT}"
+
+command -v python3 >/dev/null 2>&1 || { echo "python3 is required" >&2; exit 1; }
+
+INSTALL_DIR="/opt/vision-node"
+mkdir -p "$INSTALL_DIR"
+
+# Fetch the stdlib-only agent (prefer a local copy when run from a checkout).
+if [ -f "$(dirname "$0")/agent.py" ]; then
+  cp "$(dirname "$0")/agent.py" "$INSTALL_DIR/agent.py"
+else
+  curl -fsSL "$REPO_RAW/agent.py" -o "$INSTALL_DIR/agent.py"
+fi
+
+cat > /etc/systemd/system/vision-node.service <<SERVICE
 [Unit]
-Description=JARVIS Node Agent
-After=network.target
+Description=Vision Mesh Node Agent
+After=network-online.target
+Wants=network-online.target
+
 [Service]
-ExecStart=/opt/jarvis/venv/bin/python /opt/jarvis-node/agent.py
+ExecStart=$(command -v python3) $INSTALL_DIR/agent.py --host ${HOST} --port ${PORT} --token ${TOKEN}
 Restart=always
 RestartSec=5
-Environment=JARVIS_BRAIN=ws://$BRAIN_IP:8000/node/connect
-Environment=JARVIS_NAME=$(hostname)
+User=root
+
 [Install]
 WantedBy=multi-user.target
 SERVICE
+
 systemctl daemon-reload
-systemctl enable jarvis-node
-systemctl start jarvis-node
-echo "✅ Node نصب شد"
+systemctl enable vision-node
+systemctl restart vision-node
+
+echo "✅ Vision node installed — systemctl status vision-node"
