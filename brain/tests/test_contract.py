@@ -4,7 +4,6 @@ emits for the corresponding `core/protocol` DTOs.
 """
 
 from brain.contract import (
-    Attachment,
     AttachmentKind,
     Channel,
     DeviceContext,

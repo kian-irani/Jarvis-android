@@ -8,19 +8,19 @@ models also serialise their defaults. Use `model_dump(mode="json")` to get the w
 
 from __future__ import annotations
 
-from enum import Enum
+from enum import StrEnum
 
 from pydantic import BaseModel, Field
 
 
-class Channel(str, Enum):
+class Channel(StrEnum):
     MAIN = "MAIN"
     GROUP = "GROUP"
     WIDGET = "WIDGET"
     REMOTE = "REMOTE"
 
 
-class AttachmentKind(str, Enum):
+class AttachmentKind(StrEnum):
     IMAGE = "IMAGE"
     AUDIO = "AUDIO"
     FILE = "FILE"
@@ -32,7 +32,7 @@ class Intent(BaseModel):
     slots: dict[str, str] = Field(default_factory=dict)
 
     @staticmethod
-    def chat() -> "Intent":
+    def chat() -> Intent:
         return Intent(name="chat")
 
 
