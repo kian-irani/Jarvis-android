@@ -218,6 +218,16 @@ private fun RouteContent(route: VisionRoute, homeWide: Boolean, onNavigate: (Vis
                     homePage = { homeContent(false) },
                     onOpenSettings = { onNavigate(VisionRoute.SETTINGS) },
                     onAssistant = { onNavigate(VisionRoute.HOME) },
+                    onOpenDrawer = { onNavigate(VisionRoute.APPS) },
+                    onNotifications = {
+                        runCatching {
+                            @Suppress("WrongConstant")
+                            (ctx.getSystemService("statusbar"))
+                                ?.let { sb ->
+                                    sb.javaClass.getMethod("expandNotificationsPanel").invoke(sb)
+                                }
+                        }
+                    },
                 )
             }
         }

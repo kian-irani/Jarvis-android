@@ -6,6 +6,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -77,6 +78,8 @@ fun WorkspaceHomePager(
     homePage: @Composable () -> Unit,
     onOpenSettings: () -> Unit = {},
     onAssistant: () -> Unit = {},
+    onOpenDrawer: () -> Unit = {},
+    onNotifications: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val layout by vm.layout.collectAsStateWithLifecycle()
@@ -87,6 +90,25 @@ fun WorkspaceHomePager(
     var openFolder by remember { mutableStateOf<String?>(null) }
     var showEdit by remember { mutableStateOf(false) }
     val ctx = androidx.compose.ui.platform.LocalContext.current
+    // LR9 — workspace swipe gestures mapped through the user's GestureMap: swipe-up opens the
+    // app drawer, swipe-down opens notifications. A deliberate fling threshold avoids accidents.
+    val gestures = remember {
+        com.kianirani.jarvis.core.gesture.GestureMap(
+            mapOf(
+                com.kianirani.jarvis.core.gesture.Gesture.SWIPE_UP to com.kianirani.jarvis.core.gesture.GestureAction.OPEN_DRAWER,
+                com.kianirani.jarvis.core.gesture.Gesture.SWIPE_DOWN to com.kianirani.jarvis.core.gesture.GestureAction.NOTIFICATIONS,
+            ),
+        )
+    }
+    val swipeThresholdPx = with(androidx.compose.ui.platform.LocalDensity.current) { 64.dp.toPx() }
+    val runGesture: (com.kianirani.jarvis.core.gesture.Gesture) -> Unit = { g ->
+        when (gestures.actionFor(g)) {
+            com.kianirani.jarvis.core.gesture.GestureAction.OPEN_DRAWER -> onOpenDrawer()
+            com.kianirani.jarvis.core.gesture.GestureAction.NOTIFICATIONS -> onNotifications()
+            com.kianirani.jarvis.core.gesture.GestureAction.EXPAND_PANEL -> onOpenDrawer()
+            else -> Unit
+        }
+    }
     val openAppInfo: (String) -> Unit = { pkg ->
         runCatching {
             ctx.startActivity(
@@ -97,7 +119,22 @@ fun WorkspaceHomePager(
         }
     }
 
-    Box(modifier.fillMaxSize()) {
+    Box(
+        modifier.fillMaxSize().pointerInput(Unit) {
+            // LR9 — accumulate a vertical fling; horizontal paging stays with the pager.
+            var dy = 0f
+            detectVerticalDragGestures(
+                onDragStart = { dy = 0f },
+                onVerticalDrag = { _, amount -> dy += amount },
+                onDragEnd = {
+                    when {
+                        dy <= -swipeThresholdPx -> runGesture(com.kianirani.jarvis.core.gesture.Gesture.SWIPE_UP)
+                        dy >= swipeThresholdPx -> runGesture(com.kianirani.jarvis.core.gesture.Gesture.SWIPE_DOWN)
+                    }
+                },
+            )
+        },
+    ) {
         HorizontalPager(state = pagerState, modifier = Modifier.fillMaxSize()) { page ->
             if (page == 0) {
                 homePage()
