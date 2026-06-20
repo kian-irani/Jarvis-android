@@ -3,6 +3,12 @@ package com.kianirani.jarvis.service
 import android.app.Notification
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
+import com.kianirani.jarvis.core.event.VisionEvent
+import com.kianirani.jarvis.core.event.VisionEventBus
+import com.kianirani.jarvis.core.notif.NotificationInfo
+import com.kianirani.jarvis.core.notif.NotificationTriage
+import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -17,7 +23,11 @@ import kotlinx.coroutines.flow.asStateFlow
  * clearable notifications so the App Drawer can show launcher-style unread
  * badges. Counts are in-memory only and reset when access is revoked.
  */
+@AndroidEntryPoint
 class VisionNotificationService : NotificationListenerService() {
+
+    // DS-BG3 — publish notification events onto the shared bus so proactive triggers can react.
+    @Inject lateinit var eventBus: VisionEventBus
 
     override fun onListenerConnected() {
         super.onListenerConnected()
@@ -31,7 +41,24 @@ class VisionNotificationService : NotificationListenerService() {
         super.onListenerDisconnected()
     }
 
-    override fun onNotificationPosted(sbn: StatusBarNotification?) = refreshBadges()
+    override fun onNotificationPosted(sbn: StatusBarNotification?) {
+        refreshBadges()
+        // DS-BG3 / B4 — triage the new notification; only emit an event for IMPORTANT ones so
+        // the proactive layer (PAS) isn't spammed by promos/social noise.
+        sbn?.let { n ->
+            val info = NotificationInfo(
+                pkg = n.packageName ?: "",
+                title = n.notification?.extras?.getCharSequence(Notification.EXTRA_TITLE)?.toString() ?: "",
+                text = n.notification?.extras?.getCharSequence(Notification.EXTRA_TEXT)?.toString() ?: "",
+                category = n.notification?.category ?: "",
+                ongoing = n.isOngoing,
+            )
+            if (NotificationTriage.classify(info) == com.kianirani.jarvis.core.notif.Importance.IMPORTANT) {
+                eventBus.tryEmit(VisionEvent.Custom("notification_important", info.pkg))
+            }
+        }
+    }
+
     override fun onNotificationRemoved(sbn: StatusBarNotification?) = refreshBadges()
 
     /** Recompute package -> count of clearable (non-ongoing) notifications. */
