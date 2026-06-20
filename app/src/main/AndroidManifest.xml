@@ -89,6 +89,17 @@
         <service
             android:name=".service.VisionIpcService"
             android:exported="false" />
+        <!-- Widget API: Vision home-screen app widget (works in any launcher) -->
+        <receiver
+            android:name=".widget.VisionAppWidget"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/vision_appwidget_info" />
+        </receiver>
         <!-- Phase 7.5: real device control (Home/Back/Recents). User enables once. -->
         <service
             android:name=".service.VisionAccessibilityService"
