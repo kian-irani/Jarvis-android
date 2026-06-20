@@ -72,8 +72,11 @@ class AndroidVoiceController(
     private var ttsReady = false
     private var pendingSpeech: String? = null
 
-    // Neural (Edge) voice — opt-in online path, with on-device fallback.
+    // Online neural voice — opt-in, with on-device fallback. Google Translate TTS is the
+    // primary engine for Persian (reliable free fa voice; on-device ships none); Edge neural
+    // is the secondary. Both fall back to on-device so we are never silent.
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private val google by lazy { GoogleTtsClient() }
     private val edge by lazy { EdgeTtsClient() }
     private var neuralJob: Job? = null
     private var player: MediaPlayer? = null
@@ -204,16 +207,26 @@ class AndroidVoiceController(
     }
 
     /**
-     * Online neural path: synthesize one code-switch SSML document with Edge's
-     * free Persian/English neural voices and play it. Any failure falls back to
-     * the on-device path so we are never silent.
+     * Online neural path. For Persian, **Google Translate TTS** is tried first — it is the most
+     * reliable free `fa` voice (on-device has none, and Edge's Bing socket is often blocked) —
+     * then Edge, then on-device. For non-Persian, Edge's nicer neural voice leads with Google as
+     * the fallback. Code-switch is handled inside each engine. Any total failure falls back to
+     * on-device so we are never silent.
      */
     private fun speakNeural(text: String) {
         val rate = (((settings?.speechRate?.value ?: 1f) - 1f) * 100).toInt()
         val pitch = (((settings?.voicePitch?.value ?: 1f) - 1f) * 100).toInt()
+        val neutral = if (settings?.language?.value == "en") "en" else "fa"
         neuralJob?.cancel()
         neuralJob = scope.launch {
-            val bytes = edge.synthesize(text, EdgeTtsProtocol.DEFAULT_FA_VOICE, EdgeTtsProtocol.DEFAULT_EN_VOICE, rate, pitch)
+            // edge.synthesize is suspend; google.synthesize is a blocking OkHttp call run on IO.
+            val bytes = if (VoiceRouting.hasPersian(text)) {
+                google.synthesize(text, neutralLang = neutral)
+                    ?: edge.synthesize(text, EdgeTtsProtocol.DEFAULT_FA_VOICE, EdgeTtsProtocol.DEFAULT_EN_VOICE, rate, pitch)
+            } else {
+                edge.synthesize(text, EdgeTtsProtocol.DEFAULT_FA_VOICE, EdgeTtsProtocol.DEFAULT_EN_VOICE, rate, pitch)
+                    ?: google.synthesize(text, neutralLang = neutral)
+            }
             if (bytes != null) playMp3(bytes) { speakOnDevice(text) } else main.post { speakOnDevice(text) }
         }
     }
@@ -360,6 +373,7 @@ class AndroidVoiceController(
         _isSpeaking.value = false
         runCatching { scope.cancel() }
         runCatching { edge.close() }
+        runCatching { google.close() }
         main.post {
             stopListeningOnMain()
             releasePlayer()
