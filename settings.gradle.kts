@@ -15,3 +15,4 @@ dependencyResolutionManagement {
 }
 rootProject.name = "Jarvis"
 include(":app")
+include(":vision-protocol")
