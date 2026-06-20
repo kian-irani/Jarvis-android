@@ -5,8 +5,12 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.draw.scale
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -679,8 +683,14 @@ private fun FolderDialog(
     onDismiss: () -> Unit,
 ) {
     Dialog(onDismissRequest = onDismiss) {
+        // NEO13 — folder opens with a quick scale+fade so it reads as expanding from the grid.
+        var shown by remember { mutableStateOf(false) }
+        LaunchedEffect(Unit) { shown = true }
+        val openScale by animateFloatAsState(if (shown) 1f else 0.85f, tween(180), label = "folderScale")
+        val openAlpha by animateFloatAsState(if (shown) 1f else 0f, tween(180), label = "folderAlpha")
         Column(
-            Modifier.fillMaxWidth().clip(RoundedCornerShape(24.dp)).glassPanel(radius = 24.dp).padding(18.dp),
+            Modifier.fillMaxWidth().scale(openScale).alpha(openAlpha)
+                .clip(RoundedCornerShape(24.dp)).glassPanel(radius = 24.dp).padding(18.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             // Editable folder name — commit on each edit so it persists (LR5).
