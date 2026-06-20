@@ -430,7 +430,7 @@ project: 05-vision
 - [x] Tools: Flashlight (torch) · DeviceSettings (Wifi/Bluetooth/Brightness/Airplane/Data panels) — v5
 - [x] wired در CommandInterpreter (قبل از AI) — v5
 - [x] **CallTool/SmsTool واقعی + ContactResolver** (اجرا یا گزارشِ صادقانه) — v21 (`0c017db`)
-- [ ] App tools: CloseApp/Recents/Back/Home (نیازمند Accessibility — Phase 7.5)
+- [x] **App tools: CloseApp/Recents/Back/Home** ✅ (v120، 2026-06-20): `VisionAccessibilityService` حالا `closeCurrentApp`/`showQuickSettings`/`showNotificationsShade` (علاوه بر goHome/goBack/openRecents/lockScreen موجود) دارد. compile سبز.
 - [ ] `core/agent/AgentEngine.kt` — Goal→Plan→Tool→Execute→Respond → **CF1**
 - [ ] `core/planner/{IntentClassifier,TaskPlanner,ActionPlan}.kt` — تسک چندمرحله‌ای → **CF3**
 - [ ] LLM tool-calling: تبدیل پاسخ مدل به فراخوانی ابزار (function-calling JSON) → **CF2/FA3**
@@ -451,7 +451,7 @@ project: 05-vision
 - [x] `NavigationTool` (home/back/recents/lock، EN/FA) wired در ToolRegistry — v6
 - [x] `VisionNotificationService` (خواندن نوتیف‌ها) + `NotificationTool` + ردیف Notification Access — v7
 - [ ] Click/Scroll/InputText (تعامل با المان‌ها) · پاسخ/حذف نوتیف · Overlay/FloatingOrb → **PAU/PAW/PAO**
-- [ ] `JarvisNotificationService` (خواندن/پاسخ/حذف نوتیف)
+- [x] **JarvisNotificationService (read/dismiss)** ✅ (v120): `VisionNotificationService.dismiss/dismissAll/activeKeys`.
 - [ ] OverlayService + FloatingOrb (دستیار شناور همه‌جا) → **PAO**
 - [ ] MediaProjection screenshot + ML Kit OCR → Context Cards
 - [x] **PERM runtime permission manager** ✅ (v117، 2026-06-20): `core/perm/PermissionCatalog` + `VisionCapability`(calls/sms/contacts/mic/camera/notif/overlay→permissions) — `missing`/`isSatisfied`/`missingFor`(batch+dedup)/`available`. ۴ تست. [requestPermissions/intent = device half.]
@@ -473,18 +473,18 @@ project: 05-vision
 
 ## 🔵 Phase 11 — OS-Level Integration + Conversational OS
 - [ ] کنترل کامل دستگاه با زبان طبیعی (روی Accessibility) → **PAU**
-- [ ] دستورات OS محاوره‌ای چندمرحله‌ای
+- [x] **دستورات OS محاوره‌ای چندمرحله‌ای** ✅ (v120، 2026-06-20): `core/automation/CommandSequence` — `split`/`isMultiStep`/`plan` روی connectiveهای طبیعی (then/and then/after that/؛/سپس/بعد). ۵ تست.
 - [x] **جایگزینی دستیار پیش‌فرض (Assistant role)** ✅ (v118، 2026-06-20): `data/role/AssistantRole` — `isDefaultAssistant`/`requestIntent` via `RoleManager.ROLE_ASSISTANT` (Android 10+) با fallback به assist-settings؛ best-effort. compile سبز.
 
 ## 🔵 Phase 11.5 — Focus Mode + Broadcast
-- [ ] Focus Mode (محدودسازی نوتیف/اپ‌ها)
+- [x] **Focus Mode (Android)** ✅ (v120، 2026-06-20): `core/focus/FocusSession` + `FocusManager` — sessionِ زمان‌دار: `isActive`/`remainingMillis`/`allowsNotification`(mute جز allowed)/`blocksApp`. ۴ تست. (متمایز از FocusModeِ desktop.)
 - [x] **Broadcast / presence** ✅ (v118، 2026-06-20): `core/mesh/DevicePresence` + `PresenceStatus`(ONLINE/AWAY/BUSY/OFFLINE) — `merge` (freshest per device، order-independent)، `effectiveStatus` (silent>۲دقیقه→OFFLINE)، `onlineDevices`. ۴ تست. [transportِ mesh = network half.]
 
 ## 🔵 Phase 12 — MCP & Plugin Ecosystem + Widget API — partial
 - [x] VisionPlugin interface + PluginRegistry + SystemInfoPlugin (v1)
 - [ ] بارگذاری پلاگین خارجی + sandbox مجوزها → **AGSK**
 - [ ] MCP client (اتصال به ابزارهای بیرونی)
-- [ ] Widget API (ویجت‌های خانه)
+- [x] **Widget API (home widget)** ✅ (v120، 2026-06-20): `widget/VisionAppWidget` (`AppWidgetProvider`) + layout/provider XML + drawableِ glass-pill + receiverِ manifest — ویجتِ «Ask Vision…» که در **هر launcher** اپ را باز می‌کند؛ `refreshAll`. compile سبز.
 
 ## 🔵 Phase 13 — Zero-Trust Security + Privacy Monitor — partial
 - [x] Privacy Monitor (شمارش cloud calls) · trust gate
@@ -530,7 +530,7 @@ project: 05-vision
 ### ⭐ فاز C0 — Always-On Ambient Presence (اولویت بالا — کاربر 2026-06-14)
 > Vision نباید فقط در صفحه‌ی اصلی فعال باشد. باید **همیشه و همه‌جا در دسترس** باشد، اپ‌های در حال استفاده را ببیند، و **پیش‌دستانه پیشنهاد بدهد و تعامل کند**. (→ بلوک PROACTIVE/AMBIENT بخش ۱)
 - [ ] **C0.1 Persistent ambient service**: foreground service همیشه‌فعال + overlay/bubble سراسری (SYSTEM_ALERT_WINDOW یا Bubble API) تا Vision از داخل هر اپ یک‌لمسی در دسترس باشد، نه فقط در launcher. (→ **PAO**)
-- [ ] **C0.2 Foreground-app awareness**: با AccessibilityService اپِ پیش‌زمینه و context را تشخیص بده (کدام اپ، چه صفحه‌ای).
+- [x] **C0.2 Foreground-app awareness** ✅ (= DS-W5/v111): `VisionAccessibilityService.foregroundPackage` از TYPE_WINDOW_STATE_CHANGED + تزریق به DeviceContext.
 - [ ] **C0.3 Proactive suggestions**: بر اساس اپ/زمان/رویداد پیشنهاد بده (مثلاً داخل مرورگر → «خلاصه کنم؟»، نوتیف مهم → اقدام). با C4 Proactive یکی می‌شود. (→ **PAS**)
 - [ ] **C0.4 Always-listening wake** (اختیاری/قابل‌خاموش): فعال‌سازی صوتی سراسری با حریم‌خصوصی محلی. (→ **FV4**)
 
