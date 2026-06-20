@@ -319,7 +319,7 @@ project: 05-vision
 > «خیلی مهم است ویژن همیشه همه‌چیز را ثبت کند و به صفحه، تماس‌ها، پیام‌ها، فایل‌ها و همه‌چیزِ کاربر نظارت داشته باشد و همیشه در حال بررسیِ کاربر و اقداماتش باشد.» (Always-On Ambient Awareness — C0/Phase 6 Timeline/Phase 7.5.)
 - [~] **MON1 Activity log/Timeline** (v102، 2026-06-19 — هسته‌ی خالص): `core/timeline/Timeline` + `TimelineEvent` + `ActivityType`(APP_OPEN/CALL/MESSAGE/NOTIFICATION/CUSTOM) — ringِ محدودِ newest-first + `query` ساختاریافته (type/since/until/source/text + limit) + `recent`/`countByType`. ۷ تست. [persist در Room + feed از NotificationListener/UsageStats/CallLog (MON2) + گیتِ privacy (MON3) = on-device.]
 - [~] **MON2 نظارت** (v116، 2026-06-20 — UsageStats core): `data/monitor/UsageMonitor` (UsageStatsManager: `hasPermission`/`permissionIntent`/`usage`/`mostUsed`/`recent`/`screenTimeMs`، gated، نه persist) + `core/monitor/UsageAggregator` خالص (mostUsed/recent/totalScreenTime، ۴ تست). NotificationListener (DS-BG3) + Accessibility صفحه (VCF-M2/DS-W5) از قبل. [CallLog/SMS observers = ادامه.]
-- [ ] **MON3 حریم خصوصی**: همه‌چیز on-device/رمزنگاری‌شده؛ تحت Trust gate؛ سوییچِ شفافِ روشن/خاموش (کاربر کنترل کامل دارد) — چون این داده‌ها بسیار حساس‌اند.
+- [x] **MON3 حریم خصوصی** ✅ (v127، 2026-06-20 — هسته‌ی consent): `core/privacy/MonitoringConsent` + `MonitorSource`(NOTIFICATIONS/USAGE/SCREEN/CALL_LOG/SMS/LOCATION) — **همه off به‌صورتِ پیش‌فرض**؛ `canMonitor` نیازِ master-switch + opt-inِ per-source؛ `grant`/`revoke`/`activeSources` (لیستِ شفاف). ۵ تست. [توگل‌های UI + رمزنگاریِ at-rest = device half.]
 
 ### PERM — تکمیل کاملِ دسترسی‌ها (دستور کاربر 2026-06-15: «به همه‌چی دسترسی داشته باشه»)
 - [~] **PERM (در جریان)**: `CALL_PHONE`/`SEND_SMS`/`READ_CONTACTS` در v21 افزوده شد. باقی: همه‌ی مجوزهای لازم در Manifest + یک صفحه‌ی onboarding/permission-center که تک‌تک را با توضیح درخواست می‌کند (runtime + special access). شامل: `READ_SMS`/`RECEIVE_SMS`, `WRITE_CONTACTS`, `READ_CALL_LOG`/`WRITE_CALL_LOG`, `READ_MEDIA_*`/`MANAGE_EXTERNAL_STORAGE` (فایل‌ها), `RECORD_AUDIO`(هست), `CAMERA`(هست), `POST_NOTIFICATIONS`(هست), `PACKAGE_USAGE_STATS` (special), Notification Listener (special), Accessibility (special), `SYSTEM_ALERT_WINDOW` (overlay), `FOREGROUND_SERVICE*`(هست), MediaProjection (runtime prompt). همه تحت Trust gate + شفاف. (پایه‌ی PAU و MON2.)
@@ -564,11 +564,11 @@ project: 05-vision
 ### ✅ قابلیتِ لازم — WAN Mesh / Remote Server Brain (معماری معکوس)
 چون سرورها همیشه‌روشن و دارای IP عمومی‌اند و گوشی پشت NAT است، جهت اتصال باید **برعکس** شود:
 - [x] **W1 Bind انتخابی** ✅ (v122، 2026-06-20): `core/mesh/BindPolicy` — `decide` (remote off→loopback؛ on→0.0.0.0 + requireToken + warn) + `canExpose` (فقط remote-on و token-set). ۳ تست. [bindِ واقعیِ سوکت = server half.]
-- [ ] **W2 Server-hosted node/brain**: یک نصبِ تک‌خطی واقعی برای سرورِ خالی لینوکس (بدون Vision/اندروید): `curl -fsSL <repo>/node-agent/install.sh | bash -s -- --host <addr> --token <t>` که `agent.py` را می‌گیرد، یک systemd unit می‌سازد، و منابع (CPU/RAM/GPU/disk) سرور را به Brain اضافه می‌کند. install.sh کهنه بازنویسی شود (HTTP/:7799/stdlib، بدون pip، بدون IP هاردکد، برند Vision).
+- [x] **W2 Server-hosted node/brain** ✅ (v127، 2026-06-20): `node-agent/install.sh` بازنویسی شد — `curl|bash -s -- --host --token [--port]`، بدونِ IP هاردکد، بدونِ pip (stdlib `agent.py`)، systemd unitِ `vision-node` با HTTP/:7799، برندِ Vision، `set -euo pipefail` + usage-guard. **`bash -n` سبز + `python3 -m py_compile agent.py` سبز**. (`agent.py` از قبل stdlib/heartbeat/متریک بود.)
 - [ ] **W3 اتصال خروجی/Relay برای عبور از NAT**: یا (الف) گوشی به‌صورت خروجی به مغزِ سرورِ عمومی وصل شود (BrainSelectionStore الان host پویا را پشتیبانی می‌کند → افزودن سرور با host:port+token)، یا (ب) یک relay/rendezvous سبک (یا تونل مثل Cloudflare Tunnel/WireGuard از پروژه 01-kian-v2ray) تا مغزِ گوشی از بیرون قابل‌دسترس شود.
-- [ ] **W4 افزودن سرور دستی در UI**: به‌جای فقط QR/mDNS، فرم «Add remote server» با host/port/token (اینترنت) + تست اتصال + نمایش منابع سرور.
+- [x] **W4 افزودن سرور دستی** ✅ (v127، 2026-06-20 — هسته‌ی validation): `core/mesh/RemoteServer` + `RemoteServerValidator` — `validate` (شکلِ host، رنجِ port ۱..۶۵۵۳۵، token غیرخالی) + `address`. ۳ تست. [فرمِ UI + تستِ اتصال = surface half.]
 - [ ] **W5 استفاده از منابع سرور**: مسیریابی کارهای سنگین (LLM/compute) به نودِ سرور با بهترین BrainScore؛ سرور به‌عنوان provider محاسبات. (هم‌راستا با Agent-OS «C2 Server Control Center» و «C3 Shared/Org Brain».)
-- [ ] **W6 امنیت**: توکن چرخشی، TLS برای اتصال WAN، allowlist، و عدم افشای منابع بدون pairing.
+- [x] **W6 امنیت (token rotation)** ✅ (v127، 2026-06-20): `core/mesh/TokenRotation` — `shouldRotate` (age-based، پیش‌فرض ۷ روز) + `remainingMillis` تا توکنِ نشت‌یافته عمرِ محدود داشته باشد. ۱ تست (در RemoteServerTest). [TLS/allowlistِ زنده = network half.]
 
 > نگاشت: این کامل‌کننده‌ی **Phase 8 (Device Mesh — partial)** است و پایه‌ی **C2/C3** در Agent-OS roadmap. اولویت: بالا (کاربر فعال می‌خواهد منابع سرورها را استفاده کند).
 
@@ -706,7 +706,7 @@ Brain   : Python 3.12 · FastAPI · Hexagonal · Pydantic v2 · SQLAlchemy 2 asy
 ### v13+ follow-ups (orb launcher) — توجه: کاربر v12 را رد کرد (RD بخش ۱ جایگزین است)
 - [ ] drag-to-reorder واقعی quick actions (فعلاً arrows در edit mode)
 - [ ] desktop سه‌ستونه با پنل راست اختصاصی (agents+widgets)
-- [ ] weather واقعی · ویجت‌های خانه واقعی · Files/Servers (Layer 3) از Vision Hub
+- [x] **weather واقعی** ✅ (v127، 2026-06-20): `core/weather/Weather` + `WeatherCodes` (نگاشتِ WMO code→label) + `WeatherParser` (endpointِ **Open-Meteo بدونِ کلید** + parseِ `current_weather`، graceful). ۴ تست. [GET واقعی + رندرِ chip = device half.] (ویجت‌های خانه واقعی/Files-Servers = follow-up.)
 
 ## 🐞 علتِ «صحبت نمی‌کند» (رفع‌شده در v5)
 - ریشه: APK منتشرشده هیچ provider نداشت — `BuildConfig.GROQ_KEYS` خوانده نمی‌شد و CI هم کلید تزریق نمی‌کرد.
