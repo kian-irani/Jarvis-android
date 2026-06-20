@@ -10,6 +10,9 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- DS-W: floating assistant orb over other apps -->
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
     <!-- Real device actions: place calls, send SMS, resolve contacts (CallTool/SmsTool) -->
     <uses-permission android:name="android.permission.CALL_PHONE" />
     <uses-permission android:name="android.permission.SEND_SMS" />
@@ -62,6 +65,15 @@
             android:name=".brain.BrainLiteService"
             android:exported="false"
             android:foregroundServiceType="dataSync" />
+        <!-- DS-W1: floating assistant orb overlay service -->
+        <service
+            android:name=".service.FloatingWidgetService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Floating assistant orb overlay" />
+        </service>
         <!-- Phase 7.5: real device control (Home/Back/Recents). User enables once. -->
         <service
             android:name=".service.VisionAccessibilityService"
