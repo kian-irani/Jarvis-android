@@ -44,6 +44,7 @@ class CloudChatRouter @Inject constructor(
     private val settings: com.kianirani.jarvis.data.settings.VisionSettings,
     private val pool: TokenPool,
     private val memory: com.kianirani.jarvis.core.memory.MemoryEngine,
+    private val deviceContext: com.kianirani.jarvis.data.context.DeviceContextProvider,
 ) : java.io.Closeable {
 
     /** Background scope for fire-and-forget memory capture (CF4.2). */
@@ -176,11 +177,15 @@ class CloudChatRouter @Inject constructor(
         val context = history.recent(6)
         // CF4.2: prepend Vision's long-term memory relevant to this message (graceful "" if none / model not downloaded).
         val memoryBlock = runCatching { memory.buildContextWindow(message) }.getOrDefault("")
+        // CTX (§8.2): ground the answer in the live device state (battery/network/time).
+        val contextBlock = runCatching {
+            com.kianirani.jarvis.core.context.ContextEngine.buildContextBlock(deviceContext.snapshot())
+        }.getOrDefault("")
         val keys = store.tokens(p)
         if (keys.isEmpty()) return Result.failure(IllegalStateException("No token for ${p.displayName}"))
         var last: Throwable = IllegalStateException("${p.displayName} failed")
         for (key in pool.order(p, keys)) {
-            runCatching { ask(p, key, message, context, memoryBlock) }
+            runCatching { ask(p, key, message, context, memoryBlock + contextBlock) }
                 .onSuccess {
                     pool.recordSuccess(p, key)
                     usage.record(p, success = true)
