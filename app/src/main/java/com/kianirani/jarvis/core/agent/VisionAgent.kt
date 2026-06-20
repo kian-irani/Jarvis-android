@@ -23,6 +23,14 @@ class VisionAgent(
     tools: ToolRegistry,
     checkpointer: Checkpointer? = null,
     toolSchema: JsonArray? = null,
+    /**
+     * Persona + tool-use guidance prepended as the SYSTEM turn of every run. Evaluated per
+     * run so it reflects live settings (name/language) and context. Returns null/blank to run
+     * with no system turn (the old behaviour). Without this the agent had no identity, no
+     * language preference, and no instruction to actually call tools — so it answered like a
+     * bare chat model.
+     */
+    private val systemPrompt: () -> String? = { null },
 ) {
     private val graph = ReActAgentFactory.build(
         model = ModelNode(client, toolSchema),
@@ -31,8 +39,13 @@ class VisionAgent(
     )
 
     /** Stream a fresh turn for [userText] on [threadId] as graph lifecycle events. */
-    fun run(userText: String, threadId: String = "main", ctx: NodeContext = NodeContext()): Flow<GraphEvent> =
-        graph.stream(GraphState(messages = listOf(VisionMessage.text(Role.USER, userText))), threadId, ctx)
+    fun run(userText: String, threadId: String = "main", ctx: NodeContext = NodeContext()): Flow<GraphEvent> {
+        val messages = buildList {
+            systemPrompt()?.takeIf { it.isNotBlank() }?.let { add(VisionMessage.text(Role.SYSTEM, it)) }
+            add(VisionMessage.text(Role.USER, userText))
+        }
+        return graph.stream(GraphState(messages = messages), threadId, ctx)
+    }
 
     /** Resume after a tool-confirmation interrupt, feeding the user's [answer]. */
     fun resume(threadId: String, answer: VisionMessage, ctx: NodeContext = NodeContext()): Flow<GraphEvent> =
