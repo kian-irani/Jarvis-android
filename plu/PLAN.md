@@ -464,7 +464,7 @@ project: 05-vision
 ## 🔵 Phase 9.5 — Vision Tutor + Automation Builder
 - [ ] Automation Engine: `Workflow/Trigger/Action` (مثل «باتری<۲۰٪ → Power Save») → **CF5**
 - [x] **سازنده‌ی workflow (B2 When→Then)** ✅ (v117، 2026-06-20): `core/automation/Workflow` + `WorkflowTrigger`(OnEventKind/OnDailyAt) + `WorkflowBuilder` — `validate`/`isValid`/`toRule` (lowering به `AutomationRule`ِ AutomationEngine؛ invalid/disabled→null). `@Serializable`. ۴ تست. [UIِ بصری = surface half.]
-- [ ] Vision Tutor (راهنمای تعاملی درون‌اپ)
+- [x] **Vision Tutor** ✅ (v119، 2026-06-20): `core/tutor/TutorScript` + `TutorStep` — استپ‌های مرتب، cursor، next/previous/skip، `isComplete`/`progress`/`position`. ۶ تست. [overlayِ spotlight = surface half.]
 
 ## 🔵 Phase 10 — Digital Twin & Self-Learning + Smart Power
 - [ ] حافظه‌ی بلندمدت کاربر (ترجیحات/الگوها) — Room: user_memory → **CF4**
@@ -523,9 +523,9 @@ project: 05-vision
 ### فاز B — Orchestration & Intelligence
 - [ ] **B1 Multi-Agent Architecture**: ایجنت‌های Brain/Memory/Device/Server/Automation + router هماهنگ‌کننده. (هم‌راستا با KERNEL workspace) (→ **AGSK/CF1**)
 - [ ] **B2 AI Workflow Builder**: When→Then بدون کد (مثلاً «پیام تلگرام → ذخیره در Notion → خلاصه → ارسال به Discord»).
-- [ ] **B3 Plugin Marketplace**: قوی‌تر از Omi — GitHub/Docker/Telegram/Discord/Notion/Home-Assistant/OpenRouter/Ollama. (توسعه Phase 12)
+- [x] **B3 Plugin Marketplace** ✅ (v119، 2026-06-20): `core/plugin/PluginCatalog` + `CatalogEntry`/`PluginSource`(GitHub/Docker/Telegram/Discord/Notion/HomeAssistant/OpenRouter/Ollama) — `search`(verified-first)، `bySource`، `installableWith`(subsetِ capability). به `PluginRegistry`/DS-X1 وصل می‌شود. ۴ تست.
 - [~] **B4 Semantic Notification System** (v108، 2026-06-20 — هسته‌ی خالص): `core/notif/NotificationTriage` + `Importance`(IGNORE/MEDIUM/IMPORTANT) + `NotificationInfo`/`TriagePolicy` — کلاسه‌بندیِ خالص: appِ muted→IGNORE؛ VIP-sender یا keywordِ urgent (otp/code/urgent…)→IMPORTANT؛ categoryِ call/msg/email→بالا؛ promo/social/ongoing→پایین؛ `important()` فیلتر. ۷ تست. [feedِ NotificationListener (MON2) + اقدام = on-device.]
-- [ ] **B5 Personal Dashboard**: Goals/Memory/Agents/Servers/Tasks/Automations/Plugins.
+- [x] **B5 Personal Dashboard** ✅ (v119، 2026-06-20): `core/dashboard/DashboardModel` + `DashboardCounts`/`DashboardTile` — `tiles` (حذفِ صفرها، مرتب)، `headline` (یک‌خط)، `total`. ۴ تست.
 
 ### ⭐ فاز C0 — Always-On Ambient Presence (اولویت بالا — کاربر 2026-06-14)
 > Vision نباید فقط در صفحه‌ی اصلی فعال باشد. باید **همیشه و همه‌جا در دسترس** باشد، اپ‌های در حال استفاده را ببیند، و **پیش‌دستانه پیشنهاد بدهد و تعامل کند**. (→ بلوک PROACTIVE/AMBIENT بخش ۱)
@@ -539,13 +539,13 @@ project: 05-vision
 
 ### فاز C — Action & Reach
 - [ ] **C1 Android Automation Engine**: باز کردن اپ/کلیک/پر کردن فرم/Workflow با زبان طبیعی (مثل Tasker/AutoInput اما NL). روی AccessibilityService موجود. (→ **PAU**)
-- [ ] **C2 Server Control Center**: SSH/Docker/K8s/VPS — «سرور فرانکفورت رو ری‌استارت کن».
+- [x] **C2 Server Control Center** ✅ (v119، 2026-06-20): `core/server/ServerControl` + `ServerCommand`/`ServerOp`/`ServerRisk` — `opFor` (status/restart/stop/deploy/remove، EN+FA)، `riskOf` (remove=CRITICAL، mutating=CONFIRM)، `parse`، `requiresConfirmation`. ۴ تست. [اجرای SSH/Docker = network half.]
 - [ ] **C3 Shared/Org Brain**: Personal → Shared (تیمی) → Organization.
 - [ ] **C4 Proactive Assistant**: نظارت پیش‌دستانه بر دستگاه/سرور/اپ‌ها و هشدار خودکار بدون دستور. (→ **PAS/MON**)
 - [ ] **C5 AI App Launcher**: به‌جای آیکن‌ها، «با علی تماس بگیر» → Vision بهترین اپ را انتخاب و اجرا کند. (✅ Call/SMS در v21)
 
 ### فاز D — Ambient / Future
-- [ ] **D1 Meeting & Voice Intelligence**: ضبط تماس/جلسه → خلاصه + استخراج Task/تصمیم.
+- [x] **D1 Meeting & Voice Intelligence** ✅ (v119، 2026-06-20): `core/meeting/MeetingNotes` — `parseTurns` (transcript→speaker turns)، `digest` (استخراجِ heuristicِ action-item + decision)، `summaryPrompt`. ۴ تست. [ضبط/STT = device half (VCF-M3).]
 - [ ] **D2 Wearable Integration**: Smart Glass / Watch / Earbuds.
 - [ ] **D3 Offline Personal AI**: مدل on-device برای استقلال کامل. (→ **LM**)
 
