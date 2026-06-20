@@ -80,7 +80,14 @@ class FloatingWidgetService : Service() {
     // Compose state the overlay reads — updates recompose the orb.
     private val orbState = mutableStateOf(OrbState.IDLE)
     private val expanded = mutableStateOf(false)
-    private val gestures = GestureMap()
+    // PAO semantics (§8.1): tap → quick panel, double-tap → voice, long-press → voice.
+    private val gestures = GestureMap(
+        mapOf(
+            com.kianirani.jarvis.core.gesture.Gesture.TAP to GestureAction.EXPAND_PANEL,
+            com.kianirani.jarvis.core.gesture.Gesture.DOUBLE_TAP to GestureAction.VOICE,
+            com.kianirani.jarvis.core.gesture.Gesture.LONG_PRESS to GestureAction.VOICE,
+        ),
+    )
 
     // Live signals feeding the orb state machine.
     private var hasNotification = false
