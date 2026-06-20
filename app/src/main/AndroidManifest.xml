@@ -85,6 +85,10 @@
         <receiver
             android:name=".data.automation.AutomationReceiver"
             android:exported="false" />
+        <!-- DS-C4: cross-process IPC (Messenger) for an out-of-process widget -->
+        <service
+            android:name=".service.VisionIpcService"
+            android:exported="false" />
         <!-- Phase 7.5: real device control (Home/Back/Recents). User enables once. -->
         <service
             android:name=".service.VisionAccessibilityService"
