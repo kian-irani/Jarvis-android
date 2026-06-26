@@ -24,6 +24,15 @@ object VoiceRouting {
     fun hasPersian(text: String): Boolean =
         text.any { VoiceSegmenter.scriptOf(it) == VoiceSegmenter.Script.PERSIAN }
 
+    /**
+     * Whether Google Translate's read-aloud endpoint can voice [text]. Google has **no Persian
+     * voice** — `translate_tts?tl=fa` returns HTTP 400 for any input — so it must never be used
+     * for a reply that contains Persian (doing so wasted a guaranteed-failing round-trip before
+     * Edge and was the v129 "Google-primary" regression that left Persian silent/slow). Edge
+     * neural is the only reliable free Persian voice; Google stays a Latin-only fallback.
+     */
+    fun googleCanSpeak(text: String): Boolean = !hasPersian(text)
+
     fun useNeural(language: String?, mode: NeuralVoiceMode, online: Boolean, replyText: String = ""): Boolean {
         if (!online) return false
         return when (mode) {

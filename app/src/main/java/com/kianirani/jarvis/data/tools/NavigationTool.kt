@@ -28,7 +28,7 @@ class NavigationTool @Inject constructor() : Tool {
         return ToolResult(if (ok) reply else "Couldn't do that right now.")
     }
 
-    private fun actionFor(m: String): Pair<String, String>? = when {
+    private fun actionFor(raw: String): Pair<String, String>? = raw.lowercase().let { m -> when {
         m == "home" || m == "go home" || m.contains("برو خانه") || m.contains("صفحه اصلی") || m.contains("هوم") ->
             "home" to "Going home."
         m == "back" || m == "go back" || m.contains("برگرد") || m.contains("بازگشت") ->
@@ -39,5 +39,5 @@ class NavigationTool @Inject constructor() : Tool {
         m.contains("lock screen") || m == "lock" || m.contains("قفل") ->
             "lock" to "Locking the screen."
         else -> null
-    }
+    } }
 }

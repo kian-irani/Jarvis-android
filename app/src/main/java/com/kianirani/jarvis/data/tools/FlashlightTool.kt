@@ -14,13 +14,15 @@ class FlashlightTool @Inject constructor(
 ) : Tool {
     override val id = "flashlight"
 
-    override fun matches(message: String): Boolean =
-        message.startsWith("flashlight") || message.startsWith("torch") ||
-            message.contains("چراغ قوه") || message.contains("چراغ‌قوه") ||
-            message == "فلش" || message == "flash"
+    override fun matches(message: String): Boolean = message.lowercase().let { m ->
+        m.startsWith("flashlight") || m.startsWith("torch") ||
+            m.contains("چراغ قوه") || m.contains("چراغ‌قوه") ||
+            m == "فلش" || m == "flash"
+    }
 
     override fun run(message: String): ToolResult {
-        val off = message.contains("off") || message.contains("خاموش")
+        val m = message.lowercase()
+        val off = m.contains("off") || m.contains("خاموش")
         return ToolResult(toggle(enable = !off))
     }
 

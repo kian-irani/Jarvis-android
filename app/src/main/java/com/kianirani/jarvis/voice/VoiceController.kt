@@ -207,26 +207,22 @@ class AndroidVoiceController(
     }
 
     /**
-     * Online neural path. For Persian, **Google Translate TTS** is tried first — it is the most
-     * reliable free `fa` voice (on-device has none, and Edge's Bing socket is often blocked) —
-     * then Edge, then on-device. For non-Persian, Edge's nicer neural voice leads with Google as
-     * the fallback. Code-switch is handled inside each engine. Any total failure falls back to
-     * on-device so we are never silent.
+     * Online neural path. **Edge neural is the primary engine** — it has fluent Persian voices
+     * (fa-IR-DilaraNeural/FaridNeural), the only reliable free Persian read-aloud. Google
+     * Translate TTS is a **Latin-only fallback**: it has no Persian voice (`tl=fa` → HTTP 400),
+     * so it is skipped entirely when the reply contains Persian (see [VoiceRouting.googleCanSpeak];
+     * calling it for Persian was the v129 regression that wasted a failing round-trip and left
+     * Persian slow/silent). Code-switch is handled inside each engine. Any total failure falls
+     * back to on-device TTS so we are never silent.
      */
     private fun speakNeural(text: String) {
         val rate = (((settings?.speechRate?.value ?: 1f) - 1f) * 100).toInt()
         val pitch = (((settings?.voicePitch?.value ?: 1f) - 1f) * 100).toInt()
-        val neutral = if (settings?.language?.value == "en") "en" else "fa"
         neuralJob?.cancel()
         neuralJob = scope.launch {
             // edge.synthesize is suspend; google.synthesize is a blocking OkHttp call run on IO.
-            val bytes = if (VoiceRouting.hasPersian(text)) {
-                google.synthesize(text, neutralLang = neutral)
-                    ?: edge.synthesize(text, EdgeTtsProtocol.DEFAULT_FA_VOICE, EdgeTtsProtocol.DEFAULT_EN_VOICE, rate, pitch)
-            } else {
-                edge.synthesize(text, EdgeTtsProtocol.DEFAULT_FA_VOICE, EdgeTtsProtocol.DEFAULT_EN_VOICE, rate, pitch)
-                    ?: google.synthesize(text, neutralLang = neutral)
-            }
+            val bytes = edge.synthesize(text, EdgeTtsProtocol.DEFAULT_FA_VOICE, EdgeTtsProtocol.DEFAULT_EN_VOICE, rate, pitch)
+                ?: if (VoiceRouting.googleCanSpeak(text)) google.synthesize(text, neutralLang = "en") else null
             if (bytes != null) playMp3(bytes) { speakOnDevice(text) } else main.post { speakOnDevice(text) }
         }
     }

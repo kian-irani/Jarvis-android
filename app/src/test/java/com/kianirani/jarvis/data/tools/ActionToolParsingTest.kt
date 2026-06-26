@@ -89,4 +89,14 @@ class ActionToolParsingTest {
         // a real addressee with بگو still parses
         assertEquals("علی" to "سلام", SmsTool.parse("به علی بگو سلام"))
     }
+
+    // --- case handling: matching is case-insensitive, but the SMS body keeps its capitalization
+    // (the registry used to lowercase the whole message, so "See you at 5PM" was sent as
+    // "see you at 5pm"). The target is still lowercased for contact lookup.
+    @Test
+    fun `message body preserves original capitalization while matching is case-insensitive`() {
+        assertEquals("mom" to "I'll be there at 5PM", SmsTool.parse("Text Mom: I'll be there at 5PM"))
+        assertEquals("ali" to "OK See you", SmsTool.parse("MESSAGE Ali saying OK See you"))
+        assertEquals("dad" to "On My Way", SmsTool.parse("Send Dad a message saying On My Way"))
+    }
 }

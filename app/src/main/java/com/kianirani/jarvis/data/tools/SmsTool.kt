@@ -53,9 +53,11 @@ class SmsTool @Inject constructor(
 
     companion object {
         // EN: "text/message/sms <name> (saying|that|:) <body>"  | "send <name> a message (saying|:) <body>"
+        // IGNORE_CASE so the matcher is case-insensitive while [parse] reads the body from the
+        // original text — capitalization in the message body is preserved.
         private val EN = listOf(
-            Regex("""^(?:text|message|sms)\s+(.+?)\s*(?:saying|that|:)\s+(.+)$"""),
-            Regex("""^send\s+(.+?)\s+(?:a\s+)?(?:message|text|sms)\s*(?:saying|that|:)?\s+(.+)$"""),
+            Regex("""^(?:text|message|sms)\s+(.+?)\s*(?:saying|that|:)\s+(.+)$""", RegexOption.IGNORE_CASE),
+            Regex("""^send\s+(.+?)\s+(?:a\s+)?(?:message|text|sms)\s*(?:saying|that|:)?\s+(.+)$""", RegexOption.IGNORE_CASE),
         )
 
         // "به X بگو …" — the exact form TOOL_PROTOCOL tells the model to emit. "بگو" is a
@@ -79,13 +81,17 @@ class SmsTool @Inject constructor(
             Regex("""^برای\s+(.+?)\s+(?:بنویس|بفرست)\s*(?:که|:)?\s*(.+)$"""),
         )
 
-        /** Returns (target, body) for a send-message command, or null if not one. */
+        /**
+         * Returns (target, body) for a send-message command, or null if not one. Matching is
+         * case-insensitive but the **body keeps its original capitalization** (it is the literal
+         * text we will send); the target is lowercased since contact lookup is case-insensitive.
+         */
         fun parse(message: String): Pair<String, String>? {
-            val m = message.trim().lowercase()
+            val m = message.trim()
             if (m.isEmpty()) return null
             for (rx in EN + FA) {
                 val g = rx.find(m)?.groupValues ?: continue
-                val target = g.getOrNull(1)?.trim().orEmpty()
+                val target = g.getOrNull(1)?.trim()?.lowercase().orEmpty()
                 val body = g.getOrNull(2)?.trim().orEmpty()
                 if (target.isEmpty()) continue
                 // "بگو" to self/assistant is a chat request, not an SMS — let it flow to AI.
