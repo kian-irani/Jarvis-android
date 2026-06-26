@@ -7,19 +7,20 @@ import java.net.URLEncoder
 import java.util.concurrent.TimeUnit
 
 /**
- * FV-FA — reliable free Persian (and English) TTS via Google Translate's read-aloud endpoint.
+ * Free English/Latin TTS via Google Translate's read-aloud endpoint — a **Latin-only fallback**
+ * behind Edge neural.
  *
- * The user's recurring complaint is that Persian replies are silent: AUTO mode routes Persian
- * to the Edge neural voice, but Microsoft's Bing websocket is unreliable/geo-blocked, and the
- * on-device fallback ships **no `fa-IR` voice** — so nothing plays. Google's `translate_tts`
- * endpoint speaks `fa` fluently over a plain HTTP GET (no key, no token), so it is the most
- * dependable free Persian voice and becomes the primary online engine.
+ * IMPORTANT: Google Translate has **no Persian voice**. `translate_tts?tl=fa` returns HTTP 400
+ * for any input (verified 2026-06), so this engine must never be used for a reply that contains
+ * Persian — the caller guards that via [VoiceRouting.googleCanSpeak]. The earlier belief that
+ * Google "speaks fa fluently" was wrong and made it the primary Persian engine (v129), which
+ * only ever 400'd and delayed the real (Edge) voice. Edge neural is the primary engine; this is
+ * the fallback for Latin-only replies when Edge's socket is blocked.
  *
- * Code-switch aware: the reply is split by [VoiceSegmenter] and each Persian/Latin run is
- * fetched with the right `tl` (fa/en) and the MP3 chunks concatenated, so "یک playlist از
- * Shakira" speaks each language correctly instead of one mangling the other. The endpoint caps
- * a request near 200 chars, so each run is [chunk]ed on word boundaries. Any failure returns
- * null so the caller falls back to Edge, then on-device — never silent, never regressive.
+ * Code-switch aware: the reply is split by [VoiceSegmenter] and each Latin/neutral run is fetched
+ * with the right `tl` and the MP3 chunks concatenated. The endpoint caps a request near 200
+ * chars, so each run is [chunk]ed on word boundaries. Any failure returns null so the caller
+ * falls back to on-device — never silent, never regressive.
  */
 class GoogleTtsClient(
     private val client: OkHttpClient = OkHttpClient.Builder()

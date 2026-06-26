@@ -30,7 +30,7 @@ class DeviceSettingsTool @Inject constructor(
         )
     }
 
-    private fun panelFor(m: String): Pair<String, String>? = when {
+    private fun panelFor(raw: String): Pair<String, String>? = raw.lowercase().let { m -> when {
         m.contains("wifi") || m.contains("wi-fi") || m.contains("وای فای") || m.contains("وایفای") ->
             Settings.ACTION_WIFI_SETTINGS to "Wi-Fi"
         m.contains("bluetooth") || m.contains("بلوتوث") ->
@@ -42,5 +42,5 @@ class DeviceSettingsTool @Inject constructor(
         m.contains("mobile data") || m.contains("دیتا") || m.contains("اینترنت همراه") ->
             Settings.ACTION_DATA_ROAMING_SETTINGS to "Mobile data"
         else -> null
-    }
+    } }
 }

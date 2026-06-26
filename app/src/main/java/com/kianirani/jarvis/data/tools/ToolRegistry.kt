@@ -30,7 +30,11 @@ class ToolRegistry @Inject constructor(
     val ids: List<String> get() = tools.map { it.id }
 
     fun dispatch(message: String): String? {
-        val m = message.trim().lowercase()
+        // Pass the ORIGINAL-case (trimmed) message through: each tool lowercases internally for
+        // matching but extracts content (an SMS body, a search query, text to type) from the
+        // original, so capitalization is preserved end to end ("text Ali: See you at 5PM" used to
+        // become "see you at 5pm"). Tools are case-insensitive matchers, so this is safe.
+        val m = message.trim()
         if (m.isEmpty()) return null
         return tools.firstOrNull { it.matches(m) }?.run(m)?.reply
     }

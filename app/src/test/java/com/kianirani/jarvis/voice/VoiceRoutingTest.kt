@@ -54,4 +54,13 @@ class VoiceRoutingTest {
         assertFalse(VoiceRouting.hasPersian("hello 123"))
         assertFalse(VoiceRouting.hasPersian(""))
     }
+
+    // Google Translate TTS has no Persian voice (tl=fa → HTTP 400): it must be used only for
+    // Latin-only replies, never when any Persian is present (the v129 silent-Persian regression).
+    @Test fun `googleCanSpeak is true only for latin-only text`() {
+        assertTrue(VoiceRouting.googleCanSpeak("hello there"))
+        assertTrue(VoiceRouting.googleCanSpeak("play Shakira 2024"))
+        assertFalse(VoiceRouting.googleCanSpeak("سلام"))
+        assertFalse(VoiceRouting.googleCanSpeak("یک playlist از Shakira"))
+    }
 }

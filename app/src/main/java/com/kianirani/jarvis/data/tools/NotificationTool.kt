@@ -9,9 +9,10 @@ import javax.inject.Singleton
 class NotificationTool @Inject constructor() : Tool {
     override val id = "notifications"
 
-    override fun matches(message: String): Boolean =
-        message.contains("notification") || message.contains("نوتیف") ||
-            message.contains("اعلان") || message.contains("اعلان‌ها")
+    override fun matches(message: String): Boolean = message.lowercase().let { m ->
+        m.contains("notification") || m.contains("نوتیف") ||
+            m.contains("اعلان") || m.contains("اعلان‌ها")
+    }
 
     override fun run(message: String): ToolResult {
         val svc = VisionNotificationService.instance
