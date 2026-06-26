@@ -8,7 +8,7 @@ project: 05-vision
 
 # 🗂️ PLAN — Vision OS
 > منبع کامل: `repo/ROADMAP.md` + `repo/docs/VISION-CAPABILITIES.md` + PRDِ VCF `docs/2026-06-18-vision-cognitive-framework-PRD.md`.
-> ریپو: `kian-irani/Jarvis-android` · **آخرین نسخه: v128** (2026-06-20 — VCF-LIVE: agentic chat path).
+> ریپو: `kian-irani/Jarvis-android` · **آخرین نسخه: v132** (2026-06-26 — رفعِ صدای فارسی + حفظِ حروفِ بزرگ در دستورات).
 > وضعیت: `[x]` انجام‌شده · `[~]` نیمه · `[ ]` باز.
 
 ---
@@ -250,6 +250,8 @@ project: 05-vision
 - [x] **NEO11 At-a-Glance + search bar** ✅ (v114، 2026-06-20): `GlanceSearchBar` در بالای HomeScreen — pillِ شیشه‌ای (`glassPanel`) با **تاریخِ امروز** (روز·ماه·روزِ ماه) + ورودیِ «Search apps, contacts, web» که `onOpenSearch`→App Drawer (جستجوی یکپارچه‌ی `SearchRanker`) را باز می‌کند + آیکنِ mic. تارگت ≥۵۲dp، on-style، آیکنِ `VisionIcons`. compile سبز. [هوا و جستجوی صوتیِ زنده = follow-up.]
 - [~] **NEO12 Icon pack + notification dots روی هوم** (v104، 2026-06-19 — مدلِ badge): `core/notif/NotificationBadges` + `NotificationBadge` — countهای unreadِ per-app را به مدلِ badgeِ هوم تبدیل می‌کند: `from` (فقط unread، پرشمار اول)، `hasDot`، `display` (cap «۹۹+»، خالی برای صفر)، `total`. ۵ تست. **+ orb-aware (v106):** `FloatingWidgetService` از `NotificationBadges.total(VisionNotificationService.badges)` استفاده می‌کند تا وقتی نوتیفِ unread هست orb را NOTIFICATION کند. build-green. [resolverِ آیکن‌پک + رسمِ dot روی آیکنِ هوم = on-device.]
 - [x] **NEO13 folder open animation** ✅ (v114، 2026-06-20): `FolderDialog` حالا با **scale (۰.۸۵→۱) + fade (۱۸۰ms)** باز می‌شود (`animateFloatAsState` + `LaunchedEffect`) تا حسِ بازشدن از گرید بدهد، honorِ on-style. compile سبز. [cross-page dragِ آیکن به/از dock = follow-upِ LR3.]
+- [x] **FIX-FA-VOICE صدای فارسی (v132، 2026-06-26)**: ریشه‌ی باگِ «صدای فارسی نمیاد/کند است» پیدا و رفع شد — Google Translate **هیچ صدای فارسی ندارد**: `translate_tts?tl=fa` برای هر ورودی **HTTP 400** برمی‌گرداند (تأییدشده روی شبکه). تغییرِ v129 که Google را موتورِ **اصلیِ** فارسی کرده بود، باعث می‌شد هر پاسخِ فارسی اول ۴۰۰ بخورد، بعد به Edge بیفتد (تأخیر) و اگر Edge بسته بود → سکوت. حالا **Edge neural موتورِ اصلیِ همه‌ی پاسخ‌هاست** و Google فقط fallbackِ Latin-only است که با `VoiceRouting.googleCanSpeak` هرگز برای متنِ حاویِ فارسی صدا زده نمی‌شود. تست: `googleCanSpeak`. build+test سبز.
+- [x] **FIX-CMD-CASE اجرای دستورات (v132، 2026-06-26)**: `ToolRegistry.dispatch` کلِ پیام را lowercase می‌کرد، پس متنِ SMS مثل «See you at 5PM» به «see you at 5pm» و queryِ جستجو حروفِ بزرگش را از دست می‌داد. حالا پیامِ اصلی (case حفظ‌شده) عبور می‌کند؛ هر tool فقط برای matching داخلی lowercase می‌کند و محتوا (بدنه‌ی SMS، queryِ جستجو، متنِ تایپ) را از اصل می‌خواند. `SmsTool.parse` بدنه را با حفظِ حروفِ بزرگ و matchingِ case-insensitive برمی‌گرداند. این مسیرِ چت (`deliver`) و مسیرِ ایجنت (`device_command`) را هر دو درست می‌کند. تست: حفظِ caseِ بدنه‌ی SMS. build+test سبز.
 - [ ] **NEO14 Neural voice follow-up**: تأییدِ Edge neural روی دستگاهِ واقعی + pickerِ صدای neural per-voice + streamingِ chunk-by-chunk + STT چندلوکیلِ خودکار.
 
 > کاربر v12 را نصب کرد: **هر دو طراحی قبلی (HUD) و جدید (v12 orb) رد شد** — «هیچ اثری از طراحی قدیمی نباشد، کاملاً جدید، از عکس‌ها استفاده کن.» + امکان تغییر فونت در اپ + فونت بهترِ پیش‌فرض.
